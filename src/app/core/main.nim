@@ -19,8 +19,8 @@ type StatusFoundation* = ref object
 proc newStatusFoundation*(fleetConfig: string): StatusFoundation =
   result = StatusFoundation()
   result.events = createEventEmitter()
-  result.fleetConfiguration = newFleetConfiguration(fleetConfig)
   result.threadpool = newThreadPool()
+  result.fleetConfiguration = newFleetConfiguration(fleetConfig)
   result.signalsManager = newSignalsManager(result.events)
 
 proc delete*(self: StatusFoundation) =

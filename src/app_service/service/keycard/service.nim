@@ -1,9 +1,10 @@
 import NimQml, json, os, chronicles, random, strutils
-import keycard_go
 import app/global/global_singleton
 import app/core/eventemitter
 import app/core/tasks/[qt, threadpool]
 import ../../../constants as status_const
+when not defined(ios):
+  import keycard_go
 
 import constants
 
@@ -102,7 +103,7 @@ QtObject:
     # with errors like bad flushGen 12 in prepareForSweep; sweepgen 0
     if status_const.IS_MACOS and status_const.IS_INTEL:
       sleep 700
-    let initResp = keycard_go.keycardInitFlow(status_const.KEYCARDPAIRINGDATAFILE)
+    let initResp = "" #keycard_go.keycardInitFlow(status_const.KEYCARDPAIRINGDATAFILE)
     if self.doLogging:
       debug "initialization response: ", initResp
 
@@ -163,14 +164,14 @@ QtObject:
       return
     self.busy = true
     self.updateLocalPayloadForCurrentFlow(payload, cleanBefore = true)
-    let response = keycard_go.keycardStartFlow(self.currentFlow.int, $payload)
+    let response = "" #keycard_go.keycardStartFlow(self.currentFlow.int, $payload)
     if self.doLogging:
       debug "keycardStartFlow", kcServiceCurrFlow=($self.currentFlow), payload=payload, response=response
 
   proc resumeFlow(self: Service, payload: JsonNode) =
     self.busy = true
     self.updateLocalPayloadForCurrentFlow(payload)
-    let response = keycard_go.keycardResumeFlow($payload)
+    let response = "" #keycard_go.keycardResumeFlow($payload)
     if self.doLogging:
       debug "keycardResumeFlow", kcServiceCurrFlow=($self.currentFlow), payload=payload, response=response
 
@@ -180,7 +181,7 @@ QtObject:
     # with errors like bad flushGen 12 in prepareForSweep; sweepgen 0
     if status_const.IS_MACOS and status_const.IS_INTEL:
       sleep 700
-    let response = keycard_go.keycardCancelFlow()
+    let response = "" #keycard_go.keycardCancelFlow()
     # sleep 200 is needed for cancel flow
     sleep 200
     self.currentFlow = KCSFlowType.NoFlow
@@ -195,7 +196,7 @@ QtObject:
     if not singletonInstance.localAppSettings.displayMockedKeycardWindow():
       error "registerMockedKeycard can be used only in test env"
       return
-    let response = keycard_go.mockedLibRegisterKeycard(cardIndex, readerState, keycardState, mockedKeycard, mockedKeycardHelper)
+    let response = "" #keycard_go.mockedLibRegisterKeycard(cardIndex, readerState, keycardState, mockedKeycard, mockedKeycardHelper)
     if self.doLogging:
       debug "mockedLibRegisterKeycard", kcServiceCurrFlow=($self.currentFlow), cardIndex=cardIndex, readerState=readerState, keycardState=keycardState, mockedKeycard=mockedKeycard, mockedKeycardHelper=mockedKeycardHelper, response=response
 
@@ -203,7 +204,7 @@ QtObject:
     if not singletonInstance.localAppSettings.displayMockedKeycardWindow():
       error "pluginMockedReaderAction can be used only in test env"
       return
-    let response = keycard_go.mockedLibReaderPluggedIn()
+    let response = "" #keycard_go.mockedLibReaderPluggedIn()
     if self.doLogging:
       debug "mockedLibReaderPluggedIn", kcServiceCurrFlow=($self.currentFlow), response=response
 
@@ -211,7 +212,7 @@ QtObject:
     if not singletonInstance.localAppSettings.displayMockedKeycardWindow():
       error "unplugMockedReaderAction can be used only in test env"
       return
-    let response = keycard_go.mockedLibReaderUnplugged()
+    let response = "" #keycard_go.mockedLibReaderUnplugged()
     if self.doLogging:
       debug "mockedLibReaderUnplugged", kcServiceCurrFlow=($self.currentFlow), response=response
 
@@ -219,7 +220,7 @@ QtObject:
     if not singletonInstance.localAppSettings.displayMockedKeycardWindow():
       error "insertMockedKeycardAction can be used only in test env"
       return
-    let response = keycard_go.mockedLibKeycardInserted(cardIndex)
+    let response = "" #keycard_go.mockedLibKeycardInserted(cardIndex)
     if self.doLogging:
       debug "mockedLibKeycardInserted", kcServiceCurrFlow=($self.currentFlow), cardIndex=cardIndex, response=response
 
@@ -227,7 +228,7 @@ QtObject:
     if not singletonInstance.localAppSettings.displayMockedKeycardWindow():
       error "removeMockedKeycardAction can be used only in test env"
       return
-    let response = keycard_go.mockedLibKeycardRemoved()
+    let response = "" #keycard_go.mockedLibKeycardRemoved()
     if self.doLogging:
       debug "mockedLibKeycardRemoved", kcServiceCurrFlow=($self.currentFlow), response=response
   ##########################################################

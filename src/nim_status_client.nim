@@ -1,7 +1,7 @@
 import NimQml, chronicles, os, stew/shims/strformat, strutils, times, checksums/md5, json, re
 
 import status_go
-import keycard_go
+# import keycard_go
 import app/core/main
 import constants as main_constants
 import statusq_bridge
@@ -21,7 +21,7 @@ logScope:
   topics = "status-app"
 
 var signalsManagerQObjPointer: pointer
-var keycardServiceQObjPointer: pointer
+# var keycardServiceQObjPointer: pointer
 
 proc isExperimental(): string =
   result = if getEnv("EXPERIMENTAL") == "1": "1" else: "0" # value explicity passed to avoid trusting input
@@ -30,7 +30,10 @@ proc determineResourcePath(): string =
   result = if defined(windows) and defined(production): "/../resources/resources.rcc" else: "/../resources.rcc"
 
 proc determineFleetsPath(): string =
-  result = if defined(windows) and defined(production): "/../resources/fleets.json" else: "/../fleets.json"
+  when defined(ios):
+    result = "/fleets.json"
+  else:
+    result = if defined(windows) and defined(production): "/../resources/fleets.json" else: "/../fleets.json"
 
 proc determineOpenUri(): string =
   if OPENURI.len > 0:
@@ -77,10 +80,10 @@ proc setupRemoteSignalsHandling() =
       signal_handler(signalsManagerQObjPointer, p0, "receiveSignal")
   status_go.setSignalEventCallback(callbackStatusGo)
 
-  var callbackKeycardGo: keycard_go.KeycardSignalCallback = proc(p0: cstring) {.cdecl.} =
-    if keycardServiceQObjPointer != nil:
-      signal_handler(keycardServiceQObjPointer, p0, "receiveKeycardSignal")
-  keycard_go.setSignalEventCallback(callbackKeycardGo)
+  # var callbackKeycardGo: keycard_go.KeycardSignalCallback = proc(p0: cstring) {.cdecl.} =
+  #   if keycardServiceQObjPointer != nil:
+  #     signal_handler(keycardServiceQObjPointer, p0, "receiveKeycardSignal")
+  # keycard_go.setSignalEventCallback(callbackKeycardGo)
 
 proc ensureDirectories*(dataDir, tmpDir, logDir: string) =
   createDir(dataDir)
@@ -125,7 +128,7 @@ proc logHandlerCallback(messageType: cint, message: cstring, category: cstring, 
     else:
       warn "qt message of unknown type", messageType = int(messageType)
 
-proc mainProc() =
+proc mainProc() {.exportc.} =
 
   when defined(macosx) and defined(arm64):
     var signalStack: cstring = cast[cstring](allocShared(SIGSTKSZ))
@@ -221,7 +224,7 @@ proc mainProc() =
   defer:
     info "shutting down..."
     signalsManagerQObjPointer = nil
-    keycardServiceQObjPointer = nil
+    # keycardServiceQObjPointer = nil
     isProductionQVariant.delete()
     isExperimentalQVariant.delete()
     signalsManagerQVariant.delete()
@@ -240,7 +243,7 @@ proc mainProc() =
   # We need these global variables in order to be able to access the application
   # from the non-closure callback passed to `statusgo_backend.setSignalEventCallback`
   signalsManagerQObjPointer = cast[pointer](statusFoundation.signalsManager.vptr)
-  keycardServiceQObjPointer = cast[pointer](appController.keycardService.vptr)
+  # keycardServiceQObjPointer = cast[pointer](appController.keycardService.vptr)
   setupRemoteSignalsHandling()
 
   info "app info", version=APP_VERSION, commit=GIT_COMMIT, currentDateTime=now()
@@ -251,5 +254,5 @@ proc mainProc() =
   info "starting application..."
   app.exec()
 
-when isMainModule:
-  mainProc()
+# when isMainModule:
+#   mainProc()

@@ -47,8 +47,8 @@ StatusWindow {
     Universal.theme: Universal.System
 
     objectName: "mainWindow"
-    minimumWidth: 1200
-    minimumHeight: 680
+    minimumWidth: Screen.desktopAvailableWidth
+    minimumHeight: Screen.desktopAvailableHeight
     color: Theme.palette.background
     title: {
         // Set application settings
@@ -90,10 +90,10 @@ StatusWindow {
             geometry.y = (screen.height - geometry.height) / 2;
         }
 
-        applicationWindow.visibility = visibility;
+        applicationWindow.visibility = Qt.WindowFullScreen;
         if (visibility === Window.Windowed) {
-            applicationWindow.x = geometry.x;
-            applicationWindow.y = geometry.y;
+            // applicationWindow.x = geometry.x;
+            // applicationWindow.y = geometry.y;
             applicationWindow.width = Math.max(geometry.width, applicationWindow.minimumWidth)
             applicationWindow.height = Math.max(geometry.height, applicationWindow.minimumHeight)
         }

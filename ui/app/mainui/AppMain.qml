@@ -2698,9 +2698,9 @@ Item {
                         }
                     ]
                 }
-                wcSdk: WalletConnectSDK {
+                wcSdk: WalletConnectSDKBase {
                     enabled: featureFlagsStore.dappsEnabled && WalletStores.RootStore.walletSectionInst.walletReady
-                    userUID: appMain.rootStore.profileSectionStore.profileStore.pubkey
+                    // userUID: appMain.rootStore.profileSectionStore.profileStore.pubkey
                     projectId: WalletStores.RootStore.appSettings.walletConnectProjectID
                 }
                 bcSdk: DappsConnectorSDK {

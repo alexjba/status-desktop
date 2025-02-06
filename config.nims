@@ -8,7 +8,7 @@ else:
 --debugger:native # passes "-g" to the C compiler
 --define:ssl # needed by the stdlib to enable SSL procedures
 
-if defined(macosx):
+if defined(macosx) and not defined(ios):
   --dynlibOverrideAll # don't use dlopen()
   --tlsEmulation:off
   switch("passL", "-lstdc++")
@@ -30,13 +30,16 @@ elif defined(windows):
   --app:gui
   --tlsEmulation:off
   switch("passL", "-Wl,-as-needed")
-else:
+elif defined(linux):
   --dynlibOverrideAll # don't use dlopen()
   # dynamically link these libs, since we're opting out of dlopen()
   switch("passL", "-l:libcrypto.so.1.1")
   switch("passL", "-l:libssl.so.1.1")
   # don't link libraries we're not actually using
   switch("passL", "-Wl,-as-needed")
+else:
+  switch("passL", "-lstdc++")
+  switch("passL", "-Wl,-no_compact_unwind")
 
 --define:chronicles_line_numbers # useful when debugging=
 switch("define", "chronicles_timestamps=RfcUtcTime")

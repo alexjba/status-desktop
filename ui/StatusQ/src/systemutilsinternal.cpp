@@ -5,7 +5,9 @@
 #include <QMimeDatabase>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#if !defined(Q_OS_IOS)
 #include <QProcess>
+#endif
 #include <QSaveFile>
 
 SystemUtilsInternal::SystemUtilsInternal(QObject *parent)
@@ -18,7 +20,9 @@ QString SystemUtilsInternal::qtRuntimeVersion() const {
 
 void SystemUtilsInternal::restartApplication() const
 {
+#if !defined(Q_OS_IOS)
     QProcess::startDetached(QCoreApplication::applicationFilePath(), {});
+#endif
     QMetaObject::invokeMethod(QCoreApplication::instance(), "quit", Qt::QueuedConnection);
 }
 

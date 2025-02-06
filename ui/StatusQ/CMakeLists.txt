@@ -5,6 +5,7 @@ project(StatusQ)
 option(STATUSQ_BUILD_SANDBOX "Enable to build StatusQ Sandbox application" ON)
 option(STATUSQ_BUILD_SANITY_CHECKER "Enable to build StatusQ Sanity Checker application" ON)
 option(STATUSQ_BUILD_TESTS "Enable to build StatusQ UI auto tests" ON)
+option(STATUSQ_STATIC_LIB "Enable to build StatusQ as a static library" OFF)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
@@ -25,6 +26,12 @@ set(QZXING_USE_DECODER_QR_CODE ON)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
+if (STATUSQ_STATIC_LIB)
+    set(LIB_TYPE STATIC)
+else ()
+    set(LIB_TYPE SHARED)
+endif ()
 
 find_package(Qt5 COMPONENTS
         Core Qml Gui Quick QuickControls2 REQUIRED)
@@ -80,12 +87,13 @@ if (NOT PROJECT_IS_TOP_LEVEL)
 endif ()
 
 if (${STATUSQ_SHADOW_BUILD})
-    qt5_add_big_resources(STATUSQ_QRC_COMPILED
+    qt5_add_resources(STATUSQ_QRC_COMPILED
             src/statusq.qrc
-            src/assets.qrc)
+            src/assets.qrc
+            src/assets2.qrc)
 endif()
 
-add_library(StatusQ SHARED
+add_library(StatusQ ${LIB_TYPE}
         ${STATUSQ_QRC_COMPILED}
         include/StatusQ/aggregator.h
         include/StatusQ/clipboardutils.h
@@ -172,7 +180,7 @@ add_library(StatusQ SHARED
 
 target_compile_features(StatusQ PRIVATE cxx_std_17)
 
-if (APPLE)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     find_library(AppKit AppKit)
     find_library(Foundation Foundation)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${AppKit} ${Foundation})

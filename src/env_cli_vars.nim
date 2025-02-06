@@ -101,12 +101,14 @@ proc defaultDataDir*(): string =
           joinPath(homeDir, "AppData", "Local")
         else:
           targetDir
-      else:
+      elif defined(linux):
         let targetDir = getEnv("XDG_CONFIG_HOME").string
         if targetDir == "":
           joinPath(homeDir, ".config")
         else:
           targetDir
+      else:
+        getHomeDir()
     return absolutePath(joinPath(parentDir, "Status"))
   except OSError:
     echo "Error: Unable to determine home directory."
@@ -275,8 +277,11 @@ type StatusDesktopConfig = object
 # serial number (PSN) as -psn_... command-line argument, which we remove before
 # processing the arguments with nim-confutils.
 # Credit: https://github.com/bitcoin/bitcoin/blame/b6e34afe9735faf97d6be7a90fafd33ec18c0cbb/src/util/system.cpp#L383-L389
+when defined(ios) or defined(android):
+  var cliParams: seq[string] = @[]
+else:
+  var cliParams = commandLineParams()
 
-var cliParams = commandLineParams()
 if defined(macosx):
   cliParams.keepIf(proc(p: string): bool = not p.startsWith("-psn_"))
 

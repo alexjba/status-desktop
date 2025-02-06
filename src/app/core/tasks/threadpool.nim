@@ -39,7 +39,7 @@ proc teardown*(self: ThreadPool) =
 proc newThreadPool*(): ThreadPool =
   new(result)
   var nthreads = countProcessors()
-  result.pool = Taskpool.new(num_threads = nthreads)
+  result.pool = Taskpool.new(1)
 
 proc runTask(safeTaskArg: ThreadSafeTaskArg) {.gcsafe, nimcall, raises: [].} =
   let taskArg = safeTaskArg.toString()
@@ -66,4 +66,4 @@ proc runTask(safeTaskArg: ThreadSafeTaskArg) {.gcsafe, nimcall, raises: [].} =
     error "[threadpool task thread] exception", error=e.msg
 
 proc start*[T: TaskArg](self: ThreadPool, arg: T) =
-  self.pool.spawn runTask(arg.safe())
+  runTask(arg.safe())
