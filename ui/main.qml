@@ -47,8 +47,7 @@ StatusWindow {
     Universal.theme: Universal.System
 
     objectName: "mainWindow"
-    minimumWidth: Screen.desktopAvailableWidth
-    minimumHeight: Screen.desktopAvailableHeight
+
     color: Theme.palette.background
     title: {
         // Set application settings
@@ -62,41 +61,7 @@ StatusWindow {
     visible: true
 
     function restoreAppState() {
-        let geometry = localAppSettings.geometry;
-        let visibility = localAppSettings.visibility;
-
-        if (visibility !== Window.Windowed &&
-            visibility !== Window.Maximized &&
-            visibility !== Window.FullScreen) {
-            visibility = Window.Windowed;
-        }
-
-        if (geometry === undefined ||
-            // If the monitor setup of the user changed, it's possible that the old geometry now falls out of the monitor range
-            // In this case, we reset to the basic geometry
-            geometry.x > Screen.desktopAvailableWidth ||
-            geometry.y > Screen.desktopAvailableHeight ||
-            geometry.width > Screen.desktopAvailableWidth ||
-            geometry.height > Screen.desktopAvailableHeight ||
-            geometry.x < 0 || geometry.y < 0)
-        {
-            let screen = Qt.application.screens[0];
-
-            geometry = Qt.rect(0,
-                               0,
-                               Math.min(Screen.desktopAvailableWidth - 125, 1400),
-                               Math.min(Screen.desktopAvailableHeight - 125, 840));
-            geometry.x = (screen.width - geometry.width) / 2;
-            geometry.y = (screen.height - geometry.height) / 2;
-        }
-
         applicationWindow.visibility = Qt.WindowFullScreen;
-        if (visibility === Window.Windowed) {
-            // applicationWindow.x = geometry.x;
-            // applicationWindow.y = geometry.y;
-            applicationWindow.width = Math.max(geometry.width, applicationWindow.minimumWidth)
-            applicationWindow.height = Math.max(geometry.height, applicationWindow.minimumHeight)
-        }
     }
 
     function storeAppState() {

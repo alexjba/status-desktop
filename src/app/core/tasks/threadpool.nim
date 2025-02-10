@@ -1,20 +1,21 @@
-import # std libs
-  std/cpuinfo
+when defined(taskpool):
+  import # std libs
+    std/cpuinfo
+  import taskpools
+  export taskpools.isolate, taskpools.extract
 
 import # vendor libs
-  json_serialization, json, chronicles, taskpools
+  json_serialization, json, chronicles
 
 import # status-desktop libs
   ./common
 
-export common, json_serialization, taskpools.isolate, taskpools.extract
+export common, json_serialization
 
 logScope:
   topics = "task-threadpool"
 
 type
-  ThreadPool* = ref object
-    pool: Taskpool
   ThreadSafeTaskArg* = object
     tptr: common.Task
     payload: cstring
@@ -31,15 +32,6 @@ proc safe*[T: TaskArg](taskArg: T): ThreadSafeTaskArg =
 proc toString*(input: ThreadSafeTaskArg): string =
   result = $(input.payload)
   deallocShared input.payload
-
-proc teardown*(self: ThreadPool) =
-  self.pool.syncAll()
-  self.pool.shutdown()
-
-proc newThreadPool*(): ThreadPool =
-  new(result)
-  var nthreads = countProcessors()
-  result.pool = Taskpool.new(1)
 
 proc runTask(safeTaskArg: ThreadSafeTaskArg) {.gcsafe, nimcall, raises: [].} =
   let taskArg = safeTaskArg.toString()
@@ -65,5 +57,35 @@ proc runTask(safeTaskArg: ThreadSafeTaskArg) {.gcsafe, nimcall, raises: [].} =
   except Exception as e:
     error "[threadpool task thread] exception", error=e.msg
 
-proc start*[T: TaskArg](self: ThreadPool, arg: T) =
-  runTask(arg.safe())
+# ThreadPool is a wrapper around Taskpool
+when defined(taskpool):
+
+  type
+    ThreadPool* = ref object
+      pool: Taskpool
+
+  proc teardown*(self: ThreadPool) =
+    self.pool.syncAll()
+    self.pool.shutdown()
+
+  proc newThreadPool*(): ThreadPool =
+    new(result)
+    var nthreads = countProcessors()
+    result.pool = Taskpool.new(num_threads = nthreads)
+
+  proc start*[T: TaskArg](self: ThreadPool, arg: T) =
+    self.pool.spawn runTask(arg.safe())
+
+else:
+# Single threaded implementation
+  type
+    ThreadPool* = ref object
+
+  proc start*[T: TaskArg](self: ThreadPool, arg: T) =
+    runTask(arg.safe())
+
+  proc newThreadPool*(): ThreadPool =
+    new(result)
+
+  proc teardown*(self: ThreadPool) =
+    discard
