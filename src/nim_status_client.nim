@@ -20,6 +20,7 @@ when defined(windows):
 logScope:
   topics = "status-app"
 
+const fleetJson = staticRead("../fleets.json")
 var signalsManagerQObjPointer: pointer
 # var keycardServiceQObjPointer: pointer
 
@@ -128,7 +129,9 @@ proc logHandlerCallback(messageType: cint, message: cstring, category: cstring, 
     else:
       warn "qt message of unknown type", messageType = int(messageType)
 
-proc mainProc() {.exportc.} =
+proc mainProc() {.exportc dynlib.} =
+
+  echo "Starting Status Desktop"
 
   when defined(macosx) and defined(arm64):
     var signalStack: cstring = cast[cstring](allocShared(SIGSTKSZ))
@@ -162,8 +165,7 @@ proc mainProc() {.exportc.} =
   let openUri = determineOpenUri()
   let statusAppIconPath = determineStatusAppIconPath()
 
-  let fleetConfig = readFile(joinPath(getAppDir(), fleetsPath))
-  let statusFoundation = newStatusFoundation(fleetConfig)
+  let statusFoundation = newStatusFoundation(fleetJson)
   let uiScaleFilePath = joinPath(DATADIR, "ui-scale")
   # Required by the WalletConnectSDK view right after creating the QGuiApplication instance
   initializeWebView()
@@ -200,7 +202,7 @@ proc mainProc() {.exportc.} =
     app.icon(app.applicationDirPath & statusAppIconPath)
 
   prepareLogging()
-  installMessageHandler(logHandlerCallback)
+  # installMessageHandler(logHandlerCallback)
 
   singletonInstance.engine.addImportPath("qrc:/")
   singletonInstance.engine.addImportPath("qrc:/./imports")

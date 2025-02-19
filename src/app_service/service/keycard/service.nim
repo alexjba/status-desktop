@@ -3,7 +3,7 @@ import app/global/global_singleton
 import app/core/eventemitter
 import app/core/tasks/[qt, threadpool]
 import ../../../constants as status_const
-when not defined(ios):
+when not defined(ios) and not defined(android):
   import keycard_go
 
 import constants

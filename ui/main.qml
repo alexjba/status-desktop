@@ -44,6 +44,9 @@ StatusWindow {
     property MetricsStore metricsStore: MetricsStore {}
     property UtilsStore utilsStore: UtilsStore {}
 
+    width: Screen.desktopAvailableWidth
+    height: Screen.desktopAvailableHeight
+
     Universal.theme: Universal.System
 
     objectName: "mainWindow"

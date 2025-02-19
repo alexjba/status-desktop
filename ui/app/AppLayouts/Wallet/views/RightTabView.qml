@@ -17,10 +17,9 @@ import shared.views 1.0
 import shared.stores 1.0 as SharedStores
 import shared.panels 1.0
 
-import "./"
-import "../stores"
-import "../panels"
-import "../views/collectibles"
+import AppLayouts.Wallet.stores 1.0
+import AppLayouts.Wallet.panels 1.0
+import AppLayouts.Wallet.views.collectibles 1.0
 
 RightTabBaseView {
     id: root

@@ -5,12 +5,12 @@ else:
 
 --threads:on
 --opt:speed # -O3
---debugger:native # passes "-g" to the C compiler
 --define:ssl # needed by the stdlib to enable SSL procedures
 
 if defined(macosx) and not defined(ios):
   --dynlibOverrideAll # don't use dlopen()
   --tlsEmulation:off
+  --debugger:native # passes "-g" to the C compiler
   switch("passL", "-lstdc++")
   # DYLD_LIBRARY_PATH doesn't always work when running/packaging so set rpath
   # note: macdeployqt rewrites rpath appropriately when building the .app bundle
@@ -29,17 +29,21 @@ if defined(macosx) and not defined(ios):
 elif defined(windows):
   --app:gui
   --tlsEmulation:off
+  --debugger:native # passes "-g" to the C compiler
   switch("passL", "-Wl,-as-needed")
 elif defined(linux):
   --dynlibOverrideAll # don't use dlopen()
-  # dynamically link these libs, since we're opting out of dlopen()
-  switch("passL", "-l:libcrypto.so.1.1")
-  switch("passL", "-l:libssl.so.1.1")
-  # don't link libraries we're not actually using
+    # don't link libraries we're not actually using
   switch("passL", "-Wl,-as-needed")
+  # dynamically link these libs, since we're opting out of dlopen()
+  if not defined(android):
+    switch("passL", "-l:libcrypto.so.1.1")
+    switch("passL", "-l:libssl.so.1.1")
+    --debugger:native # passes "-g" to the C compiler
 else:
   switch("passL", "-lstdc++")
   switch("passL", "-Wl,-no_compact_unwind")
+  --debugger:native # passes "-g" to the C compiler
 
 --define:chronicles_line_numbers # useful when debugging=
 switch("define", "chronicles_timestamps=RfcUtcTime")
