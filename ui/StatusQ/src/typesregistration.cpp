@@ -109,6 +109,9 @@ void registerStatusQTypes() {
                                               "Onboarding", [](QQmlEngine*, QJSEngine*) {
                                                   return new OnboardingEnums;
                                               });
+    Q_INIT_RESOURCE(statusq);
+    Q_INIT_RESOURCE(assets);
+    Q_INIT_RESOURCE(assets2);
 
     QZXing::registerQMLTypes();
     qqsfpm::registerTypes();

@@ -129,7 +129,7 @@ proc logHandlerCallback(messageType: cint, message: cstring, category: cstring, 
     else:
       warn "qt message of unknown type", messageType = int(messageType)
 
-proc mainProc() {.exportc dynlib.} =
+proc mainProc() =
 
   echo "Starting Status Desktop"
 
@@ -256,5 +256,5 @@ proc mainProc() {.exportc dynlib.} =
   info "starting application..."
   app.exec()
 
-# when isMainModule:
-#   mainProc()
+when isMainModule:
+  mainProc()

@@ -87,10 +87,16 @@ if (NOT PROJECT_IS_TOP_LEVEL)
 endif ()
 
 if (${STATUSQ_SHADOW_BUILD})
-    qt5_add_resources(STATUSQ_QRC_COMPILED
-            src/statusq.qrc
-            src/assets.qrc
-            src/assets2.qrc)
+    set(STATUSQ_QRC_FILES src/statusq.qrc
+        src/assets.qrc
+        src/assets2.qrc)
+    if (${STATUSQ_STATIC_LIB})
+        qt5_add_resources(STATUSQ_QRC_COMPILED
+                ${STATUSQ_QRC_FILES})
+    else()
+        qt5_add_big_resources(STATUSQ_QRC_COMPILED
+                ${STATUSQ_QRC_FILES})
+    endif()
 endif()
 
 add_library(StatusQ ${LIB_TYPE}
