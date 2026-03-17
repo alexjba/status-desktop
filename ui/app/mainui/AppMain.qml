@@ -1504,7 +1504,12 @@ Item {
 
             Item {
                 anchors.fill: parent
-                anchors.leftMargin: sidebar.alwaysVisible ? sidebar.width : undefined
+                readonly property bool offsetBySidebar: sidebar.alwaysVisible
+                                                      || d.activeSectionType === Constants.appSection.browser
+                readonly property real sidebarOffset: offsetBySidebar
+                                                    ? sidebar.width * (sidebar.alwaysVisible ? 1.0 : sidebar.position)
+                                                    : 0
+                anchors.leftMargin: sidebarOffset
 
                 StackLayout {
                     id: appView
@@ -1851,9 +1856,7 @@ Item {
                             restoreMode: Binding.RestoreNone
                         }
 
-                        sourceComponent: (appMain.rootStore.thirdpartyServicesEnabled && !SQUtils.Utils.isMobile)
-                                         ? browserLayout
-                                         : browserPrivacyWall
+                        sourceComponent: appMain.rootStore.thirdpartyServicesEnabled ? browserLayout: browserPrivacyWall
 
                         Component {
                             id: browserPrivacyWall
@@ -1873,6 +1876,7 @@ Item {
                                 isMobile: SQUtils.Utils.isMobile
                                 userUID: appMain.profileStore.pubKey
                                 thirdpartyServicesEnabled: appMain.rootStore.thirdpartyServicesEnabled
+                                dappsEnabled: featureFlagsStore.dappsEnabled
                                 bookmarksStore: BrowserStores.BookmarksStore {}
                                 downloadsStore: BrowserStores.DownloadsStore {}
                                 browserRootStore: BrowserStores.BrowserRootStore {}
@@ -2932,7 +2936,7 @@ Item {
                         accountsModel: WalletStores.RootStore.nonWatchAccounts
                     }
                     bcSdk: DappsConnectorSDK {
-                        enabled: featureFlagsStore.connectorEnabled && WalletStores.RootStore.walletSectionInst.walletReady
+                        enabled: featureFlagsStore.dappsEnabled && WalletStores.RootStore.walletSectionInst.walletReady
                         excludeClientIds: ["walletconnect"]
                         store: SharedStores.BrowserConnectStore {
                             controller: WalletStores.RootStore.dappsConnectorController
