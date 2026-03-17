@@ -20,6 +20,7 @@ import shared.stores as SharedStores
 import AppLayouts.Browser.stores as BrowserStores
 import AppLayouts.Wallet.services.dapps
 
+import AppLayouts.Browser.adapters
 import AppLayouts.Browser.provider.qml
 import AppLayouts.Browser.popups
 import AppLayouts.Browser.controls
@@ -48,8 +49,9 @@ StatusSectionLayout {
 
     property bool isDebugEnabled: false
     property string platformOS: Qt.platform.os
-
-    readonly property string userAgent: connectorBridge.httpUserAgent
+    // FIXME: restore in the next PR
+    property bool useWebViewAdapter: false
+    readonly property Component webViewAdapterComponent: webEngineAdapterComponent
 
     signal sendToRecipientRequested(string address)
 
@@ -63,9 +65,7 @@ StatusSectionLayout {
     }
 
     Component.onCompleted: {
-        connectorBridge.defaultProfile.downloadRequested.connect(_internal.onDownloadRequested);
-        connectorBridge.otrProfile.downloadRequested.connect(_internal.onDownloadRequested);
-        var tab = webStackView.createEmptyTab(connectorBridge.defaultProfile, true);
+        var tab = webStackView.createEmptyTab(connectorBridge.defaultProfileParams, true);
         // For Devs: Uncomment the next line if you want to use the simpledapp on first load
         // tab.url = root.browserRootStore.determineRealURL("https://simpledapp.eth");
     }
@@ -97,7 +97,8 @@ StatusSectionLayout {
         id: _internal
 
         property Item currentWebView: tabs.currentIndex < tabs.count ? webStackView.getCurrentWebView() : null
-        readonly property bool currentTabIncognito: webStackView.getCurrentWebView()?.profile?.offTheRecord ?? false
+        readonly property bool currentTabIncognito: webStackView.getCurrentWebView()?.offTheRecord ?? false
+        property bool webViewHidden: false
 
         property Component jsDialogComponent: JSDialogWindow {}
 
@@ -135,12 +136,12 @@ StatusSectionLayout {
         }
 
         function addNewDownloadTab() {
-            webStackView.createDownloadTab(tabs.count !== 0 ? currentWebView.profile : connectorBridge.defaultProfile);
+            webStackView.createDownloadTab(tabs.count !== 0 ? currentWebView.profileParams : connectorBridge.defaultProfileParams);
             tabs.currentIndex = tabs.count - 1;
         }
 
         function addNewTab() {
-            var tab = webStackView.createEmptyTab(tabs.count !== 0 ? currentWebView.profile : connectorBridge.defaultProfile);
+            var tab = webStackView.createEmptyTab(tabs.count !== 0 ? currentWebView.profileParams : connectorBridge.defaultProfileParams);
             browserToolbar.activateAddressBar()
             return tab;
         }
@@ -345,15 +346,18 @@ StatusSectionLayout {
         StackLayout {
             id: webStackView
             currentIndex: tabs.currentIndex
+            visible: !_internal.webViewHidden
 
             Layout.fillHeight: true
             Layout.fillWidth: true
 
-            function createEmptyTab(profile, createAsStartPage = false, focusOnNewTab = true, url = undefined) {
+            function createEmptyTab(profileParams, createAsStartPage = false, focusOnNewTab = true, url = undefined) {
                 focusOnNewTab = focusOnNewTab && !createAsStartPage
 
-                var webview = webViewContainer.createObject(webStackView).currentView
-                webview.profile = profile
+                var webview = root.webViewAdapterComponent.createObject(webStackView, {
+                    profileParams: profileParams,
+                    isDownloadView: false
+                })
 
                 tabs.createEmptyTab(createAsStartPage, focusOnNewTab, webview)
 
@@ -368,9 +372,11 @@ StatusSectionLayout {
                 return webview;
             }
 
-            function createDownloadTab(profile) {
-                var webview = webViewContainer.createObject(webStackView, {isDownloadView: true}).currentView
-                webview.profile = profile
+            function createDownloadTab(profileParams) {
+                var webview = root.webViewAdapterComponent.createObject(webStackView, {
+                    profileParams: profileParams,
+                    isDownloadView: true
+                })
                 tabs.createDownloadTab()
                 return webview;
             }
@@ -380,27 +386,31 @@ StatusSectionLayout {
             }
 
             function getWebView(index) { // -> WebEngineView/WebView
-                return webStackView.children[index].currentView
+                return webStackView.children[index]
             }
 
             function removeView(index) {
                 if (tabs.count <= 1) {
-                    createEmptyTab(_internal.currentWebView.profile, true)
+                    createEmptyTab(_internal.currentWebView.profileParams, true)
                 }
                 tabs.removeTab(index)
                 var view = getWebView(index)
                 view.stop()
-                webStackView.children[index].destroy()
+                view.destroy()
             }
         }
 
-        WebViewContainer {
-            id: devToolsView
-            z: 100
-            Layout.preferredHeight: visible ? 400 : 0
-            Layout.fillWidth: true
-            visible: localAccountSensitiveSettings.devToolsEnabled
-            inspectedView: visible && tabs.currentIndex < tabs.count ? webStackView.getCurrentWebView() : null
+        // Overlay for DownloadView and EmptyWebPage
+        Loader {
+            id: overlayLoader
+            anchors.fill: parent
+            z: 53
+            
+            readonly property bool showDownloadView: _internal.currentWebView?.isDownloadView ?? false
+            readonly property bool showEmptyPage: !showDownloadView && (!_internal.currentWebView?.url?.toString())
+            
+            active: showDownloadView || showEmptyPage
+            sourceComponent: showDownloadView ? downloadViewComponent : emptyPageComponent
         }
 
         // Non UI component
@@ -413,84 +423,89 @@ StatusSectionLayout {
                 browserHeaderComponent: browserToolbar
             }
         }
+
+        StatusBubble {
+            id: statusBubble
+            z: 54
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+        }
+
+        Connections {
+            target: _internal.currentWebView
+            function onLinkHovered(hoveredUrl) {
+                statusBubble.show(hoveredUrl)
+            }
+        }
     }
 
     Component {
-        id: webViewContainer
-        WebViewContainer {
-            isDebugEnabled: root.isDebugEnabled
+        id: webEngineAdapterComponent
+        WebEngineAdapter {
+            id: webEngineAdapterItem
+            anchors.fill: parent
             webChannel: connectorBridge.channel
-            currentWebViewProfile: _internal.currentWebView.profile
-            fnCreateEmptyTab: function(profile, createAsStartPage, focusOnNewTab, url)  {
-                return webStackView.createEmptyTab(profile, createAsStartPage, focusOnNewTab, url);
+            enableJsLogs: root.isDebugEnabled
+            devToolsEnabled: localAccountSensitiveSettings.devToolsEnabled
+
+            onWindowCloseRequested: webStackView.removeView(StackLayout.index)
+            onNewWindowRequested: (makeCurrent, requestedUrl, callback) => {
+                var tab = webStackView.createEmptyTab(_internal.currentWebView.profileParams, false, makeCurrent, requestedUrl);
+                callback(tab);
             }
+            onDownloadRequested: (download) => {
+                _internal.onDownloadRequested(download)
+            }
+            onCertificateError: (error) => {
+                error.defer()
+                sslDialog.enqueue(error)
+            }
+            onJavaScriptDialogRequested: (request) => {
+                request.accepted = true;
+                var dialog = _internal.jsDialogComponent.createObject(root, {"request": request})
+                dialog.open()
+            }
+            onFindTextFinished: (result) => {
+                if (!findBar.visible)
+                    findBar.visible = true
+                findBar.numberOfMatches = result.numberOfMatches;
+                findBar.activeMatch = result.activeMatch;
+            }
+        }
+    }
 
-            downloadViewComponent: downloadView
-            emptyPageComponent: emptyPage
 
-            onRemoveView: (index) => {
-                              tabs.removeView(StackLayout.index)
-                          }
-            onShowFindBar: (numberOfMatches, activeMatch) => {
-                               if (!findBar.visible)
-                               findBar.visible = true
-
-                               findBar.numberOfMatches = numberOfMatches;
-                               findBar.activeMatch = activeMatch;
-                           }
-            onResetFindBar: () => {
-                                findBar.reset()
-                            }
-            onShowSslDialog: (error) => {
-                                 error.defer()
-                                 sslDialog.enqueue(error)
-                             }
-
-            onShowJsDialogComponent: (request) => {
-                                         request.accepted = true;
-                                         var dialog = _internal.jsDialogComponent.createObject(root, {"request": request})
-                                         dialog.open()
-                                     }
-
-            onLinkHovered: (hoveredUrl) => {
-                               if (hoveredUrl.toString() === "") {
-                                   hideStatusText.start();
-                               } else {
-                                   statusText.text = hoveredUrl;
-                                   statusBubble.visible = true;
-                                   hideStatusText.stop();
-                               }
-                           }
-
-            // TODO: refactor this
-            // https://github.com/status-im/status-app/issues/19669
-            Rectangle {
-                id: statusBubble
-                color: Theme.palette.baseColor2
-                z: 54
-                visible: false
-
-                anchors.left: parent.left
-                anchors.bottom: parent.bottom
-                width: Math.min(statusText.implicitWidth, parent.width)
-                height: statusText.implicitHeight
-
-                StatusBaseText {
-                    id: statusText
-                    anchors.fill: parent
-                    verticalAlignment: Qt.AlignVCenter
-                    elide: Qt.ElideMiddle
-                    padding: 4
-
-                    Timer {
-                        id: hideStatusText
-                        interval: 750
-                        onTriggered: {
-                            statusText.text = "";
-                            statusBubble.visible = false;
-                        }
-                    }
+    Component {
+        id: downloadViewComponent
+        DownloadView {
+            downloadsModel: root.downloadsStore.downloadModel
+            downloadsMenu: downloadMenuInst
+            onOpenDownloadClicked: function(downloadComplete, index) {
+                if (downloadComplete) {
+                    return root.downloadsStore.openFile(index)
                 }
+                root.downloadsStore.openDirectory(index)
+            }
+        }
+    }
+
+    Component {
+        id: emptyPageComponent
+        EmptyWebPage {
+            bookmarksModel: root.bookmarksStore.bookmarksModel
+            favMenu: favoriteMenu
+            addFavModal: addFavoriteModal
+            determineRealURLFn: function(url) {
+                return _internal.determineRealURL(url)
+            }
+            onSetCurrentWebUrl: (url) => {
+                                    _internal.currentWebView.url = url
+                                }
+            Component.onCompleted: {
+                // Add fav button at the end of the grid
+                var index = root.bookmarksStore.getBookmarkIndexByUrl(Constants.newBookmark)
+                if (index !== -1) { root.bookmarksStore.deleteBookmark(Constants.newBookmark) }
+                root.bookmarksStore.addBookmark(Constants.newBookmark, qsTr("Add Favourite"))
             }
         }
     }
@@ -502,7 +517,7 @@ StatusSectionLayout {
             x: browserToolbar.width - width - Theme.halfPadding
             y: browserToolbar.height + 4
 
-            incognitoMode: _internal.currentWebView && _internal.currentWebView.profile === connectorBridge.otrProfile
+            incognitoMode: _internal.currentWebView?.offTheRecord ?? false
             accounts: root.browserWalletStore.accounts
             currentAccount: root.browserWalletStore.dappBrowserAccount
             activityStore: root.browserActivityStore
@@ -545,13 +560,13 @@ StatusSectionLayout {
         x: parent.width - width - Theme.halfPadding
         y: browserToolbar.height + 4
 
-        incognitoMode: _internal.currentWebView && _internal.currentWebView.profile === connectorBridge.otrProfile
+        incognitoMode: _internal.currentWebView?.offTheRecord ?? false
         zoomFactor: _internal.currentWebView ? _internal.currentWebView.zoomFactor : 1
         onAddNewTab: _internal.addNewTab()
         onAddNewDownloadTab: _internal.addNewDownloadTab()
         onGoIncognito: function (checked) {
             if (_internal.currentWebView) {
-                _internal.currentWebView.profile = checked ? connectorBridge.otrProfile : connectorBridge.defaultProfile;
+                _internal.currentWebView.offTheRecord = checked;
             }
         }
         onZoomIn: {
@@ -591,7 +606,7 @@ StatusSectionLayout {
             parent: browserToolbar
             x: Theme.halfPadding
             y: browserToolbar.height + 4
-            incognitoMode: _internal.currentWebView && _internal.currentWebView.profile === connectorBridge.otrProfile
+            incognitoMode: _internal.currentWebView?.offTheRecord ?? false
             bookmarksStore: root.bookmarksStore
         }
     }
@@ -668,36 +683,27 @@ StatusSectionLayout {
     }
 
     Component {
-        id: downloadView
-        DownloadView {
-            downloadsModel: root.downloadsStore.downloadModel
-            downloadsMenu: downloadMenuInst
-            onOpenDownloadClicked: function(downloadComplete, index) {
-                if (downloadComplete) {
-                    return root.downloadsStore.openFile(index)
+        id: favoritesBar
+        FavoritesBar {
+            bookmarkModel: root.bookmarksStore.bookmarksModel
+            favoritesMenu: favoriteMenu
+            onSetAsCurrentWebUrl: (url) => {
+                if (!_internal.currentWebView) {
+                    console.error("[Browser] currentWebView is null, cannot set URL")
+                    return
                 }
-                root.downloadsStore.openDirectory(index)
+                const newUrl = _internal.determineRealURL(url)
+                Qt.callLater(function() {
+                    if (_internal.currentWebView) {
+                        _internal.currentWebView.url = newUrl
+                    }
+                })
             }
-        }
-    }
-
-    Component {
-        id: emptyPage
-        EmptyWebPage {
-            bookmarksModel: root.bookmarksStore.bookmarksModel
-            favMenu: favoriteMenu
-            addFavModal: addFavoriteModal
-            determineRealURLFn: function(url) {
-                return _internal.determineRealURL(url)
-            }
-            onSetCurrentWebUrl: (url) => {
-                                    _internal.currentWebView.url = url
-                                }
-            Component.onCompleted: {
-                // Add fav button at the end of the grid
-                var index = root.bookmarksStore.getBookmarkIndexByUrl(Constants.newBookmark)
-                if (index !== -1) { root.bookmarksStore.deleteBookmark(Constants.newBookmark) }
-                root.bookmarksStore.addBookmark(Constants.newBookmark, qsTr("Add Favourite"))
+            onOpenInNewTab: (url) => root.openUrlInNewTab(url)
+            onAddFavModalRequested: {
+                Global.openPopup(addFavoriteModal, {toolbarMode: true,
+                                     ogUrl: browserHeader.currentFavorite ? browserHeader.currentFavorite.url : _internal.currentWebView.url,
+                                     ogName: browserHeader.currentFavorite ? browserHeader.currentFavorite.name : _internal.currentWebView.title})
             }
         }
     }
@@ -751,6 +757,36 @@ StatusSectionLayout {
             }
             onAddNewDownloadTab: _internal.addNewDownloadTab()
             onClose: root.showFooter = false
+        }
+    }
+
+    Connections {
+        target: _internal.currentWebView
+        function onUrlChanged() {
+            browserHeader.addressBar.text = root.browserRootStore.obtainAddress(_internal.currentWebView.url)
+
+            // Update ConnectorBridge with current dApp metadata
+            if (_internal.currentWebView && _internal.currentWebView.url) {
+                connectorBridge.connectorManager.updateDAppUrl(
+                            _internal.currentWebView.url,
+                            _internal.currentWebView.title,
+                            _internal.currentWebView.icon
+                            )
+            }
+        }
+    }
+
+    Connections {
+        target: root.bookmarksStore.bookmarksModel
+        function onModelChanged() {
+            browserHeader.currentFavorite = Qt.binding(function () {return root.bookmarksStore.getCurrentFavorite(_internal.currentWebView.url)})
+        }
+    }
+
+    Connections {
+        target: typeof browserSection !== "undefined" ? browserSection : null
+        function onOpenUrl(url: string) {
+            root.openUrlInNewTab(url);
         }
     }
 }
