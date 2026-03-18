@@ -1647,15 +1647,20 @@ Item {
                     }
 
                     Loader {
+                        id: personalChatLayoutLoader
                         active: false
-                        sourceComponent: {
-                            if (appMain.rootChatStore.chatsLoadingFailed) {
-                                return errorStateComponent
+                        asynchronous: true
+                        sourceComponent: personalChatLayoutComponent
+
+                        Loader {
+                            id: personalChatLayoutLoadingStateLoader
+                            active: personalChatLayoutLoader.status === Loader.Loading
+                            anchors.fill: parent
+                            
+                            sourceComponent: ChatLayoutLoading {
+                                anchors.fill: parent
+                                showMembersPanel: appMain.accountSettingsStore.showUsersList
                             }
-                            if (appMain.rootStore.sectionsLoaded) {
-                                return personalChatLayoutComponent
-                            }
-                            return loadingStateComponent
                         }
 
                         // Do not unload section data from the memory in order not
@@ -1668,39 +1673,13 @@ Item {
                         }
 
                         Component {
-                            id: loadingStateComponent
-                            Item {
-                                anchors.fill: parent
-
-                                Row {
-                                    anchors.centerIn: parent
-                                    spacing: 6
-                                    StatusBaseText {
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        text: qsTr("Loading sections...")
-                                    }
-                                    LoadingAnimation { anchors.verticalCenter: parent.verticalCenter }
-                                }
-                            }
-                        }
-
-                        Component {
-                            id: errorStateComponent
-                            Item {
-                                anchors.fill: parent
-                                StatusBaseText {
-                                    text: qsTr("Error loading chats, try closing the app and restarting")
-                                    anchors.centerIn: parent
-                                }
-                            }
-                        }
-
-                        Component {
                             id: personalChatLayoutComponent
 
                             ChatLayout {
                                 id: chatLayoutContainer
 
+                                anchors.fill: parent
+                                visible: !personalChatLayoutLoadingStateLoader.active
                                 showUsersList: appMain.accountSettingsStore.showUsersList
                                 onShowUsersListRequested:
                                     show => appMain.accountSettingsStore.setShowUsersList(show)
@@ -1725,7 +1704,7 @@ Item {
                                 stickersPopup: statusStickersPopupLoader.item
                                 sendViaPersonalChatEnabled: featureFlagsStore.sendViaPersonalChatEnabled
                                 disabledTooltipText: !appMain.networkConnectionStore.sendBuyBridgeEnabled ?
-                                                         appMain.networkConnectionStore.sendBuyBridgeToolTipText : ""
+                                                        appMain.networkConnectionStore.sendBuyBridgeToolTipText : ""
                                 paymentRequestFeatureEnabled: featureFlagsStore.paymentRequestEnabled
 
                                 mutualContactsModel: contactsModelAdaptor.mutualContacts
@@ -2097,6 +2076,8 @@ Item {
                         }
 
                         delegate: Loader {
+                            id: communityChatLayoutLoader
+
                             readonly property string sectionId: model.id
 
                             Layout.fillWidth: true
@@ -2104,6 +2085,18 @@ Item {
                             Layout.fillHeight: true
 
                             active: false
+                            asynchronous: true
+
+                            Loader {
+                                id: communityLoadingStateLoader
+                                active: communityChatLayoutLoader.status === Loader.Loading
+                                anchors.fill: parent
+
+                                sourceComponent: ChatLayoutLoading {
+                                    anchors.fill: parent
+                                    showMembersPanel: appMain.accountSettingsStore.showUsersList
+                                }
+                            }
 
                             // Do not unload section data from the memory in order not
                             // to reset scroll, not send text input and etc during the
@@ -2133,6 +2126,8 @@ Item {
                                     }
                                 }
 
+                                anchors.fill: parent
+                                visible: !communityLoadingStateLoader.active
                                 showUsersList: appMain.accountSettingsStore.showUsersList
                                 onShowUsersListRequested:
                                     show => appMain.accountSettingsStore.setShowUsersList(show)
@@ -2144,7 +2139,7 @@ Item {
                                 createChatPropertiesStore: appMain.createChatPropertiesStore
                                 communitiesStore: appMain.communitiesStore
                                 communitySettingsDisabled: !chatLayoutComponent.isManageCommunityEnabledInAdvanced &&
-                                                           (appMain.rootStore.isProduction && appMain.networksStore.areTestNetworksEnabled)
+                                                        (appMain.rootStore.isProduction && appMain.networksStore.areTestNetworksEnabled)
 
                                 newCommnityStore: appMain.messagingRootStore.createCommunityRootStore(this, model.id)
                                 rootStore: ChatStores.RootStore {
