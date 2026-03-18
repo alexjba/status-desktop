@@ -141,19 +141,21 @@ pipeline {
     }
 
     stage('Run pytest suite') {
-      steps {
-        script {
-          env.E2E_RUN_ID = env.BUILD_TAG
-          def appId = env.UPLOADED_BROWSERSTACK_APP_ID ?: params.BROWSERSTACK_APP_ID
-          dir('test/e2e_appium') {
-            withCredentials([
-              usernamePassword(
-                credentialsId: 'browserstack-status-mobile-android',
-                usernameVariable: 'BROWSERSTACK_USERNAME',
-                passwordVariable: 'BROWSERSTACK_ACCESS_KEY'
-              )
-            ]) {
-              sh "BROWSERSTACK_APP_ID=${appId} ${VIRTUAL_ENV}/bin/python -m pytest --env browserstack ${params.PYTEST_ARGS?.trim() ?: ''}"
+      steps{
+        lock(resource: 'e2e-android') {
+          script {
+            env.E2E_RUN_ID = env.BUILD_TAG
+            def appId = env.UPLOADED_BROWSERSTACK_APP_ID ?: params.BROWSERSTACK_APP_ID
+            dir('test/e2e_appium') {
+              withCredentials([
+                usernamePassword(
+                  credentialsId: 'browserstack-status-mobile-android',
+                  usernameVariable: 'BROWSERSTACK_USERNAME',
+                  passwordVariable: 'BROWSERSTACK_ACCESS_KEY'
+                )
+              ]) {
+                sh "BROWSERSTACK_APP_ID=${appId} ${VIRTUAL_ENV}/bin/python -m pytest --env browserstack ${params.PYTEST_ARGS?.trim() ?: ''}"
+              }
             }
           }
         }
