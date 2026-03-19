@@ -17,6 +17,9 @@ import androidx.core.app.NotificationCompat;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.json.JSONObject;
 
 import app.status.mobile.BuildConfig;
@@ -50,6 +53,9 @@ public final class StatusGoService extends Service {
     private final RemoteCallbackList<IStatusGoSignalListener> listeners = new RemoteCallbackList<>();
     private volatile boolean foregroundStarted = false;
     private volatile boolean uiVisible = false;
+
+    private final ExecutorService lifecycleExecutor = Executors.newSingleThreadExecutor();
+    private final AtomicInteger lifecycleGen = new AtomicInteger(0);
 
     private StatusNotificationManager notificationManager;
 
@@ -150,20 +156,36 @@ public final class StatusGoService extends Service {
         }
     }
 
-    private void updateBackendLifecycleForUiVisibility(boolean visible) {
-        final String method = "AppStateChange";
-        final String argsJson = visible ? "[\"active\"]" : "[\"background\"]";
-        try {
-            final String response = nativeCall(method, argsJson);
-            if (response == null || response.isEmpty()) return;
-            final JSONObject parsed = new JSONObject(response);
-            final String error = parsed.optString("error", "");
-            if (!error.isEmpty()) {
-                Log.w(TAG, method + " returned error: " + error);
+    /**
+     * Schedules an AppStateChange call on a dedicated single thread. Uses a generation
+     * counter to coalesce rapid/piled-up calls: if a newer setUiVisible arrives before
+     * an older one starts executing, the older one is skipped. This reduces redundant
+     * lifecycle updates and avoids executing stale calls in the Go runtime after repeated ANR restarts.
+     */
+    private void scheduleBackendLifecycleUpdate(boolean visible) {
+        final int gen = lifecycleGen.incrementAndGet();
+        lifecycleExecutor.execute(() -> {
+            if (lifecycleGen.get() != gen) return;
+            final String method = "AppStateChange";
+            final String argsJson = visible ? "[\"active\"]" : "[\"background\"]";
+            try {
+                final String response = nativeCall(method, argsJson);
+                if (response == null || response.isEmpty()) return;
+                final JSONObject parsed = new JSONObject(response);
+                final String error = parsed.optString("error", "");
+                if (!error.isEmpty()) {
+                    Log.w(TAG, method + " returned error: " + error);
+                }
+            } catch (Throwable t) {
+                Log.w(TAG, "Failed to update backend lifecycle for UI visibility", t);
             }
-        } catch (Throwable t) {
-            Log.w(TAG, "Failed to update backend lifecycle for UI visibility", t);
-        }
+        });
+    }
+
+    private void applyUiVisibility(boolean visible) {
+        uiVisible = visible;
+        notificationManager.setUiVisible(visible);
+        scheduleBackendLifecycleUpdate(visible);
     }
 
     private final IStatusGoService.Stub binder = new IStatusGoService.Stub() {
@@ -202,8 +224,7 @@ public final class StatusGoService extends Service {
             // RemoteCallbackList.unregister() calls unlinkToDeath internally, so clean
             // unregistration does not trigger this callback.
             try {
-                listener.asBinder().linkToDeath(
-                        () -> notificationManager.setUiVisible(false), 0);
+                listener.asBinder().linkToDeath(() -> applyUiVisibility(false), 0);
             } catch (RemoteException ignored) {
                 // Binder already dead — notification suppression is not a concern.
             }
@@ -218,9 +239,7 @@ public final class StatusGoService extends Service {
         @Override
         public void setUiVisible(boolean visible) {
             enforceCallerIsSameApp();
-            uiVisible = visible;
-            notificationManager.setUiVisible(visible);
-            updateBackendLifecycleForUiVisibility(visible);
+            applyUiVisibility(visible);
         }
     };
 
@@ -258,6 +277,7 @@ public final class StatusGoService extends Service {
     public void onDestroy() {
         StatusNotificationManager.clearInstance();
         listeners.kill();
+        lifecycleExecutor.shutdownNow();
         super.onDestroy();
     }
 
