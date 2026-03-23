@@ -39,10 +39,10 @@ ${PYTHON_CMD} -m  pip install --upgrade pip
 ${PYTHON_CMD} -m  pip install -r requirements.txt
 
 echo -e "${GRN}Updating data in repo${RST}"
-${PYTHON_CMD} scripts/benchmark.py --config ./scripts/tests_config.toml parse --data-dir ../test/e2e/allure-report/ --commit-hash "${commit_sha}" --date "${date_time}" 
+${PYTHON_CMD} scripts/benchmark.py --config ./scripts/tests_config.toml parse ../test/e2e/allure-report/ --data-dir ./data --commit-hash "${commit_sha}" --date "${date_time}"
 
 echo -e "${GRN}Generating new visualizations from data${RST}"
-${PYTHON_CMD} scripts/benchmark.py ./scripts/tests_config.toml graphs
+${PYTHON_CMD} scripts/benchmark.py --config ./scripts/tests_config.toml graphs
 
 echo -e "${GRN}Committing changes${RST}"
 git add .
