@@ -47,11 +47,6 @@ pipeline {
       description: 'Decides whether the mocked status-keycard-go library is built.',
       defaultValue: false
     )
-    booleanParam(
-      name: 'USE_NWAKU',
-      description: 'Whether to build with nwaku or not',
-      defaultValue: getNWakuMode(),
-    )
   }
 
   options {
@@ -75,21 +70,17 @@ pipeline {
   }
 
   environment {
-    PLATFORM = "linux/${getArch()}${(params.USE_NWAKU ?: false) ? '-nwaku' : ''}"
+    PLATFORM = "linux/${getArch()}"
     /* Improve make performance */
     MAKEFLAGS = "-j${utils.getProcCount()} V=${params.VERBOSE}"
     /* Avoid weird bugs caused by stale cache. */
     QML_DISABLE_DISK_CACHE = "true"
-    /* Set USE_NWAKU before VERSION since version.sh uses it */
-    USE_NWAKU = "${params.USE_NWAKU}"
-    /* nwaku source directory */
-    NWAKU_SOURCE_DIR = "${env.WORKSPACE_TMP}/nwaku"
     /* nim-sds source directory */
     NIM_SDS_SOURCE_DIR = "${env.WORKSPACE_TMP}/nim-sds"
     /* sets App Version in Settings */
     VERSION = "${utils.getVersion()}"
     /* Control output the filename */
-    APP_TYPE = "${utils.getAppType() + (params.USE_NWAKU ? '-experimental' : '')}"
+    APP_TYPE = "${utils.getAppType()}"
     STATUS_CLIENT_APPIMAGE = "pkg/${utils.pkgFilename(ext: 'AppImage', arch: getArch(), version: env.VERSION, type: env.APP_TYPE)}"
     STATUS_CLIENT_TARBALL = "pkg/${utils.pkgFilename(ext: 'tar.gz', arch: getArch(), version: env.VERSION, type: env.APP_TYPE)}"
     /* prevent sharing cache dir across different jobs */
@@ -154,7 +145,7 @@ pipeline {
     }
 
     stage('E2E') {
-      when { expression { utils.isPRBuild() && !(params.USE_NWAKU ?: false) } }
+      when { expression { utils.isPRBuild() } }
       steps { script {
         build(
           job: 'status-app/e2e/prs',
@@ -183,12 +174,4 @@ def getArch() {
     if (tokens.contains(arch)) { return arch }
   }
 }
-/* We extract the name of the job from currentThread because
- * before an agent is picked env is not available. */
-def getJobPathTokens() {
-    return Thread.currentThread().getName().split('/')
-}
 
-def getNWakuMode() {
-    return getJobPathTokens().contains('package-nwaku')
-}

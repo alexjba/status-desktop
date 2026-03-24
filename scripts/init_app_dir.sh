@@ -24,9 +24,6 @@ cp -R resources.rcc "${APP_DIR}/usr/"
 cp vendor/status-go/build/bin/libstatus.so "${APP_DIR}/usr/lib/"
 cp vendor/status-go/build/bin/libstatus.so.0 "${APP_DIR}/usr/lib/"
 cp "${STATUSKEYCARDGO}" "${APP_DIR}/usr/lib/"
-if [ "${USE_NWAKU}" = "true" ]; then
-  cp ${NWAKU_SOURCE_DIR}/build/libwaku.so "${APP_DIR}/usr/lib/"
-fi
 cp ${NIM_SDS_SOURCE_DIR}/build/libsds.so "${APP_DIR}/usr/lib/"
 cp "${FCITX5_QT}" "${APP_DIR}/usr/plugins/platforminputcontexts/"
 

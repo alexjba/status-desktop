@@ -36,11 +36,6 @@ pipeline {
       description: 'Select app entitlements. Squish requires extra entitlements.',
       choices: ['resources/Entitlements.plist', 'resources/Entitlements_squish.plist']
     )
-    booleanParam(
-      name: 'USE_NWAKU',
-      description: 'Whether to build with nwaku or not',
-      defaultValue: getNWakuMode(),
-    )
     string(
       name: 'NIMFLAGS',
       description: 'Extra Nim flags. Examples: --verbosity:2 --passL:"-v" --passC:"-v"',
@@ -69,7 +64,7 @@ pipeline {
   }
 
   environment {
-    PLATFORM = "macos/${getArch()}${(params.USE_NWAKU ?: false) ? '-nwaku' : ''}"
+    PLATFORM = "macos/${getArch()}"
     /* Improve make performance */
     MAKEFLAGS = "-j${utils.getProcCount()} V=${params.VERBOSE}"
     QT_VERSION="6.9.2"
@@ -81,16 +76,12 @@ pipeline {
     PATH = "/nix/var/nix/profiles/default/bin:${env.QTDIR}/bin:${env.QTDIR}/libexec:${env.HOME}/go/bin:/usr/local/go/bin:${env.PATH}"
     /* Avoid weird bugs caused by stale cache. */
     QML_DISABLE_DISK_CACHE = "true"
-    /* Set USE_NWAKU before VERSION since version.sh uses it */
-    USE_NWAKU = "${params.USE_NWAKU}"
-    /* nwaku source directory */
-    NWAKU_SOURCE_DIR = "${env.WORKSPACE_TMP}/nwaku"
     /* nim-sds source directory */
     NIM_SDS_SOURCE_DIR = "${env.WORKSPACE_TMP}/nim-sds"
     /* Controls the App version in Settings */
     VERSION = "${utils.getVersion()}"
     /* Control output the filename */
-    APP_TYPE = "${utils.getAppType() + ( params.USE_NWAKU ? '-experimental' : '' )}"
+    APP_TYPE = "${utils.getAppType()}"
     STATUS_CLIENT_DMG = "pkg/${utils.pkgFilename(ext: 'dmg', arch: getArch(), version: env.VERSION, type: env.APP_TYPE)}"
     /* Apple Team ID for Notarization */
     MACOS_NOTARIZE_TEAM_ID = "8B5X2M6H2Y"
@@ -202,12 +193,4 @@ def getArch() {
     }
 }
 
-/* We extract the name of the job from currentThread because
- * before an agent is picked env is not available. */
-def getJobPathTokens() {
-    return Thread.currentThread().getName().split('/')
-}
 
-def getNWakuMode() {
-    return getJobPathTokens().contains('package-nwaku')
-}

@@ -240,13 +240,6 @@ ifeq ($(mkspecs),macx)
  endif
 endif
 
-ifeq ($(USE_NWAKU), true)
-    NWAKU_SOURCE_DIR ?= $(GIT_ROOT)/../nwaku
-    STATUSGO_MAKE_PARAMS += USE_NWAKU=true NWAKU_SOURCE_DIR="$(NWAKU_SOURCE_DIR)"
-    LIBWAKU_LIBDIR := $(NWAKU_SOURCE_DIR)/build
-    NIM_EXTRA_PARAMS += --passL:"-L$(LIBWAKU_LIBDIR)" --passL:"-lwaku"
-endif
-
 NIM_SDS_SOURCE_DIR ?= $(GIT_ROOT)/../nim-sds
 export NIM_SDS_SOURCE_DIR
 NIMSDS_LIBDIR := $(NIM_SDS_SOURCE_DIR)/build
@@ -946,12 +939,12 @@ run: $(RUN_TARGET)
 
 run-linux: nim_status_client
 	echo -e "\033[92mRunning:\033[39m bin/nim_status_client"
-	LD_LIBRARY_PATH="$(QT_LIBDIR)":"$(LIBWAKU_LIBDIR)":"$(NIMSDS_LIBDIR)":"$(STATUSGO_LIBDIR)":"$(KEYCARD_LIBDIR)":"$(STATUSQ_LIB_PATH)":"$(EXTRA_LIBS_PATH)":"$(LD_LIBRARY_PATH)" \
+	LD_LIBRARY_PATH="$(QT_LIBDIR)":"$(NIMSDS_LIBDIR)":"$(STATUSGO_LIBDIR)":"$(KEYCARD_LIBDIR)":"$(STATUSQ_LIB_PATH)":"$(EXTRA_LIBS_PATH)":"$(LD_LIBRARY_PATH)" \
 	./bin/nim_status_client $(ARGS)
 
 run-linux-gdb: nim_status_client
 	echo -e "\033[92mRunning:\033[39m bin/nim_status_client"
-	LD_LIBRARY_PATH="$(QT_LIBDIR)":"$(LIBWAKU_LIBDIR)":"$(NIMSDS_LIBDIR)":"$(STATUSGO_LIBDIR)":"$(KEYCARD_LIBDIR)":"$(STATUSQ_LIB_PATH)":"$(EXTRA_LIBS_PATH)":"$(LD_LIBRARY_PATH)" \
+	LD_LIBRARY_PATH="$(QT_LIBDIR)":"$(NIMSDS_LIBDIR)":"$(STATUSGO_LIBDIR)":"$(KEYCARD_LIBDIR)":"$(STATUSQ_LIB_PATH)":"$(EXTRA_LIBS_PATH)":"$(LD_LIBRARY_PATH)" \
 	gdb -ex=r ./bin/nim_status_client $(ARGS)
 
 run-macos: nim_status_client
@@ -984,7 +977,7 @@ NIM_TEST_FILES := $(wildcard test/nim/*.nim)
 NIM_TESTS := $(foreach test_file,$(NIM_TEST_FILES),nim-test-run/$(test_file))
 
 nim-test-run/%: | dotherside $(STATUSGO) $(QRCODEGEN)
-	LD_LIBRARY_PATH="$(QT_LIBDIR)":"$(LIBWAKU_LIBDIR)":"$(NIMSDS_LIBDIR)":"$(STATUSGO_LIBDIR)":"$(EXTRA_LIBS_PATH)":"$(LD_LIBRARY_PATH)" $(ENV_SCRIPT) \
+	LD_LIBRARY_PATH="$(QT_LIBDIR)":"$(NIMSDS_LIBDIR)":"$(STATUSGO_LIBDIR)":"$(EXTRA_LIBS_PATH)":"$(LD_LIBRARY_PATH)" $(ENV_SCRIPT) \
 	nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --mm:refc --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" --passL:"$(QRCODEGEN)" -r $(subst nim-test-run/,,$@)
 
 tests-nim-linux: $(NIM_TESTS)
