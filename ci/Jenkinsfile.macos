@@ -98,6 +98,9 @@ pipeline {
     XDG_CACHE_HOME = "${env.WORKSPACE_TMP}/.cache"
     /* Ensure nimcache is not shared between builds. */
     NIMFLAGS = "${params.NIMFLAGS} --colors:off --nimcache:${env.WORKSPACE_TMP}/nimcache"
+    // Workaround for cmake 4.x dropping compatibility with cmake_minimum_required < 3.5
+    // Required by vendor/QR-Code-generator (scodes) until upstream bumps their CMakeLists.txt
+    CMAKE_POLICY_VERSION_MINIMUM = 3.5
   }
 
   stages {
