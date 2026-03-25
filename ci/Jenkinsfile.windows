@@ -1,11 +1,13 @@
 #!/usr/bin/env groovy
 library 'status-jenkins-lib@v1.9.42'
 
+QT_VERSION = "6.11.0"
+
 /* Options section can't access functions in objects. */
 def isPRBuild = utils.isPRBuild()
 
 pipeline {
-  agent { label 'windows && x86_64 && qt-6.9.2 && go-1.24' }
+  agent { label "windows && x86_64 && qt-${QT_VERSION} && go-1.24" }
 
   parameters {
     booleanParam(
@@ -71,7 +73,7 @@ pipeline {
     /* Improve make performance */
     MAKEFLAGS = "-j${utils.getProcCount()} V=${params.VERBOSE}"
     /* Explicitly set the QT version */
-    QTDIR = "/c/Qt/6.9.2/msvc2022_64"
+    QTDIR = "/c/Qt/${QT_VERSION}/msvc2022_64"
     GOPATH = "${WORKSPACE_TMP}/go"
     GOBIN = "${WORKSPACE_TMP}/go/bin"
     GOCACHE = "${WORKSPACE_TMP}/gocache"

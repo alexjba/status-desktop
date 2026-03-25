@@ -1,16 +1,18 @@
 #!/usr/bin/env groovy
 library 'status-jenkins-lib@v1.9.42'
 
+QT_VERSION = "6.11.0"
+
 /* Options section can't access functions in objects. */
 def isPRBuild = utils.isPRBuild()
 def isNightlyBuild = utils.isNightlyBuild()
 
 pipeline {
   agent {
-    /* Image with Ubuntu 22.04 and QT 6.9.2 */
+    /* Image with Ubuntu 22.04 and QT ${QT_VERSION} */
     docker {
       label 'linuxcontainer'
-      image 'harbor.status.im/status-im/status-desktop-build:1.0.6-qt6.9.2'
+      image "harbor.status.im/status-im/status-desktop-build:1.0.7-qt${QT_VERSION}"
       /* allows jenkins use cat and mounts '/dev/fuse' for linuxdeployqt */
       args '--entrypoint="" ' +
            '--cap-add=SYS_ADMIN ' +

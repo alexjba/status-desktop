@@ -3,7 +3,7 @@
 # =============================================================================
 # Global build arguments
 # =============================================================================
-ARG QT_VERSION="6.9.2"
+ARG QT_VERSION="6.11.0"
 ARG QT_MODULES="qt5compat qtmultimedia qtwebsockets qtpositioning qtshadertools qtimageformats qtwebview qtconnectivity qtlottie qtscxml qtwebchannel"
 ARG JAVA_VERSION=17
 ARG ANDROID_API_LEVEL=35

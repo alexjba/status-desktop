@@ -1,6 +1,8 @@
 #!/usr/bin/env groovy
 library 'status-jenkins-lib@v1.9.42'
 
+QT_VERSION = "6.11.0"
+
 /* Options section can't access functions in objects. */
 def isPRBuild = utils.isPRBuild()
 
@@ -49,7 +51,7 @@ pipeline {
     /* Improve make performance */
     MAKEFLAGS = "-j${utils.getProcCount()} V=${params.VERBOSE}"
     /* Makefile assumes the compiler folder is included */
-    QTDIR = "/opt/qt/6.9.2/gcc_64"
+    QTDIR = "/opt/qt/${QT_VERSION}/gcc_64"
     PATH = "${env.QTDIR}/bin:${env.PATH}"
     /* Hack fix for params not being set in job on first run */
     VERBOSE = "${params.VERBOSE}"

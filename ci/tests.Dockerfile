@@ -1,4 +1,4 @@
-FROM harbor.status.im/status-im/status-desktop-build:1.0.5-qt6.9.2
+FROM harbor.status.im/status-im/status-desktop-build:1.0.7-qt6.11.0
 
 USER root
 

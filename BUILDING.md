@@ -218,7 +218,7 @@ python3 -m pip install setuptools --break-system-packages
 
 ### Windows & Linux
 
-Install **Qt 6.9.2** using the [Qt Online Installer](https://download.qt.io/official_releases/online_installers/).
+Install **Qt 6.11.0** using the [Qt Online Installer](https://download.qt.io/official_releases/online_installers/).
 
 ### Linux (Alternative)
 
@@ -244,8 +244,8 @@ sudo dnf install qt6-qtbase-devel qt6-qtbase-private-devel qt6-qt5compat-devel q
 Set environment variables:
 
 ```powershell
-$env:QTBASE = "C:\Qt\6.9.2"
-$env:QTDIR = "C:\Qt\6.9.2\msvc2022_64"
+$env:QTBASE = "C:\Qt\6.11.0"
+$env:QTDIR = "C:\Qt\6.11.0\msvc2022_64"
 $env:GOPATH = "C:\Program Files\Go\bin"
 $env:VCINSTALLDIR = "C:\BuildTools\VC"
 ```
@@ -259,7 +259,7 @@ C:\ProgramData\scoop\shims
 C:\Program Files\Go\bin
 C:\nim-2.2.6\bin
 C:\Users\{you_username}\.nimble\bin
-C:\Qt\6.9.2\msvc2022_64\bin
+C:\Qt\6.11.0\msvc2022_64\bin
 C:\BuildTools\VC\Tools\MSVC\14.44.35207\bin
 C:\ProgramData\mingw64\mingw64\bin
 C:\Program Files\CMake\bin
@@ -273,7 +273,7 @@ If you installed Qt via your system's package manager, additional environment co
 
 Otherwise, set those environment variables:
 ```shell
-export QTDIR="/path/to/Qt/6.9.2/gcc_64"
+export QTDIR="/path/to/Qt/6.11.0/gcc_64"
 export PATH="${QTDIR}/bin:${PATH}"
 ```
 
@@ -362,7 +362,7 @@ make run ARGS="-d=./dir"
 Make sure your `QTDIR` and `PATH` are correctly set. You can also try:
 
 ```bash
-export QTDIR=/path/to/Qt/6.9.2/gcc_64
+export QTDIR=/path/to/Qt/6.11.0/gcc_64
 export PATH=$QTDIR/bin:$PATH
 ```
 

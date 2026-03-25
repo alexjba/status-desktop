@@ -1,13 +1,15 @@
 #!/usr/bin/env groovy
 library 'status-jenkins-lib@v1.9.42'
 
+QT_VERSION = "6.11.0"
+
 /* Options section can't access functions in objects. */
 def isPRBuild = utils.isPRBuild()
 
 pipeline {
   /* This way we run the same Jenkinsfile on different platforms. */
   agent {
-    label "${getAgentLabels().join(' && ')} && qt-6.9.2 && go-1.24 && xcode-16.2"
+    label "${getAgentLabels().join(' && ')} && qt-${QT_VERSION} && go-1.24 && xcode-16.2"
   }
 
   parameters {
@@ -67,7 +69,6 @@ pipeline {
     PLATFORM = "macos/${getArch()}"
     /* Improve make performance */
     MAKEFLAGS = "-j${utils.getProcCount()} V=${params.VERBOSE}"
-    QT_VERSION="6.9.2"
     QMAKE = "/Users/admin/${QT_VERSION}/macos/bin/qmake"
     /* QMAKE = sh(script: "which qmake", returnStdout: true).trim() */
     QTDIR = sh(script:"${env.QMAKE} -query QT_INSTALL_PREFIX", returnStdout: true).trim()

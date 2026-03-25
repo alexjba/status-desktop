@@ -15,17 +15,17 @@ pipeline {
   parameters {
     string(
       name: 'QT_VERSION',
-      defaultValue: '6.9.2',
+      defaultValue: '6.11.0',
       description: 'Qt version to build'
     )
     string(
       name: 'DOCKER_TAG_ANDROID',
-      defaultValue: '1.1.0-qt6.9.2-android',
+      defaultValue: '1.0.0-qt6.11.0-android',
       description: 'Docker image tag for the Andorid image'
     )
     string(
       name: 'DOCKER_TAG_LINUX',
-      defaultValue: '1.0.6-qt6.9.2',
+      defaultValue: '1.0.7-qt6.11.0',
       description: 'Docker image tag for the Linux image'
     )
     string(

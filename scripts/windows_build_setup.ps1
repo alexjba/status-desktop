@@ -131,7 +131,7 @@ export PATH=`"/c/ProgramData/scoop/apps/inno-setup/current:`$PATH`"
 # Stop the script after first error
 $ErrorActionPreference = 'Stop'
 # Version of Qt SDK available form aqt
-$QtVersion = "6.9.2"
+$QtVersion = "6.11.0"
 
 # Don't run when sourcing script
 If ($MyInvocation.InvocationName -ne ".") {

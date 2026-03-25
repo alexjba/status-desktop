@@ -1,6 +1,8 @@
 #!/usr/bin/env groovy
 library 'status-jenkins-lib@v1.9.42'
 
+QT_VERSION = "6.11.0"
+
 /* Options section can't access functions in objects. */
 def isPRBuild = utils.isPRBuild()
 
@@ -8,7 +10,7 @@ pipeline {
   agent {
     docker {
       label 'linuxcontainer'
-      image 'harbor.status.im/status-im/status-desktop-build:1.0.6-qt6.9.2'
+      image "harbor.status.im/status-im/status-desktop-build:1.0.7-qt${QT_VERSION}"
     }
   }
 
@@ -47,7 +49,7 @@ pipeline {
     /* Improve make performance */
     MAKEFLAGS = "-j${utils.getProcCount()} V=${params.VERBOSE}"
     /* Makefile assumes the compiler folder is included */
-    QTDIR = "/opt/qt/6.9.2/gcc_64"
+    QTDIR = "/opt/qt/${QT_VERSION}/gcc_64"
     /* Avoid weird bugs caused by stale cache. */
     QML_DISABLE_DISK_CACHE = "true"
     /* Include library in order to compile the project */
