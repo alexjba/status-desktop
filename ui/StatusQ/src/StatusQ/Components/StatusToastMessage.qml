@@ -135,33 +135,6 @@ Control {
     Accessible.name: Utils.formatAccessibleName(root.primaryText + (root.secondaryText.length ? (" — " + root.secondaryText) : ""), objectName)
 
     /*!
-        \qmlmethod
-        This function is used to open the ToastMessage setting all its properties.
-        Examples of usage:
-        \qml
-        StatusToastMessage {
-            id: toastMessage
-        }
-        StatusMouseArea {
-            anchors.fill: parent
-            onClicked: {
-                toastMessage.open(qsTr("Verification Request Sent"), "", "checkmark-circle", 1, false,"");
-            }
-        }
-    \endqml
-
-    */
-    function open(title, subTitle, iconName, type, loading, url) {
-        root.primaryText = title;
-        root.secondaryText = subTitle;
-        root.icon.name = iconName;
-        root.type = type;
-        root.loading = loading;
-        root.linkUrl = url;
-        root.open = true;
-    }
-
-    /*!
         \qmlsignal
         This signal is emitted when the ToastMessage is clicked.
     */
