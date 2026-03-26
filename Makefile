@@ -605,12 +605,15 @@ rcc: $(UI_RESOURCES)
 
 TS_SOURCE_DIR := ui/i18n
 TS_BUILD_DIR := $(TS_SOURCE_DIR)/build
+# QT_INSTALL_PREFIX points to the target (android_arm64_v8a) Qt which lacks LinguistTools.
+QT_HOST_PREFIX := $(shell $(QMAKE) -query QT_HOST_PREFIX 2>/dev/null)
+TS_CMAKE_PARAMS := -DCMAKE_PREFIX_PATH=$(or $(QT_HOST_PREFIX),$(QT_INSTALL_PREFIX))
 
 log-update-translations:
 	echo -e "\033[92mUpdating:\033[39m translations"
 
 update-translations: | log-update-translations
-	cmake -S $(TS_SOURCE_DIR) -B $(TS_BUILD_DIR) -Wno-dev $(HANDLE_OUTPUT)
+	cmake -S $(TS_SOURCE_DIR) -B $(TS_BUILD_DIR) -Wno-dev $(TS_CMAKE_PARAMS) $(HANDLE_OUTPUT)
 	cmake --build $(TS_BUILD_DIR) --target update_application_translations $(HANDLE_OUTPUT)
 	+ cd scripts/translationScripts && go run fixup-base-ts-for-lokalise.go $(HANDLE_OUTPUT)
 
@@ -618,7 +621,7 @@ log-compile-translations:
 	echo -e "\033[92mCompiling:\033[39m translations"
 
 compile-translations: | update-translations log-compile-translations
-	cmake -S $(TS_SOURCE_DIR) -B $(TS_BUILD_DIR) -Wno-dev $(HANDLE_OUTPUT)
+	cmake -S $(TS_SOURCE_DIR) -B $(TS_BUILD_DIR) -Wno-dev $(TS_CMAKE_PARAMS) $(HANDLE_OUTPUT)
 	cmake --build $(TS_BUILD_DIR) --target compile_application_translations $(HANDLE_OUTPUT)
 
 clean-translations:
