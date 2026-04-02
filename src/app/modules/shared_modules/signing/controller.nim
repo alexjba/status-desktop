@@ -4,11 +4,13 @@ import io_interface
 import app/core/eventemitter
 import app_service/service/accounts/service as accounts_service
 import app_service/service/wallet_account/service as wallet_account_service
+import app_service/service/transaction/service as transaction_service
 import app_service/service/keycardV2/service as keycard_serviceV2
+import app_service/common/utils as common_utils
 import app/modules/shared/keypairs
 
 logScope:
-  topics = "authentication-module-controller"
+  topics = "signing-module-controller"
 
 type
   Controller* = ref object of RootObj
@@ -16,12 +18,14 @@ type
     events: EventEmitter
     accountsService: accounts_service.Service
     walletAccountService: wallet_account_service.Service
+    transactionService: transaction_service.Service
     keycardServiceV2: keycard_serviceV2.Service
 
 proc newController*(delegate: io_interface.AccessInterface,
   events: EventEmitter,
   accountsService: accounts_service.Service,
   walletAccountService: wallet_account_service.Service,
+  transactionService: transaction_service.Service,
   keycardServiceV2: keycard_serviceV2.Service):
   Controller =
   result = Controller()
@@ -29,6 +33,7 @@ proc newController*(delegate: io_interface.AccessInterface,
   result.events = events
   result.accountsService = accountsService
   result.walletAccountService = walletAccountService
+  result.transactionService = transactionService
   result.keycardServiceV2 = keycardServiceV2
 
 proc delete*(self: Controller) =
@@ -39,18 +44,21 @@ proc init*(self: Controller) =
     let args = KeycardEventArg(e)
     self.delegate.onKeycardStateUpdated(args.keycardEvent)
 
-  self.events.on(SIGNAL_KEYCARD_EXPORT_PUBLIC_KEYS_FINISHED) do(e: Args):
-    let args = KeycardExportedPublicKeysArgs(e)
-    self.delegate.onKeycardExportPublicKeysFinished(args.exportedPublicKeys, args.error)
+  self.events.on(SIGNAL_KEYCARD_SIGN_FINISHED) do(e: Args):
+    let args = KeycardSignArgs(e)
+    self.delegate.onKeycardSignFinished(args.signature, args.error)
 
 proc verifyPassword*(self: Controller, password: string): bool =
   return self.accountsService.verifyPassword(password)
 
-proc startKeycardAuthentication*(self: Controller, keyUid: string, paths: seq[string], exportPrivate: bool,
-  exportMasterAddr: bool, pin: string) =
-  self.keycardServiceV2.asyncExportPublicKey(keyUid, paths, exportPrivate, exportMasterAddr, pin)
+proc signMessage*(self: Controller, address: string, password: string, txHash: string): tuple[res: string, err: string] =
+  let hashedPassword = common_utils.hashPassword(password)
+  return self.transactionService.signMessage(address, hashedPassword, txHash)
 
-proc stopKeycardAuthentication*(self: Controller) =
+proc startKeycardSigning*(self: Controller, keyUid: string, pin: string, txHash: string, path: string) =
+  self.keycardServiceV2.asyncSign(keyUid, pin, txHash, path)
+
+proc stopKeycardSigning*(self: Controller) =
   self.keycardServiceV2.asyncStop()
 
 proc isKeypairMigratedToKeycard*(self: Controller, keyUid: string): bool =

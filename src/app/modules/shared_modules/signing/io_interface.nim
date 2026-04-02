@@ -15,22 +15,25 @@ method getModuleAsVariant*(self: AccessInterface): QVariant {.base.} =
 method verifyPassword*(self: AccessInterface, password: string): bool {.base.} =
   raise newException(ValueError, "No implementation available")
 
+method signMessage*(self: AccessInterface, address: string, password: string, txHash: string): string {.base.} =
+  raise newException(ValueError, "No implementation available")
+
 method isKeypairMigratedToKeycard*(self: AccessInterface, keyUid: string): bool {.base.} =
   raise newException(ValueError, "No implementation available")
 
 method buildKeyPairForProcessing*(self: AccessInterface, keyUid: string): KeyPairItem {.base.} =
   raise newException(ValueError, "No implementation available")
 
-method startKeycardAuthentication*(self: AccessInterface, keyUid: string, pin: string) {.base.} =
+method startKeycardSigning*(self: AccessInterface, keyUid: string, pin: string, txHash: string, path: string) {.base.} =
   raise newException(ValueError, "No implementation available")
 
-method stopKeycardAuthentication*(self: AccessInterface) {.base.} =
+method stopKeycardSigning*(self: AccessInterface) {.base.} =
   raise newException(ValueError, "No implementation available")
 
 method onKeycardStateUpdated*(self: AccessInterface, kcEvent: KeycardEventDto) {.base.} =
   raise newException(ValueError, "No implementation available")
 
-method onKeycardExportPublicKeysFinished*(self: AccessInterface, exportedPublicKeys: KeycardExportedPublicKeysDto, error: string) {.base.} =
+method onKeycardSignFinished*(self: AccessInterface, signature: KeycardSignatureDto, error: string) {.base.} =
   raise newException(ValueError, "No implementation available")
 
 type

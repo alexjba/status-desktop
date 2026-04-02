@@ -24,20 +24,23 @@ QtObject:
   proc verifyPassword*(self: View, password: string): bool {.slot.} =
     return self.delegate.verifyPassword(password)
 
+  proc signMessage*(self: View, address: string, password: string, txHash: string): string {.slot.} =
+    return self.delegate.signMessage(address, password, txHash)
+
   proc isKeypairMigratedToKeycard*(self: View, keyUid: string): bool {.slot.} =
     return self.delegate.isKeypairMigratedToKeycard(keyUid)
 
   proc buildKeyPairForProcessing*(self: View, keyUid: string) {.slot.} =
     discard self.delegate.buildKeyPairForProcessing(keyUid)
 
-  proc keycardAuthSuccess*(self: View, encryptionPublicKey: string) {.signal.}
-  proc keycardAuthError*(self: View, error: string) {.signal.}
+  proc keycardSignSuccess*(self: View, r: string, s: string, v: int) {.signal.}
+  proc keycardSignError*(self: View, error: string) {.signal.}
 
-  proc startKeycardAuthentication*(self: View, keyUid: string, pin: string) {.slot.} =
-    self.delegate.startKeycardAuthentication(keyUid, pin)
+  proc startKeycardSigning*(self: View, keyUid: string, pin: string, txHash: string, path: string) {.slot.} =
+    self.delegate.startKeycardSigning(keyUid, pin, txHash, path)
 
-  proc stopKeycardAuthentication*(self: View) {.slot.} =
-    self.delegate.stopKeycardAuthentication()
+  proc stopKeycardSigning*(self: View) {.slot.} =
+    self.delegate.stopKeycardSigning()
 
   proc keycardStateChanged*(self: View) {.signal.}
   proc getKeycardState*(self: View): string {.slot.} =

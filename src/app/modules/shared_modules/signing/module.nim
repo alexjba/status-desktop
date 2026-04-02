@@ -5,16 +5,15 @@ import view, controller
 import app/core/eventemitter
 import app/modules/shared_models/keypair_item
 
-import app/global/global_singleton
-import app_service/common/account_constants
 import app_service/service/accounts/service as accounts_service
 import app_service/service/wallet_account/service as wallet_account_service
+import app_service/service/transaction/service as transaction_service
 import app_service/service/keycardV2/service as keycard_serviceV2
 
 export io_interface
 
 logScope:
-  topics = "authentication-module"
+  topics = "signing-module"
 
 type
   Module*[T: io_interface.DelegateInterface] = ref object of io_interface.AccessInterface
@@ -27,13 +26,14 @@ proc newModule*[T](delegate: T,
   events: EventEmitter,
   accountsService: accounts_service.Service,
   walletAccountService: wallet_account_service.Service,
+  transactionService: transaction_service.Service,
   keycardServiceV2: keycard_serviceV2.Service):
   Module[T] =
   result = Module[T]()
   result.delegate = delegate
   result.view = view.newView(result)
   result.viewVariant = newQVariant(result.view)
-  result.controller = controller.newController(result, events, accountsService, walletAccountService, keycardServiceV2)
+  result.controller = controller.newController(result, events, accountsService, walletAccountService, transactionService, keycardServiceV2)
   result.controller.init()
 
 {.push warning[Deprecated]: off.}
@@ -49,6 +49,13 @@ method getModuleAsVariant*[T](self: Module[T]): QVariant =
 method verifyPassword*[T](self: Module[T], password: string): bool =
   return self.controller.verifyPassword(password)
 
+method signMessage*[T](self: Module[T], address: string, password: string, txHash: string): string =
+  let (res, err) = self.controller.signMessage(address, password, txHash)
+  if err.len > 0:
+    error "signMessage failed", error=err
+    return ""
+  return res
+
 method isKeypairMigratedToKeycard*[T](self: Module[T], keyUid: string): bool =
   return self.controller.isKeypairMigratedToKeycard(keyUid)
 
@@ -58,32 +65,21 @@ method buildKeyPairForProcessing*[T](self: Module[T], keyUid: string): KeyPairIt
     self.view.setKeyPairForProcessing(item)
   return item
 
-method startKeycardAuthentication*[T](self: Module[T], keyUid: string, pin: string) =
-  let
-    targetKeyUid = if keyUid.len > 0: keyUid
-                   else: singletonInstance.userProfile.getKeyUid()
-    paths = @[account_constants.PATH_ENCRYPTION]
-    exportPrivate = true
-    exportMasterAddr = false
-  self.controller.startKeycardAuthentication(targetKeyUid, paths, exportPrivate, exportMasterAddr, pin)
+method startKeycardSigning*[T](self: Module[T], keyUid: string, pin: string, txHash: string, path: string) =
+  self.controller.startKeycardSigning(keyUid, pin, txHash, path)
 
-method stopKeycardAuthentication*[T](self: Module[T]) =
-  self.controller.stopKeycardAuthentication()
+method stopKeycardSigning*[T](self: Module[T]) =
+  self.controller.stopKeycardSigning()
 
 method onKeycardStateUpdated*[T](self: Module[T], kcEvent: KeycardEventDto) =
   self.view.setKeycardState($kcEvent.stateString)
   self.view.setRemainingPinAttempts(kcEvent.keycardStatus.remainingAttemptsPIN)
 
-method onKeycardExportPublicKeysFinished*[T](self: Module[T], exportedPublicKeys: KeycardExportedPublicKeysDto, error: string) =
+method onKeycardSignFinished*[T](self: Module[T], signature: KeycardSignatureDto, error: string) =
   if error.len > 0:
-    error "exporting public keys error", error=error
-    self.view.keycardAuthError(error)
+    error "keycard sign error", error=error
+    self.view.keycardSignError(error)
     return
-  if exportedPublicKeys.keys.len != 1:
-    error "exporting public keys error", error="expected 1 key, got " & $exportedPublicKeys.keys.len
-    self.view.keycardAuthError(error)
-    return
-  let encryptionPublicKey = exportedPublicKeys.keys[0].publicKey
-  self.view.keycardAuthSuccess(encryptionPublicKey)
+  self.view.keycardSignSuccess(signature.r, signature.s, signature.v)
 
 {.pop.}
