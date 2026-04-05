@@ -7561,6 +7561,13 @@ Por favor, agrégala e intenta de nuevo.</translation>
     </message>
 </context>
 <context>
+    <name>FeeRow</name>
+    <message>
+        <source>Max.</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>FeesBox</name>
     <message>
         <source>Fees</source>
@@ -8934,6 +8941,10 @@ Are you sure you want to do this?</source>
     <message>
         <source>PIN correct</source>
         <translation>PIN correcto</translation>
+    </message>
+    <message>
+        <source>Keycard blocked</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>%n attempt(s) remaining</source>
