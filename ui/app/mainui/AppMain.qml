@@ -1271,7 +1271,7 @@ Item {
             isWalletEnabled: appMain.walletProfileStore.isWalletEnabled
             thirdpartyServicesEnabled: appMain.rootStore.thirdpartyServicesEnabled
 
-            onBuyClicked: popupRequestsHandler.sendModalHandler.buyStickerPack(packId, price)
+            onBuyClicked: (packId, price) => popupRequestsHandler.sendModalHandler.buyStickerPack(packId, price)
             onEnableThirdpartyServicesRequested: popupRequestsHandler.thirdpartyServicesPopupHandler.openPopup()
         }
     }
