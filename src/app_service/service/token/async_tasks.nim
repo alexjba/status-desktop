@@ -201,3 +201,31 @@ proc getTokenHistoricalDataTask*(argEncoded: string) {.gcsafe, nimcall.} =
   except Exception as e:
     output["error"] = %* "Historical market value not found"
   arg.finish(output)
+
+type
+  PrefetchParaswapSupportTaskArg = ref object of QObjectTaskArg
+    chainId: int
+
+proc prefetchParaswapSupportTask*(argEncoded: string) {.gcsafe, nimcall.} =
+  let arg = decode[PrefetchParaswapSupportTaskArg](argEncoded)
+  if arg.chainId <= 0:
+    arg.finish(%*{"chainId": 0, "error": "invalid chainId"})
+    return
+  try:
+    var response: JsonNode
+    var err = status_go_tokens.isChainSupportedForSwapViaParaswap(response, arg.chainId)
+    if err.len > 0:
+      raise newException(CatchableError, "failed" & err)
+    if response.isNil or response.kind != JsonNodeKind.JBool:
+      raise newException(CatchableError, "unexpected response")
+    arg.finish(%*{
+      "chainId": arg.chainId,
+      "supported": response.getBool(),
+      "error": "",
+    })
+  except Exception as e:
+    error "prefetch paraswap chain support failed", chainId = arg.chainId, err = e.msg
+    arg.finish(%*{
+      "chainId": arg.chainId,
+      "error": e.msg,
+    })

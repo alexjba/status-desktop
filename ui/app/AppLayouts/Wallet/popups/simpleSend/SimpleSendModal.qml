@@ -159,6 +159,7 @@ StatusDialog {
     property int selectedChainId
     /** property to set and expose currently selected group key **/
     property string selectedGroupKey
+    onSelectedGroupKeyChanged: d.updateResolvedSelectedToken()
     /** property to set and expose the raw amount to send from outside without any localization
     Crypto value in a base unit as a string integer,
     e.g. 1000000000000000000 for 1 ETH **/
@@ -218,13 +219,15 @@ StatusDialog {
         id: d
 
         readonly property bool selectedTokenExistsInAssetsModel: selectedAssetEntry.available
+        onSelectedTokenExistsInAssetsModelChanged: d.updateResolvedSelectedToken()
 
-        readonly property var resolvedSelectedToken: {
-            if (d.selectedTokenExistsInAssetsModel) {
-                return {}
+        property var resolvedSelectedToken: ({})
+        function updateResolvedSelectedToken() {
+            if (d.selectedTokenExistsInAssetsModel || !root.selectedGroupKey) {
+                d.resolvedSelectedToken = {}
+            } else {
+                d.resolvedSelectedToken = root.getTokenByKeyOrGroupKeyFromAllTokens(root.selectedGroupKey)
             }
-
-            return root.getTokenByKeyOrGroupKeyFromAllTokens(root.selectedGroupKey)
         }
 
         readonly property real scrollViewContentY: scrollView.flickable.contentY
@@ -247,6 +250,7 @@ StatusDialog {
             onItemChanged: d.setAssetInTokenSelector()
             onAvailableChanged: d.setAssetInTokenSelector()
             onValueChanged: {
+                d.updateResolvedSelectedToken()
                 // if it's non-interactive mode and the assets model doesn't contain selectedGroupKey set the UI properly
                 if (!root.interactive && !!root.selectedGroupKey) {
                     if (d.selectedTokenExistsInAssetsModel) {
@@ -913,4 +917,6 @@ StatusDialog {
             visible: !!root.routerErrorCode || !!root.routerError
         }
     }
+
+    Component.onCompleted: d.updateResolvedSelectedToken()
 }

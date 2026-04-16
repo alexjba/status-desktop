@@ -33,6 +33,45 @@ proc applyAllTokenListsData(self: Service, allTokenListsJson: JsonNode) =
     else: Json.decode($allTokenListsJson, seq[TokenListDto], allowUnknownFields = true)
   self.allTokenLists = tokenListsDtos.map(tl => createTokenListItem(tl))
 
+proc rebuildAllTokensByGroupKeyIndex(self: Service) =
+  self.allTokensByGroupKey.clear()
+  let allTokens = getAllTokens()
+  for token in allTokens:
+    self.allTokensByGroupKey.mgetOrPut(token.groupKey, @[]).add(token)
+
+proc prefetchParaswapSupport(self: Service) =
+  let chainIds = self.networkService.getEnabledChainIds()
+  if chainIds.len == 0:
+    return
+  # One task per chain so the cache fills incrementally as each RPC completes.
+  for chainId in chainIds:
+    if chainId <= 0:
+      continue
+    let arg = PrefetchParaswapSupportTaskArg(
+      tptr: prefetchParaswapSupportTask,
+      vptr: cast[uint](self.vptr),
+      slot: "prefetchParaswapSupportRetrieved",
+      chainId: chainId,
+    )
+    self.threadpool.start(arg)
+
+proc prefetchParaswapSupportRetrieved(self: Service, response: string) {.slot.} =
+  try:
+    let parsedJson = response.parseJson
+    var errorString: string
+    discard parsedJson.getProp("error", errorString)
+    if errorString.len > 0:
+      return
+    if not parsedJson.hasKey("chainId") or not parsedJson.hasKey("supported"):
+      return
+    let chainId = parsedJson["chainId"].getInt()
+    if chainId <= 0:
+      return
+    let supported = parsedJson["supported"].getBool()
+    self.chainsSupportedForSwapViaParaswap[chainId] = supported
+  except Exception as ex:
+    error "prefetchParaswapSupportRetrieved", err = ex.msg
+
 proc applyRefreshTokensData(self: Service, tokensOfInterestJson: JsonNode, tokenPrefsJson: JsonNode) =
   # Parse tokens of interest
   self.tokensOfInterestByKey.clear()
@@ -60,7 +99,8 @@ proc applyRefreshTokensData(self: Service, tokensOfInterestJson: JsonNode, token
         communityId: dto.communityId)
 
   self.rebuildMarketData()
-  self.fetchTokensDetails()
+  self.fetchTokensDetails() # TODO: if the only place where we can see these details is account's details page, we should fetch this on demand, no need to have local cache
+  self.rebuildAllTokensByGroupKeyIndex()
   # notify modules
   self.events.emit(SIGNAL_TOKENS_LIST_UPDATED, Args())
   self.events.emit(SIGNAL_TOKEN_PREFERENCES_UPDATED, Args())
@@ -134,11 +174,13 @@ proc init*(self: Service) =
 
   self.events.on(SIGNAL_NETWORK_MODE_UPDATED) do(e:Args):
     self.asyncRefreshTokens()
+    self.prefetchParaswapSupport()
 
   self.events.on(SIGNAL_CURRENCY_UPDATED) do(e:Args):
     self.rebuildMarketData()
 
   self.asyncRefreshTokens()
+  self.prefetchParaswapSupport()
 
 proc getMandatoryTokenGroupKeys*(self: Service): seq[string] =
   let tokenKeys = getMandatoryTokenKeys()
@@ -297,6 +339,10 @@ proc getTokenByKeyOrGroupKeyFromAllTokens*(self: Service, key: string): TokenIte
   var tokens = self.getTokensByGroupKey(key)
   if tokens.len > 0:
     return tokens[0]
+  if self.allTokensByGroupKey.hasKey(key):
+    let indexed = self.allTokensByGroupKey[key]
+    if indexed.len > 0:
+      return indexed[0]
   tokens = getAllTokens()
   let matchedTokens = tokens.filter(t => t.groupKey == key)
   if matchedTokens.len > 0:
