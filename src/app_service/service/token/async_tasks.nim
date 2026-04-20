@@ -1,4 +1,39 @@
-import times, std/strformat
+import times, std/strformat, json
+
+#################################################
+# Async task response envelopes
+#################################################
+
+type
+  BuildGroupsForChainResponse* = object
+    chainId*: int
+    tokens*: seq[TokenDtoSafe]
+    error*: string
+
+  FetchAllTokenGroupsResponse* = object
+    tokens*: seq[TokenDtoSafe]
+    error*: string
+
+  RefreshTokensResponse* = object
+    tokensOfInterest*: seq[TokenDtoSafe]
+    tokenPreferences*: JsonNode
+    error*: string
+
+  FetchAllTokenListsResponse* = object
+    allTokenLists*: seq[TokenListDto]
+    error*: string
+
+  TokensMarketValuesSlotResponse* = object
+    tokenMarketValues*: JsonNode
+    error*: string
+
+  TokensDetailsSlotResponse* = object
+    tokensDetails*: JsonNode
+    error*: string
+
+  TokensPricesSlotResponse* = object
+    tokensPrices*: JsonNode
+    error*: string
 
 #################################################
 # Async refresh tokens (blocking RPCs on threadpool)
@@ -11,8 +46,8 @@ type
 proc asyncRefreshTokensTask*(argEncoded: string) {.gcsafe, nimcall.} =
   let arg = decode[AsyncRefreshTokensTaskArg](argEncoded)
   var output = %*{
-    "tokensOfInterest": "",
-    "tokenPreferences": "",
+    "tokensOfInterest": newJArray(),
+    "tokenPreferences": newJArray(),
     "error": ""
   }
   try:
@@ -20,7 +55,7 @@ proc asyncRefreshTokensTask*(argEncoded: string) {.gcsafe, nimcall.} =
     var err = status_go_tokens.getTokensOfInterestForActiveNetworksMode(tokensOfInterestResponse)
     if err.len > 0:
       raise newException(CatchableError, "getTokensOfInterestForActiveNetworksMode failed: " & err)
-    output["tokensOfInterest"] = if tokensOfInterestResponse.isNil: newJNull() else: tokensOfInterestResponse
+    output["tokensOfInterest"] = if tokensOfInterestResponse.isNil: newJArray() else: tokensOfInterestResponse
 
     let prefsResponse = backend.getTokenPreferences()
     if not prefsResponse.error.isNil:
@@ -37,7 +72,7 @@ type
 proc asyncFetchAllTokenListsTask*(argEncoded: string) {.gcsafe, nimcall.} =
   let arg = decode[AsyncFetchAllTokenListsTaskArg](argEncoded)
   var output = %*{
-    "allTokenLists": "",
+    "allTokenLists": newJArray(),
     "error": ""
   }
   try:
@@ -45,7 +80,7 @@ proc asyncFetchAllTokenListsTask*(argEncoded: string) {.gcsafe, nimcall.} =
     var err = status_go_tokens.getAllTokenLists(allTokenListsResponse)
     if err.len > 0:
       raise newException(CatchableError, "getAllTokenLists failed: " & err)
-    output["allTokenLists"] = if allTokenListsResponse.isNil: newJNull() else: allTokenListsResponse
+    output["allTokenLists"] = if allTokenListsResponse.isNil: newJArray() else: allTokenListsResponse
   except Exception as e:
     output["error"] = %* fmt"Error fetching all token lists: {e.msg}"
   arg.finish(output)
@@ -57,7 +92,7 @@ type
 proc asyncFetchAllTokenGroupsTask*(argEncoded: string) {.gcsafe, nimcall.} =
   let arg = decode[AsyncFetchAllTokenGroupsTaskArg](argEncoded)
   var output = %*{
-    "tokens": "",
+    "tokens": newJArray(),
     "error": ""
   }
   try:
@@ -65,7 +100,7 @@ proc asyncFetchAllTokenGroupsTask*(argEncoded: string) {.gcsafe, nimcall.} =
     var err = status_go_tokens.getTokensForActiveNetworksMode(response)
     if err.len > 0:
       raise newException(CatchableError, "getTokensForActiveNetworksMode failed: " & err)
-    output["tokens"] = if response.isNil: newJNull() else: response
+    output["tokens"] = if response.isNil: newJArray() else: response
   except Exception as e:
     output["error"] = %* fmt"Error fetching all token groups: {e.msg}"
   arg.finish(output)
@@ -78,7 +113,7 @@ proc asyncBuildGroupsForChainTask*(argEncoded: string) {.gcsafe, nimcall.} =
   let arg = decode[AsyncBuildGroupsForChainTaskArg](argEncoded)
   var output = %*{
     "chainId": arg.chainId,
-    "tokens": "",
+    "tokens": newJArray(),
     "error": ""
   }
   try:
@@ -86,7 +121,7 @@ proc asyncBuildGroupsForChainTask*(argEncoded: string) {.gcsafe, nimcall.} =
     var err = status_go_tokens.getTokensByChain(response, arg.chainId)
     if err.len > 0:
       raise newException(CatchableError, "getTokensByChain failed: " & err)
-    output["tokens"] = if response.isNil: newJNull() else: response
+    output["tokens"] = if response.isNil: newJArray() else: response
   except Exception as e:
     output["error"] = %* fmt"Error building groups for chain {arg.chainId}: {e.msg}"
   arg.finish(output)
@@ -106,7 +141,7 @@ type
 proc fetchTokensMarketValuesTask*(argEncoded: string) {.gcsafe, nimcall.} =
   let arg = decode[FetchTokensMarketValuesTaskArg](argEncoded)
   var output = %*{
-    "tokenMarketValues": "",
+    "tokenMarketValues": newJNull(),
     "error": ""
   }
   try:
@@ -124,7 +159,7 @@ type
 proc fetchTokensDetailsTask*(argEncoded: string) {.gcsafe, nimcall.} =
   let arg = decode[FetchTokensDetailsTaskArg](argEncoded)
   var output = %*{
-    "tokensDetails": "",
+    "tokensDetails": newJNull(),
     "error": ""
   }
   try:
@@ -142,7 +177,7 @@ type
 proc fetchTokensPricesTask*(argEncoded: string) {.gcsafe, nimcall.} =
   let arg = decode[FetchTokensPricesTaskArg](argEncoded)
   var output = %*{
-    "tokensPrices": "",
+    "tokensPrices": newJNull(),
     "error": ""
   }
   try:
