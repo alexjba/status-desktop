@@ -34,6 +34,7 @@ AbstractWebView {
         id: backend
         anchors.fill: parent
         visible: root.visible
+        freeze: root.freeze
         userScripts: root.profileParams.scripts
         webChannel: root.webChannel
     }
@@ -119,6 +120,27 @@ AbstractWebView {
 
     function changeZoomFactor(factor) {
         backend.zoomFactor = factor
+    }
+
+    // targetSize is the logical on-screen size
+    function grabToImage(callback, targetSize) {
+        function onReady(imageUrl, ok) {
+            backend.snapshotReady.disconnect(onReady)
+            if (callback)
+                callback({ url: ok ? imageUrl : "" })
+        }
+        backend.snapshotReady.connect(onReady)
+
+        const scale = 2;
+        if (targetSize !== undefined && targetSize !== null) {
+            backend.requestSnapshot(
+                Qt.size(
+                    targetSize.width * scale,
+                    targetSize.height * scale
+                )
+            )
+        } else
+            backend.requestSnapshot()
     }
 
     function acceptAsNewWindow(request) {
