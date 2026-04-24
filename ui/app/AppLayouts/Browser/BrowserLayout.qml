@@ -481,7 +481,10 @@ StatusSectionLayout {
 
             onRequestReloadPage: webViewContext.reloadCurrent()
             onRequestStopLoadingPage: webViewContext.stopCurrent()
-            onRequestLaunchInBrowser: url => _internal.onRequestLaunchInBrowser(url)
+            onRequestLaunchInBrowser: url => {
+                                          _internal.onRequestLaunchInBrowser(url)
+                                          deactivateAddressBar()
+                                      }
             onRequestOpenDapp: url => _internal.onRequestOpenDapp(url)
             onRequestDisconnectDapp: dappUrl => connectorBridge.disconnect(dappUrl)
             onRequestWalletMenu: dialogsContext.openWalletMenu(browserWalletMenu)
