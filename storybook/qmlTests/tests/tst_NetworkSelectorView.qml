@@ -12,7 +12,7 @@ import shared.stores
 Item {
     id: root
     width: 600
-    height: 400
+    height: 600
 
     readonly property var networksStore: NetworksStore{}
 
