@@ -618,6 +618,8 @@ StatusSectionLayout {
         id: settingsMenu
 
         parent: browserToolbarLoader
+        modal: true
+        dim: false
 
         incognitoMode: _internal.currentTabIncognito
         zoomFactor: _internal.currentWebView?.zoomFactor ?? 1
