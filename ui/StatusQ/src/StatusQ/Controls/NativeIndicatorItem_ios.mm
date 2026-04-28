@@ -29,6 +29,7 @@ protected:
 
 private:
     UIView *getUIView() const;
+    UIWindow *createOverlayWindow(UIView *root);
     void ensureViews();
     void destroyViews();
     void attachParentWatchers();
@@ -39,6 +40,7 @@ private:
     QPointer<QQuickItem> m_parentItem;
     QVector<QMetaObject::Connection> m_parentConnections;
 
+    UIWindow *m_overlayWindow = nullptr;
     UIView *m_containerView = nullptr;
     UIImageView *m_imageView = nullptr;
 
@@ -69,6 +71,30 @@ UIView *NativeIndicatorItem_iOS::getUIView() const
     return reinterpret_cast<UIView *>(window()->winId());
 }
 
+UIWindow *NativeIndicatorItem_iOS::createOverlayWindow(UIView *root)
+{
+    CGRect overlayFrame = CGRectZero;
+    if (root.window)
+        overlayFrame = root.window.bounds;
+    if (CGRectIsEmpty(overlayFrame))
+        overlayFrame = root.bounds;
+    if (CGRectIsEmpty(overlayFrame))
+        overlayFrame = UIScreen.mainScreen.bounds;
+
+    if (@available(iOS 13.0, *)) {
+        UIWindowScene *scene = root.window.windowScene;
+        if (!scene) {
+            // Scene not ready yet; polish() will be triggered again once the window attaches.
+            QTimer::singleShot(0, this, [this]() { polish(); });
+            return nullptr;
+        }
+        UIWindow *w = [[UIWindow alloc] initWithWindowScene:scene];
+        w.frame = overlayFrame;
+        return w;
+    }
+    return [[UIWindow alloc] initWithFrame:overlayFrame];
+}
+
 void NativeIndicatorItem_iOS::ensureViews()
 {
     if (m_containerView && m_imageView)
@@ -77,6 +103,22 @@ void NativeIndicatorItem_iOS::ensureViews()
     UIView *root = getUIView();
     if (!root)
         return;
+
+    m_overlayWindow = createOverlayWindow(root);
+    if (!m_overlayWindow)
+        return;
+
+    // UIWindowLevelNormal + 1 keeps the overlay above WKWebView (normal level)
+    // but below the system keyboard (UIWindowLevelAlert range).
+    m_overlayWindow.windowLevel = UIWindowLevelNormal + 1;
+    m_overlayWindow.userInteractionEnabled = NO;
+    m_overlayWindow.backgroundColor = UIColor.clearColor;
+    UIViewController *vc = [UIViewController new];
+    vc.view.userInteractionEnabled = NO;
+    vc.view.backgroundColor = UIColor.clearColor;
+    m_overlayWindow.rootViewController = vc;
+    [vc release];
+    m_overlayWindow.hidden = NO;
 
     m_containerView = [[UIView alloc] initWithFrame:CGRectZero];
     m_containerView.userInteractionEnabled = NO;
@@ -87,11 +129,7 @@ void NativeIndicatorItem_iOS::ensureViews()
     m_imageView.hidden = YES;
 
     [m_containerView addSubview:m_imageView];
-    [root addSubview:m_containerView];
-
-    // QtWebView (WKWebView) is a native UIView inserted into the same hierarchy.
-    // Ensure our overlay stays above it.
-    [root bringSubviewToFront:m_containerView];
+    [m_overlayWindow.rootViewController.view addSubview:m_containerView];
 }
 
 void NativeIndicatorItem_iOS::destroyViews()
@@ -105,6 +143,11 @@ void NativeIndicatorItem_iOS::destroyViews()
         [m_containerView removeFromSuperview];
         [m_containerView release];
         m_containerView = nullptr;
+    }
+    if (m_overlayWindow) {
+        m_overlayWindow.hidden = YES;
+        [m_overlayWindow release];
+        m_overlayWindow = nullptr;
     }
 }
 
@@ -171,11 +214,6 @@ void NativeIndicatorItem_iOS::syncToNative()
     }
 
     ensureViews();
-    if (m_containerView) {
-        UIView *root = getUIView();
-        if (root)
-            [root bringSubviewToFront:m_containerView];
-    }
     attachParentWatchers();
     updateImageIfNeeded();
     updateFramesAndVisibility();
@@ -228,8 +266,15 @@ void NativeIndicatorItem_iOS::updateImageIfNeeded()
 
 void NativeIndicatorItem_iOS::updateFramesAndVisibility()
 {
-    if (!m_containerView || !m_imageView || !window())
+    if (!m_containerView || !m_imageView || !m_overlayWindow || !window())
         return;
+
+    UIView *qtView = getUIView();
+    if (!qtView)
+        return;
+
+    // Keep the overlay window covering the full Qt window so convertRect works correctly.
+    m_overlayWindow.frame = qtView.window.bounds;
 
     QQuickItem *pItem = parentItem();
     const bool clip = pItem ? pItem->clip() : false;
@@ -257,22 +302,20 @@ void NativeIndicatorItem_iOS::updateFramesAndVisibility()
     const QPointF indicatorNativePos(indicatorScenePos.x() * qtScale, indicatorScenePos.y() * qtScale);
     const QSizeF indicatorNativeSize(width() * qtScale, height() * qtScale);
 
+    // Convert parent rect from Qt root-view coordinates into overlay-window coordinates.
+    CGRect parentInQt = CGRectMake(parentNativePos.x(), parentNativePos.y(),
+                                   parentNativeSize.width(), parentNativeSize.height());
+    CGRect parentInOverlay = [m_overlayWindow convertRect:parentInQt fromView:qtView];
+    m_containerView.frame = parentInOverlay;
+    m_containerView.clipsToBounds = clip ? YES : NO;
+
     const qreal localX = indicatorNativePos.x() - parentNativePos.x();
     const qreal localY = indicatorNativePos.y() - parentNativePos.y();
-
-    m_containerView.frame = CGRectMake(parentNativePos.x(), parentNativePos.y(), parentNativeSize.width(), parentNativeSize.height());
-    m_containerView.clipsToBounds = clip ? YES : NO;
     m_imageView.frame = CGRectMake(localX, localY, indicatorNativeSize.width(), indicatorNativeSize.height());
-
 
     const bool show = isVisible() && isEnabled() && (!pItem || pItem->isVisible());
     m_containerView.hidden = !show;
     m_imageView.hidden = !show;
-
-    // Keep it on top even if native views (e.g. WKWebView) are re-attached later.
-    UIView *root = getUIView();
-    if (root)
-        [root bringSubviewToFront:m_containerView];
 }
 
 void registerNativeIndicatorItemType()
