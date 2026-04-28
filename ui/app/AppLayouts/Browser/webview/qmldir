@@ -1,4 +1,6 @@
+singleton BrowserUiSettings 1.0 BrowserUiSettings.qml
 BrowserWebViewContext 1.0 BrowserWebViewContext.qml
+BrowserSavedSessionContext 1.0 BrowserSavedSessionContext.qml
 BrowserOverlayContext 1.0 BrowserOverlayContext.qml
 BrowserFavoritesContext 1.0 BrowserFavoritesContext.qml
 BrowserDialogsContext 1.0 BrowserDialogsContext.qml

@@ -55,12 +55,10 @@ StatusSectionLayout {
 
     readonly property string userAgent: connectorBridge.httpUserAgent
 
-    readonly property alias uiSettings: uiSettings
-
     signal sendToRecipientRequested(string address)
 
-    function openUrlInNewTab(url) {
-        Qt.callLater(() => _internal.addNewTab(root.browserRootStore.determineRealURL(url)))
+    function openUrlInNewTab(url, initialTitle) {
+        Qt.callLater(() => _internal.addNewTab(root.browserRootStore.determineRealURL(url), initialTitle))
     }
 
     function reloadCurrentTab() {
@@ -68,11 +66,11 @@ StatusSectionLayout {
     }
 
     Component.onCompleted: {
-        _internal.restoreSession()
+        savedSessionContext.restoreSession()
     }
 
     Component.onDestruction: {
-        _internal.saveSession()
+        savedSessionContext.saveSession()
     }
 
     Connections {
@@ -139,8 +137,8 @@ StatusSectionLayout {
             tabs.activateTab(tabs.count - 1)
         }
 
-        function addNewTab(url) {
-            var tab = webViewContext.createEmptyTab(tabs.count !== 0 ? currentWebView.profileParams : connectorBridge.defaultProfileParams, false, true, url);
+        function addNewTab(url, initialTitle) {
+            var tab = webViewContext.createEmptyTab(tabs.count !== 0 ? currentWebView.profileParams : connectorBridge.defaultProfileParams, false, true, url, initialTitle);
             browserToolbarLoader.activateAddressBar()
             return tab;
         }
@@ -209,33 +207,6 @@ StatusSectionLayout {
             favoriteMenu.createObject(root, {url, name}).popup(parent, pos)
         }
 
-        function saveSession() {
-            if (!uiSettings.restoreOpenTabs)
-                return
-
-            var tabsModel = []
-
-            for (let i = 0; i < tabs.count; i++){
-                const webView = webViewContext.getWebView(i)
-                if (!!webView) {
-                    const url = root.browserRootStore.determineRealURL(webView.url.toString())
-                    if (!!url)
-                        tabsModel.push(url)
-                }
-            }
-            uiSettings.openTabs = tabsModel
-        }
-
-        function restoreSession() {
-            if (uiSettings.restoreOpenTabs && !!uiSettings.openTabs && uiSettings.openTabs.length > 0)
-                uiSettings.openTabs.forEach((url) => root.openUrlInNewTab(url))
-            else {
-                const tab = webViewContext.createEmptyTab(connectorBridge.defaultProfileParams, true)
-                // For Devs: Uncomment the next line if you want to use the simpledapp on first load
-                // tab.url = root.browserRootStore.determineRealURL("https://simpledapp.eth");
-            }
-        }
-
         onCurrentWebViewChanged: {
             onCurrentTabUrlChanged()
             findBar.reset()
@@ -247,13 +218,6 @@ StatusSectionLayout {
     showFooter: false
     headerPadding: 0
     backgroundColor: Theme.palette.statusAppNavBar.backgroundColor
-
-    Settings {
-        id: uiSettings
-        category: "BrowserSettings_%1".arg(root.userUID)
-        property bool restoreOpenTabs
-        property var openTabs: []
-    }
 
     BrowserFavoritesContext {
         id: favoritesContext
@@ -306,6 +270,14 @@ StatusSectionLayout {
                 findBar.activeMatch = result.activeMatch
             }
         }
+    }
+
+    BrowserSavedSessionContext {
+        id: savedSessionContext
+        webViewContext: webViewContext
+        tabs: tabs
+        defaultProfileParams: connectorBridge.defaultProfileParams
+        determineRealURL: (u) => root.browserRootStore.determineRealURL(u)
     }
 
     headerContent: ColumnLayout {
@@ -427,7 +399,7 @@ StatusSectionLayout {
                 currentTabLoading: _internal.currentTabLoading
                 currentTabIsDownloads: webStackView.children[tabs.currentIndex]?.isDownloadView ?? false
                 browserDappsModel: browserDappsProvider.model
-                historyModel: _internal.currentWebView && _internal.currentWebView.history.items
+                historyModel: _internal.currentWebView?.history?.items ?? null
             }
         }
 
@@ -444,7 +416,7 @@ StatusSectionLayout {
                 currentTabLoading: _internal.currentTabLoading
                 currentTabIsDownloads: webStackView.children[tabs.currentIndex]?.isDownloadView ?? false
                 browserDappsModel: browserDappsProvider.model
-                historyModel: _internal.currentWebView && _internal.currentWebView.history.items
+                historyModel: _internal.currentWebView?.history?.items ?? null
             }
         }
 
