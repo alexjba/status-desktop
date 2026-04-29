@@ -50,7 +50,16 @@ QtObject {
         readonly property int binanceSmartChainTestnetChainId: 97
 
         // Used for new chain advertisment
-        readonly property var newChains: []
+        readonly property var newChains: [chains.polygonZkEvmMainnetChainId,
+            chains.unichainMainnetChainId,
+            chains.katanaMainnetChainId,
+            chains.inkMainnetChainId,
+            chains.abstractMainnetChainId,
+            chains.zkSyncMainnetChainId,
+            chains.soneiumMainnetChainId,
+            chains.scrollMainnetChainId,
+            chains.blastMainnetChainId
+        ]
     }
 
     readonly property QtObject predefinedKeycardData: QtObject {
@@ -849,8 +858,8 @@ QtObject {
         readonly property string sepoliaInk: "Ink Sepolia"
         readonly property string aabstract: "Abstract"
         readonly property string sepoliaAbstract: "Abstract Sepolia"
-        readonly property string zkSync: "ZkSync"
-        readonly property string sepoliaZkSync: "ZkSync Sepolia"
+        readonly property string zkSync: "ZKsync"
+        readonly property string sepoliaZkSync: "ZKsync Sepolia"
         readonly property string soneium: "Soneium"
         readonly property string minatoSoneium: "Soneium Minato"
         readonly property string scroll: "Scroll"
