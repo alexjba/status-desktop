@@ -7519,11 +7519,6 @@
       <comment>DisplayNameValidators</comment>
       <translation>Adjective-animal Display Name formats are not allowed</translation>
     </message>
-    <message>
-      <source>This Display Name is already in use in one of your joined communities</source>
-      <comment>DisplayNameValidators</comment>
-      <translation>This Display Name is already in use in one of your joined communities</translation>
-    </message>
   </context>
   <context>
     <name>DisplaySeedPhrase</name>
@@ -8410,11 +8405,6 @@
       <source>Maybe later</source>
       <comment>EnablePushNotificationsPopup</comment>
       <translation>Maybe later</translation>
-    </message>
-    <message>
-      <source>Done</source>
-      <comment>EnablePushNotificationsPopup</comment>
-      <translation>Done</translation>
     </message>
     <message>
       <source>Open settings</source>
@@ -15682,6 +15672,11 @@
       <source>Web</source>
       <comment>MyProfileView</comment>
       <translation>Web</translation>
+    </message>
+    <message>
+      <source>This Display Name is already in use in one of your joined communities</source>
+      <comment>MyProfileView</comment>
+      <translation>This Display Name is already in use in one of your joined communities</translation>
     </message>
   </context>
   <context>

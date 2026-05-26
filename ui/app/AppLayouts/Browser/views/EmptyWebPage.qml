@@ -25,10 +25,10 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: 60
-        width: 294
-        height: 294
+        width: 240
+        height: 161
 
-        source: Assets.png("browser/pepehand")
+        source: Theme.palette.isDark ? Assets.png("browser/new_tab_dark") : Assets.png("browser/new_tab")
         cache: false
     }
 
@@ -50,4 +50,3 @@ Rectangle {
         onFavMenuRequested: (parent, pos, url, name) => root.favMenuRequested(parent, pos, url, name)
     }
 }
-

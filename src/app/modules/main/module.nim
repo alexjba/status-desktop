@@ -1687,15 +1687,18 @@ method displayEphemeralNotification*[T](
   self.view.ephemeralNotificationModel().addItem(item)
 
 method displayEphemeralNotification*[T](self: Module[T], title: string, subTitle: string, details: NotificationDetails) =
+  # Message toasts create high-frequency UI noise, so keep them disabled until their value is reassessed.
   if details.notificationType == NotificationType.NewMessage or
       details.notificationType == NotificationType.NewMessageWithPersonalMention or
-      details.notificationType == NotificationType.CommunityTokenPermissionCreated or
+      details.notificationType == NotificationType.NewMessageWithGlobalMention:
+    return
+
+  if details.notificationType == NotificationType.CommunityTokenPermissionCreated or
       details.notificationType == NotificationType.CommunityTokenPermissionUpdated or
       details.notificationType == NotificationType.CommunityTokenPermissionDeleted or
       details.notificationType == NotificationType.CommunityTokenPermissionCreationFailed or
       details.notificationType == NotificationType.CommunityTokenPermissionUpdateFailed or
-      details.notificationType == NotificationType.CommunityTokenPermissionDeletionFailed or
-      details.notificationType == NotificationType.NewMessageWithGlobalMention:
+      details.notificationType == NotificationType.CommunityTokenPermissionDeletionFailed:
     self.displayEphemeralNotification(
       title,
       subTitle,
@@ -2100,7 +2103,7 @@ proc runStartUsingKeycardForProfilePopup[T](self: Module[T]) =
 method signOutAndQuit*[T](self: Module[T]) =
   info "signOutAndQuit: logging out and quitting"
   self.controller.logout()
-  quit()
+  singletonInstance.application.quit()
 
 method checkAndPerformProfileMigrationIfNeeded*[T](self: Module[T]) =
   let keyUid = singletonInstance.userProfile.getKeyUid()
@@ -2108,7 +2111,8 @@ method checkAndPerformProfileMigrationIfNeeded*[T](self: Module[T]) =
   let profileKeypair = self.walletAccountService.getKeypairByKeyUid(keyUid)
   if profileKeypair.isNil:
     info "quit the app because of unresolved profile keypair", keyUid
-    quit() # quit the app
+    singletonInstance.application.quit()
+    return
   if not migrationNeeded:
     if not self.keycardSharedModule.isNil:
       let currentFlow = self.keycardSharedModule.getCurrentFlowType()

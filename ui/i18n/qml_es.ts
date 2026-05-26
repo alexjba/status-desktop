@@ -6168,10 +6168,6 @@ key pair. Keycard will be required for signing</source>
         <source>Adjective-animal Display Name formats are not allowed</source>
         <translation>No se permiten nombres públicos con el formato adjetivo-animal</translation>
     </message>
-    <message>
-        <source>This Display Name is already in use in one of your joined communities</source>
-        <translation>Este nombre público ya está en uso en una de tus comunidades unidas</translation>
-    </message>
 </context>
 <context>
     <name>DisplaySeedPhrase</name>
@@ -6895,10 +6891,6 @@ key pair. Keycard will be required for signing</source>
     <message>
         <source>Maybe later</source>
         <translation type="unfinished">Quizás más tarde</translation>
-    </message>
-    <message>
-        <source>Done</source>
-        <translation type="unfinished">Listo</translation>
     </message>
     <message>
         <source>Open settings</source>
@@ -12876,6 +12868,10 @@ al cargar</translation>
     <message>
         <source>Web</source>
         <translation>Web</translation>
+    </message>
+    <message>
+        <source>This Display Name is already in use in one of your joined communities</source>
+        <translation type="unfinished">Este nombre público ya está en uso en una de tus comunidades unidas</translation>
     </message>
 </context>
 <context>

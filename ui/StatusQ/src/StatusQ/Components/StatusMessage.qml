@@ -88,10 +88,11 @@ Control {
     signal senderNameClicked(var sender)
     signal replyProfileClicked(var sender, var mouse)
     signal replyMessageClicked(var mouse)
+    signal contextMenuRequested(point pos)
 
     signal addReactionClicked(var sender, var mouse)
     signal toggleReactionClicked(string hexcode)
-    signal imageClicked(var image, var mouse, var imageSource)
+    signal imageClicked(var image, var mouse, var imageSource, point pos)
     signal stickerClicked()
     signal resendClicked()
 
@@ -287,6 +288,7 @@ Control {
                             textField.onHoveredLinkChanged: {
                                 root.hoveredLink = hoveredLink;
                             }
+                            onContextMenuRequested: pos => root.contextMenuRequested(pos)
                         }
                     }
                     Loader {
@@ -315,6 +317,7 @@ Control {
                                     textField.onHoveredLinkChanged: {
                                         root.hoveredLink = hoveredLink
                                     }
+                                    onContextMenuRequested: pos => root.contextMenuRequested(pos)
                                 }
                             }
 
@@ -327,7 +330,7 @@ Control {
                                     albumCount: root.messageDetails.albumCount > 0 ? root.messageDetails.albumCount : 1
                                     imageWidth: Math.min(messageLayout.width / root.messageDetails.albumCount - 9 * (root.messageDetails.albumCount - 1), 144)
                                     shapeType: StatusImageMessage.ShapeType.LEFT_ROUNDED
-                                    onImageClicked: (image, mouse, imageSource) => root.imageClicked(image, mouse, imageSource)
+                                    onImageClicked: (image, mouse, imageSource, pos) => root.imageClicked(image, mouse, imageSource, pos)
                                 }
                             }
                         }
@@ -343,7 +346,7 @@ Control {
                                 model: attachmentsModel
                                 delegate: StatusImageMessage {
                                     source: model.source
-                                    onClicked: (image, mouse, imageSource) => root.imageClicked(image, mouse, imageSource)
+                                    onClicked: (image, mouse, imageSource, pos) => root.imageClicked(image, mouse, imageSource, pos)
                                     shapeType: StatusImageMessage.ShapeType.LEFT_ROUNDED
                                 }
                             }

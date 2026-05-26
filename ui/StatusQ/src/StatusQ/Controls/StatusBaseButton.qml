@@ -74,7 +74,7 @@ AbstractButton {
         readonly property color textColor: {
             if (!root.interactive || !root.enabled)
                 return root.disabledTextColor
-            if (root.hovered)
+            if (pointerHoverHandler.hovered)
                 return root.textHoverColor
             return root.textColor
         }
@@ -246,7 +246,7 @@ AbstractButton {
     StatusToolTip {
         id: tooltip
         objectName: "buttonTooltip"
-        visible: tooltip.text !== "" && root.hovered && !root.pressed
+        visible: tooltip.text !== "" && pointerHoverHandler.hovered && !root.pressed
         offset: -(tooltip.x + tooltip.width/2 - root.width/2)
     }
 
@@ -266,8 +266,8 @@ AbstractButton {
 
         StatusRoundIcon {
             asset.name: root.icon.name
-            asset.width: d.iconSize
-            asset.height: d.iconSize
+            asset.width: root.icon.width
+            asset.height: root.icon.height
             asset.color: root.icon.color
             asset.bgColor: root.asset.bgColor
         }

@@ -679,11 +679,10 @@ Control {
                     formatBalance: root.formatBalance
                     showLinkPreviewSettings: root.askToEnableLinkPreview
                     onImageRemoved: (index) => {
-                        //Just do a copy and replace the whole thing because it's a plain JS array and thre's no signal when a single item is removed
-                        let urls = root.fileUrlsAndSources
-                        if (urls.length > index && urls[index]) {
+                        // Spread into a new array so assigning back triggers the property change notification
+                        let urls = [...root.fileUrlsAndSources]
+                        if (index < urls.length)
                             urls.splice(index, 1)
-                        }
                         root.fileUrlsAndSources = urls
                         validateImages(root.fileUrlsAndSources)
                     }
@@ -723,7 +722,7 @@ Control {
 
                         topPadding: 9
                         bottomPadding: 9
-                        leftPadding: 0
+                        leftPadding: Theme.halfPadding // for the nav bar handle
                         rightPadding: Theme.halfPadding // for the scrollbar
 
                         messageLimit: root.messageLimit
@@ -794,7 +793,15 @@ Control {
             Theme.fontSizeOffset: ThemeUtils.fontSizeOffsetM
 
             styleButtonVisible: false
-            showFormatting: messageInputField.selectionStart !== messageInputField.selectionEnd
+
+            // On iOS, backspace temporarily creates a selection (selectionStart != selectionEnd)
+            // around the character being removed. The binding is configured as delayed to avoid
+            // briefly setting showFormatting=true and therefore unnecessarily triggering the
+            // animation within the toolbar.
+            Binding on showFormatting {
+                delayed: true
+                value: messageInputField.selectionStart !== messageInputField.selectionEnd
+            }
 
             cameraButton.visible: false
 

@@ -254,6 +254,11 @@ Loader {
         if (root.isChatBlocked && !d.addReactionAllowed)
             return
 
+        if (chatLogView?.moving)
+            return
+
+        d.contextMenu?.close() // will run destruction/cleanup
+
         const params = {
             myPublicKey: userProfile.pubKey,
             amIChatAdmin: root.amIChatAdmin,
@@ -270,7 +275,8 @@ Loader {
         }
 
         d.preventVirtualKeyboardOpening()
-        messageContextMenuComponent.createObject(root, params).popup(point)
+        d.contextMenu = messageContextMenuComponent.createObject(root, params)
+        d.contextMenu.popup(point)
     }
 
     function setMessageActive(messageId, active) {
@@ -493,15 +499,16 @@ Loader {
             d.emojiPopupOpened = true
         }
 
-        function onImageClicked(image, mouse, imageSource, url = "") {
+        function onImageClicked(image, mouse, imageSource, url = "", pos = undefined) {
             switch (mouse.button) {
             case Qt.LeftButton:
+            case Qt.NoButton: // touch event
                 d.preventVirtualKeyboardOpening()
                 Global.openImagePopup(image, url, false)
                 break;
             case Qt.RightButton:
                 d.preventVirtualKeyboardOpening()
-                Global.openMenu(imageContextMenuComponent, image, { imageSource, url })
+                Global.openMenu(imageContextMenuComponent, image, { imageSource, url }, pos)
                 break;
             }
         }
@@ -518,6 +525,16 @@ Loader {
         function preventVirtualKeyboardOpening() {
             if (!SystemUtils.androidKeyboardVisible && !SystemUtils.iosKeyboardVisible && !Qt.inputMethod.visible) {
                 root.forceActiveFocus()
+            }
+        }
+
+        // messageContextMenuComponent lifetime trackers
+        property var contextMenu: null
+        readonly property var _contextMenuConn: Connections {
+            target: root?.chatLogView ?? null
+            function onMovementEnded() {
+                // prevent spurios context menus coming from the Flickable, at the end of the move/drag operations
+                d.contextMenu?.close() // will run destruction/cleanup
             }
         }
     }
@@ -640,9 +657,11 @@ Loader {
             font.pixelSize: Theme.secondaryTextFontSize
             width: parent.width - 120
             horizontalAlignment: Text.AlignHCenter
-            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.left: parent.left
+            anchors.right: parent.right
             textFormat: Text.RichText
             topPadding: root.prevMessageIndex === 1 ? Theme.bigPadding : 0
+            wrapMode: Text.Wrap
         }
     }
 
@@ -863,8 +882,8 @@ Loader {
 
                 onEditCompleted: delegate.editCompletedHandler(newMsgText)
 
-                onImageClicked: (image, mouse, imageSource) => {
-                    d.onImageClicked(image, mouse, imageSource)
+                onImageClicked: (image, mouse, imageSource, pos) => {
+                    d.onImageClicked(image, mouse, imageSource, "", pos)
                 }
 
                 onLinkActivated: link => {
@@ -920,6 +939,7 @@ Loader {
                     root.messageStore.resendMessage(root.messageId)
                 }
 
+                onContextMenuRequested: pos => root.openMessageContextMenu(pos) // for StatusTextMessage which would eat the press events internally
                 TapHandler {
                     gesturePolicy: TapHandler.ReleaseWithinBounds // exclusive grab on press
                     acceptedDevices: PointerDevice.TouchScreen
