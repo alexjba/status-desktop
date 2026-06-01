@@ -55,7 +55,11 @@ GIT_ROOT ?= $(shell git rev-parse --show-toplevel 2>/dev/null || echo .)
 	mobile-build \
 	mobile-clean \
 	mobile-profile \
-	mobile-profile-mode-check
+	mobile-profile-mode-check \
+	flatpak \
+	flatpak-install \
+	flatpak-run \
+	flatpak-clean
 
 ifeq ($(NIM_PARAMS),)
 # "variables.mk" was not included, so we update the submodules.
@@ -811,6 +815,29 @@ $(STATUS_CLIENT_TARBALL): $(STATUS_CLIENT_APPIMAGE)
 ifdef LINUX_GPG_PRIVATE_KEY_FILE
 	scripts/sign-linux-file.sh $(STATUS_CLIENT_TARBALL)
 endif
+
+# Flatpak build configuration. Defined here so scripts/bundle-flatpak.sh
+# can read them from the environment without its own defaults.
+#   STATUS_CLIENT_FLATPAK : final single-file bundle produced by `flatpak build-bundle`
+#   FLATPAK_BUILD_DIR     : flatpak-builder's working dir; mirrors the in-sandbox /app at build time
+#   FLATPAK_REPO_DIR      : OSTree repo populated by flatpak-builder; input to `flatpak build-bundle`
+export STATUS_CLIENT_FLATPAK ?= pkg/status-desktop.flatpak
+export FLATPAK_BUILD_DIR     ?= tmp/linux/flatpak/build-dir
+export FLATPAK_REPO_DIR      ?= tmp/linux/flatpak/repo
+
+flatpak: $(STATUS_CLIENT_FLATPAK)
+$(STATUS_CLIENT_FLATPAK): nim_status_client
+	echo -e $(BUILD_MSG) "Flatpak"
+	scripts/bundle-flatpak.sh
+
+flatpak-install: $(STATUS_CLIENT_FLATPAK)
+	flatpak install --user -y --reinstall $(STATUS_CLIENT_FLATPAK)
+
+flatpak-run: flatpak-install
+	flatpak run app.status.desktop
+
+flatpak-clean:
+	rm -rf tmp/linux/flatpak pkg/*.flatpak
 
 MACOS_OUTER_BUNDLE := tmp/macos/dist/Status.app
 MACOS_INNER_BUNDLE := $(MACOS_OUTER_BUNDLE)/Contents/Frameworks/QtWebEngineCore.framework/Versions/Current/Helpers/QtWebEngineProcess.app

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Status
+Comment=Decentralised messaging, crypto wallet, and Web3 browser
+Exec=nim_status_client_wrapped
+Icon=app.status.desktop
+Type=Application
+Categories=Network;InstantMessaging;Chat;

@@ -1,0 +1,166 @@
+app-id: app.status.desktop
+runtime: org.freedesktop.Platform
+runtime-version: '24.08'
+sdk: org.freedesktop.Sdk
+command: nim_status_client_wrapped
+appstream-compose: false
+
+finish-args:
+  # Display
+  - --share=ipc
+  - --socket=x11
+  - --socket=wayland
+  - --device=dri
+  # Network, Audio & Camera
+  - --share=network
+  - --socket=pulseaudio
+  # Hardware (smartcards, cameras)
+  - --device=all
+  # PipeWire (camera access on modern Linux)
+  - --filesystem=xdg-run/pipewire-0:ro
+  # Filesystem
+  - --filesystem=xdg-download
+  - --filesystem=xdg-documents
+  - --filesystem=xdg-pictures
+  - --filesystem=xdg-videos
+  - --filesystem=~/.status-im:create
+  # D-Bus
+  - --talk-name=org.freedesktop.Notifications
+  - --talk-name=org.freedesktop.secrets
+  - --talk-name=org.kde.StatusNotifierWatcher
+  - --system-talk-name=org.freedesktop.UPower
+  # Environment
+  - --env=XCURSOR_PATH=/run/host/user-share/icons:/run/host/share/icons
+
+# Modules build inside the flatpak sandbox so they link against the
+# freedesktop runtime (org.freedesktop.Platform 24.08), not the host's
+# Ubuntu libs. They cannot live in init_app_dir.sh because that script
+# bundles for AppImage, where libs link against Ubuntu directly.
+modules:
+  # libcanberra for GTK notification sounds.
+  # The patch teaches it not to assume a GdkX11Display under Wayland.
+  - name: libcanberra
+    buildsystem: autotools
+    config-opts:
+      - --disable-static
+      - --disable-gtk-doc
+      - --disable-oss
+      - --enable-pulse
+      - --disable-udev
+      - --disable-gtk
+      - --enable-gtk3
+      - --disable-lynx
+    sources:
+      - type: archive
+        url: https://deb.debian.org/debian/pool/main/libc/libcanberra/libcanberra_0.30.orig.tar.xz
+        sha256: c2b671e67e0c288a69fc33dc1b6f1b534d07882c2aceed37004bf48c601afa72
+      - type: patch
+        path: flatpak/0001-gtk-Don-t-assume-all-GdkDisplays-are-GdkX11Displays-.patch
+
+  # PC/SC stack (smartcard daemon + USB CCID driver) for Keycard support.
+  # ipcdir=/tmp/pcscd/run matches what the wrapper script creates at runtime.
+  - name: pcsc-lite
+    buildsystem: meson
+    config-opts:
+      - -Dpolkit=false
+      - -Dlibsystemd=false
+      - -Dserial=false
+      - -Dipcdir=/tmp/pcscd/run
+      - -Dusbdropdir=/app/lib/pcsc/drivers
+    sources:
+      - type: archive
+        url: https://pcsclite.apdu.fr/files/pcsc-lite-2.2.3.tar.xz
+        sha256: cab1e62755713f62ce1b567954dbb0e9a7e668ffbc3bbad3ce85c53f8f4e00a4
+
+  - name: libusb
+    buildsystem: autotools
+    config-opts:
+      - --disable-static
+      - --disable-udev
+    sources:
+      - type: archive
+        url: https://github.com/libusb/libusb/releases/download/v1.0.27/libusb-1.0.27.tar.bz2
+        sha256: ffaa41d741a8a3bee244ac8e54a72ea05bf2879663c098c82fc5757853441575
+
+  - name: ccid
+    buildsystem: meson
+    build-options:
+      env:
+        PKG_CONFIG_PATH: /app/lib64/pkgconfig:/app/lib/pkgconfig
+    config-opts:
+      - -Dserial=false
+      - -Dudev-rules=false
+    sources:
+      - type: archive
+        url: https://ccid.apdu.fr/files/ccid-1.7.0.tar.xz
+        sha256: 2a040141109c1652caf06b41d9ed580b3ce706d478ebafd323b9085eb04e45a1
+
+  # Our app. build-commands runs flatpak-copy-to-app.sh inside the sandbox.
+  # build-args grants the build sandbox read-only access to the host so the
+  # script can pull Qt directly from /opt/qt and our compiled native libs
+  # from /workspace, instead of needing a 600 MB pre-staging copy.
+  - name: status-desktop
+    buildsystem: simple
+    build-options:
+      build-args:
+        # `host` covers /opt and the user's home (workspace lives there) so
+        # the script can read /opt/qt and /workspace directly.
+        - --filesystem=host:ro
+        # `host-os` exposes the host's /usr, /bin, /sbin, /lib* read-only at
+        # /run/host inside the sandbox. The freedesktop runtime doesn't ship
+        # the krb5 chain or NSS's PKCS#11 modules, so we read them from there.
+        - --filesystem=host-os:ro
+        # /tmp itself is bwrap-managed (mounting it ro breaks the sandbox), so
+        # we narrow-mount only the nim-sds dir for local-dev. In CI this is a
+        # no-op: NIM_SDS_SOURCE_DIR sits under WORKSPACE_TMP under home.
+        - --filesystem=/tmp/nim-sds:ro
+    build-commands:
+      - ./scripts/flatpak-copy-to-app.sh
+
+    sources:
+      # App binaries and data (built by `make nim_status_client`)
+      - type: file
+        path: bin/nim_status_client
+        dest: bin
+      - type: file
+        path: bin/StatusQ/libStatusQ.so
+        dest: bin/StatusQ
+      - type: file
+        path: resources.rcc
+
+      # Runtime entrypoint (sets env + starts pcscd + execs the app)
+      - type: file
+        path: flatpak-wrapper.sh
+
+      # Application icon (512x512 is the lowest size flatpak accepts here)
+      - type: file
+        path: status-512.png
+
+      # Desktop entry, installed verbatim by flatpak-copy-to-app.sh
+      - type: file
+        path: app.status.desktop.desktop
+
+      # Qt location handed in from the host (see bundle-flatpak.sh)
+      - type: file
+        path: tmp/linux/flatpak/in/qt.env
+
+      # In-sandbox install script
+      - type: file
+        path: scripts/flatpak-copy-to-app.sh
+        dest: scripts
+
+      # Native libraries we built ourselves. 
+      - type: file
+        path: vendor/status-go/build/bin/libstatus.so
+        dest: native-libs
+      - type: file
+        path: vendor/status-go/build/bin/libstatus.so.0
+        dest: native-libs
+      - type: file
+        path: vendor/status-keycard-go/build/libkeycard/libkeycard.so
+        dest: native-libs
+      # libsds.so is staged into tmp/linux/flatpak/in by bundle-flatpak.sh
+      # because it's built outside the workspace tree.
+      - type: file
+        path: tmp/linux/flatpak/in/libsds.so
+        dest: native-libs
