@@ -67,9 +67,10 @@ pipeline {
     timeout(time: 120, unit: 'MINUTES')
     /* manage how many builds we keep */
     buildDiscarder(logRotator(
-      daysToKeepStr: '60',
       numToKeepStr: '50',
-      artifactNumToKeepStr: '50',
+      daysToKeepStr: '60',
+      artifactNumToKeepStr: '10',
+      artifactDaysToKeepStr: '30',
     ))
     disableRestartFromStage()
   }

@@ -23,9 +23,10 @@ pipeline {
     timeout(time: 1240, unit: 'MINUTES')
     /* Limit builds retained */
     buildDiscarder(logRotator(
-      numToKeepStr: '30',
+      numToKeepStr: '10',
       daysToKeepStr: '30',
-      artifactNumToKeepStr: '10',
+      artifactNumToKeepStr: '1',
+      artifactDaysToKeepStr: '30',
     ))
     /* Allows combined build to copy */
     copyArtifactPermission('/status-app/*')
