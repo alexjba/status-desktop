@@ -1858,6 +1858,12 @@ Item {
                                     }
             }
 
+            Shortcut {
+                enabled: mainLayoutItem.openACCenterPanel
+                sequence: StandardKey.Cancel
+                onActivated: mainLayoutItem.openACCenterPanel = false
+            }
+
             Item {
                 id: sectionLayout
                 anchors.fill: parent
