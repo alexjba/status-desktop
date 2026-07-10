@@ -133,3 +133,7 @@ mobile/fastlane/result
 .claude/worktrees/
 .claude/scheduled_tasks*
 .claude/.DS_Store
+
+# sandcastle (containerized fleet agents)
+.sandcastle/.env
+.sandcastle/node_modules/

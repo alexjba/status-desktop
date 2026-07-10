@@ -1,0 +1,9 @@
+{
+  "name": "status-desktop-sandcastle",
+  "private": true,
+  "type": "module",
+  "devDependencies": {
+    "@ai-hero/sandcastle": "^0.12.0",
+    "tsx": "^4.19.0"
+  }
+}

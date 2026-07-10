@@ -45,6 +45,23 @@ If the base looks stale for your task (e.g. you're touching code known to churn 
 - Keep config commits out of feature PRs unless the PR is about config.
 - Before opening: build must pass locally for the affected platform; run relevant tests (`CLAUDE.md` → Testing).
 
+## Sandcastle fleet (containerized agents)
+
+`.sandcastle/` runs unattended agents in Docker via [sandcastle](https://github.com/mattpocock/sandcastle). Container agents run with full permissions — the sandbox (container + one worktree branch + fork-scoped tokens) is the guardrail.
+
+- **Scope:** code changes verifiable on Linux — `make tests-nim-linux`, status-go unit tests, qmllint, storybook tests. The image is the CI build image (Qt 6.11 + Nim + Go, native arm64) plus Claude Code and gh. Anything needing macOS builds, `make run`, or devices belongs to host cmux agents instead.
+- **Coordination:** GitHub only. Container agents work a branch named `agent+issue-<N>`, comment on the issue they claim, and open a fork-internal PR. They have no cmux access by design — mounting the cmux socket would let a "sandboxed" agent drive the host terminal.
+- **Credentials** (`.sandcastle/.env`, gitignored): `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token`, plus a fine-grained PAT scoped to this fork only. See `.env.example`.
+- **Launch (manual pilot):**
+
+  ```bash
+  docker build -t status-desktop-agent:local .sandcastle   # once, and after Dockerfile changes
+  cd .sandcastle && npm install                            # once
+  npx tsx run-issue.ts <issue-number>
+  ```
+
+  First run in a fresh worktree pays the full dependency build (submodules + `make update`-level work) — expect it to be slow; later runs on the same branch reuse the worktree.
+
 ## Upstreaming (human-only)
 
 Branches cut from fork `master` carry the config commits in their history, so a raw PR against `status-im/status-desktop` would include them. To extract a clean upstream branch, transplant only the branch's own commits:
