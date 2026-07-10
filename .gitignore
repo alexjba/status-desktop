@@ -127,3 +127,9 @@ mobile/fastlane/Preview.html
 mobile/fastlane/screenshots/
 mobile/fastlane/test_output/
 mobile/fastlane/result
+
+# Claude Code / agents — per-machine state (config itself is committed)
+.claude/settings.local.json
+.claude/worktrees/
+.claude/scheduled_tasks*
+.claude/.DS_Store
