@@ -37,7 +37,13 @@ If applicable, use RGR to complete the task.
 
 You are in a Linux (arm64) container with the full Qt 6.11 + Nim + Go toolchain. You CAN compile and run: `make tests-nim-linux` (Nim unit tests, `test/nim/`), status-go unit tests (`cd vendor/status-go && make test-unit`), and `make qml-lint`. You CANNOT run the desktop app, GUI/e2e tests, or macOS/iOS/Android builds — if the issue requires those, comment on the issue and stop.
 
-First build in a fresh worktree is slow (submodules + vendor deps) — that is expected; don't abort it.
+A fresh worktree has UNINITIALIZED submodules (`vendor/` will be empty). Before building or testing, run:
+
+```
+git submodule update --init --recursive
+```
+
+First build in a fresh worktree is slow (submodule fetch + vendor deps) — that is expected; don't abort it.
 
 # FEEDBACK LOOPS
 

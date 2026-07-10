@@ -50,8 +50,8 @@ If the base looks stale for your task (e.g. you're touching code known to churn 
 `.sandcastle/` runs unattended agents in Docker via [sandcastle](https://github.com/mattpocock/sandcastle). **The loop's behavior is defined by `.sandcastle/main.mts` and `.sandcastle/*-prompt.md` — those are the source of truth for what container agents do**, with review standards in `.sandcastle/CODING_STANDARDS.md`. This section is only the operator manual; don't duplicate loop mechanics here.
 
 - **Scope:** work verifiable on Linux (Nim/Go/QML code + their tests/lint). Anything needing macOS builds, `make run`, or devices belongs to host agents. Container agents have no cmux access by design.
-- **Task board:** label fork issues **`sandcastle`**; the loop picks up unblocked ones and closes them when merged.
-- **Credentials** (`.sandcastle/.env`, gitignored): `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token` (subscription quota — never set `ANTHROPIC_API_KEY` alongside it), plus `GH_TOKEN`: fine-grained PAT scoped to this fork, Issues RW + Metadata.
+- **Task board:** label fork issues **`sandcastle`**. The loop works unblocked ones, and the merge phase lands them autonomously: push branch → fork-internal PR (`Closes #N`) → wait for CI → merge when green (auto-merge if CI is slow; PR left open with an issue comment if CI fails).
+- **Credentials** (`.sandcastle/.env`, gitignored): `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token` (subscription quota — never set `ANTHROPIC_API_KEY` alongside it), plus `GH_TOKEN`: fine-grained PAT scoped to this fork — Contents RW (push), Pull requests RW (merge), Issues RW, Metadata.
 - **Run:**
 
   ```bash
@@ -63,7 +63,7 @@ If the base looks stale for your task (e.g. you're touching code known to churn 
   npm run sandcastle
   ```
 
-  The merge phase commits directly to the branch you have checked out — start from a clean `master` and review `git log` afterward. First run in a fresh worktree is slow (submodules + vendor deps).
+  The merge phase operates on your checkout (it checks branches out to rebase them, and fast-forwards local `master` to origin at the end) — start from a clean `master` and don't work in this checkout while the loop runs. First run in a fresh worktree is slow (submodules + vendor deps).
 
 ## Upstreaming (human-only)
 

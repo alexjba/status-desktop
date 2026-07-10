@@ -60,7 +60,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   // It outputs a <plan> JSON block — Output.object parses and validates it.
   // -------------------------------------------------------------------------
   const plan = await sandcastle.run({
-    sandbox: docker(),
+    sandbox: docker({ imageName: "status-desktop-agent:local" }),
     name: "planner",
     // One iteration is enough: the planner just needs to read and reason,
     // not write code. (Structured output requires maxIterations: 1.)
@@ -103,7 +103,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
     issues.map(async (issue) => {
       const sandbox = await sandcastle.createSandbox({
         branch: issue.branch,
-        sandbox: docker(),
+        sandbox: docker({ imageName: "status-desktop-agent:local" }),
       });
 
       try {
@@ -192,7 +192,7 @@ for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
   // uses to know which branches to merge and which issues to close.
   // -------------------------------------------------------------------------
   await sandcastle.run({
-    sandbox: docker(),
+    sandbox: docker({ imageName: "status-desktop-agent:local" }),
     name: "merger",
     maxIterations: 1,
     agent: sandcastle.claudeCode("claude-opus-4-8"),
