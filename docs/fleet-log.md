@@ -6,7 +6,8 @@ Smoke-test log for the Sandcastle containerized agent fleet
 ## 2026-07-10 — Pipeline smoke test (#1)
 
 This entry was produced by a **Sandcastle container agent** as an end-to-end
-validation of the container agent loop (issue claim → branch → commit → PR).
+validation of the container agent loop (issue claim → branch → commit →
+in-branch review → merge).
 
 Branch: `sandcastle/issue-1`. No code changes — documentation only.
 
