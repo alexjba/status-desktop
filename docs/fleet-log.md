@@ -3,6 +3,25 @@
 Smoke-test log for the Sandcastle containerized agent fleet
 (see `docs/AGENT-WORKFLOW.md`, "Sandcastle fleet" section).
 
+## 2026-07-10 — Autonomous merge validation (#5)
+
+This entry was produced by the **Sandcastle loop** and landed **WITHOUT
+human action**: the merger agent pushed the branch, opened the PR, waited
+for CI to go green, and merged it — auto-closing the issue on merge. It
+validates the autonomous merge phase (push → PR → CI → merge).
+
+Branch: `sandcastle/issue-5`. Documentation-only; no code.
+
+### Toolchain check (actual output from this container)
+
+```
+$ nim --version
+Nim Compiler Version 2.2.11 [Linux: arm64]
+
+$ go version
+go version go1.24.7 linux/arm64
+```
+
 ## 2026-07-10 — Toolchain versions from pinned image (#4)
 
 Follow-up to #1. That run executed in the wrong container image (no
