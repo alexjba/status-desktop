@@ -47,13 +47,12 @@ If the base looks stale for your task (e.g. you're touching code known to churn 
 
 ## Sandcastle fleet (containerized agents)
 
-`.sandcastle/` runs unattended agents in Docker via [sandcastle](https://github.com/mattpocock/sandcastle) using the parallel-planner loop (`.sandcastle/main.mts`). Container agents run with full permissions — the sandbox (container + worktree + scoped tokens) is the guardrail.
+`.sandcastle/` runs unattended agents in Docker via [sandcastle](https://github.com/mattpocock/sandcastle). **The loop's behavior is defined by `.sandcastle/main.mts` and `.sandcastle/*-prompt.md` — those are the source of truth for what container agents do**, with review standards in `.sandcastle/CODING_STANDARDS.md`. This section is only the operator manual; don't duplicate loop mechanics here.
 
-- **Task board:** GitHub issues on this fork labeled **`sandcastle`**. The planner reads all open `sandcastle` issues, builds a dependency graph, and works the unblocked ones in parallel.
-- **Flow per cycle:** plan → per-issue sandbox on branch `sandcastle/issue-<N>` (implementer, then reviewer against `.sandcastle/CODING_STANDARDS.md`) → a merger agent merges completed branches into the current host branch and closes their issues with "Completed by Sandcastle". No PRs in this flow — review happens in-branch before merge.
-- **Scope:** code changes verifiable on Linux — `make tests-nim-linux`, status-go unit tests, qmllint. The image is the CI build image (Qt 6.11 + Nim + Go, native arm64) plus Claude Code and gh. Anything needing macOS builds, `make run`, or devices belongs to host cmux agents instead. Container agents have no cmux access by design.
-- **Credentials** (`.sandcastle/.env`, gitignored): `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token` (subscription quota — never set `ANTHROPIC_API_KEY` alongside it), plus `GH_TOKEN`: a fine-grained PAT scoped to this fork with Issues RW + Metadata.
-- **Launch:**
+- **Scope:** work verifiable on Linux (Nim/Go/QML code + their tests/lint). Anything needing macOS builds, `make run`, or devices belongs to host agents. Container agents have no cmux access by design.
+- **Task board:** label fork issues **`sandcastle`**; the loop picks up unblocked ones and closes them when merged.
+- **Credentials** (`.sandcastle/.env`, gitignored): `CLAUDE_CODE_OAUTH_TOKEN` from `claude setup-token` (subscription quota — never set `ANTHROPIC_API_KEY` alongside it), plus `GH_TOKEN`: fine-grained PAT scoped to this fork, Issues RW + Metadata.
+- **Run:**
 
   ```bash
   # once, and after Dockerfile changes (UID/GID args are required — sandcastle
@@ -61,10 +60,10 @@ If the base looks stale for your task (e.g. you're touching code known to churn 
   docker build --build-arg AGENT_UID=$(id -u) --build-arg AGENT_GID=$(id -g) \
     -t status-desktop-agent:local .sandcastle
   npm install            # once (repo root)
-  npm run sandcastle     # runs plan → execute+review → merge cycles
+  npm run sandcastle
   ```
 
-  Label the issues you want worked with `sandcastle` before launching. Since the merger commits directly to the branch you have checked out, start from a clean `master` and review `git log` when the loop finishes. First run in a fresh worktree pays the full dependency build (submodules + vendor deps) — expect it to be slow.
+  The merge phase commits directly to the branch you have checked out — start from a clean `master` and review `git log` afterward. First run in a fresh worktree is slow (submodules + vendor deps).
 
 ## Upstreaming (human-only)
 
