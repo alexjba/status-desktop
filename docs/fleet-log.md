@@ -3,6 +3,37 @@
 Smoke-test log for the Sandcastle containerized agent fleet
 (see `docs/AGENT-WORKFLOW.md`, "Sandcastle fleet" section).
 
+## 2026-07-10 — Toolchain versions from pinned image (#4)
+
+Follow-up to #1. That run executed in the wrong container image (no
+toolchain), as recorded below. The agent image is now pinned
+(`status-desktop-agent:local`) and this entry validates the fix: the
+Nim, Go, and Qt toolchains are present on `PATH` in this container.
+
+### Toolchain versions (actual output from this container)
+
+```
+$ nim --version
+Nim Compiler Version 2.2.11 [Linux: arm64]
+Compiled at 2026-06-16
+Copyright (c) 2006-2026 by Andreas Rumpf
+
+git hash: 7b57dc1e54d2af08b12f995bb76cd44d663b3537
+active boot switches: -d:release
+
+$ go version
+go version go1.24.7 linux/arm64
+
+$ qmake --version
+QMake version 3.1
+Using Qt version 6.11.0 in /opt/qt/6.11.0/gcc_arm64/lib
+```
+
+All three toolchain binaries resolved on `PATH`, confirming the pinned
+image mounts the Qt 6.11 + Nim + Go build environment. The Linux
+verification loops (`make tests-nim-linux`, status-go unit tests,
+`make qml-lint`) can now be exercised for future runs.
+
 ## 2026-07-10 — Pipeline smoke test (#1)
 
 This entry was produced by a **Sandcastle container agent** as an end-to-end
