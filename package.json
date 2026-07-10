@@ -1,0 +1,14 @@
+{
+  "name": "status-desktop-fleet",
+  "private": true,
+  "scripts": {
+    "sandcastle": "tsx .sandcastle/main.mts"
+  },
+  "dependencies": {
+    "@ai-hero/sandcastle": "^0.12.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}

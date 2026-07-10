@@ -137,3 +137,6 @@ mobile/fastlane/result
 # sandcastle (containerized fleet agents)
 .sandcastle/.env
 .sandcastle/node_modules/
+
+# fleet orchestration deps (root package.json)
+/node_modules/
