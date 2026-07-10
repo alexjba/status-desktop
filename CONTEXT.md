@@ -4,6 +4,31 @@ Vocabulary for how the mobile app behaves across background/foreground transitio
 
 ## Language
 
+### External intake (share & link handling)
+
+Established while designing OS share-sheet / default-browser integration (upstream #20439).
+
+**External intake**:
+Any content the OS hands to the app: a Status deep link, an arbitrary web URL, or shared content (text and/or images). The umbrella term for everything arriving through the platform intent/open-URL layer.
+
+**Share target**:
+The app's entry in the OS share sheet. Declaring content types there is a contract — only declare what chat can actually send.
+
+**Direct-share shortcut**:
+A recent postable destination published to the OS so it appears as a one-tap target in the share sheet, above the app row. Lives outside the app (name + avatar visible to the OS even while the app isn't running); must be cleared on logout.
+
+**Postable destination**:
+A chat the logged-in user can post to: 1-1 chat, group chat, or community channel with post rights.
+
+**Destination picker**:
+The in-app screen where the user chooses a single postable destination for shared content — recency-sorted, searchable.
+
+**Pending intake slot**:
+The single, last-wins buffer holding an external intake until the app can act on it (`mainWindowReady`, i.e. after login or onboarding completes). Shared image streams are copied to app-private cache at receipt — the slot holds copied paths, never OS-managed URIs (their read grants expire).
+
+**Browser candidacy**:
+The app declaring it can handle arbitrary http/https links, making it appear in the OS link-chooser and default-browser lists. Every externally received web URL opens as a new browser tab; Status deep links keep their existing routing.
+
 ### Lifecycle
 
 **Wake**:
