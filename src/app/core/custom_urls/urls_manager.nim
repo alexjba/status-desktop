@@ -30,6 +30,8 @@ QtObject:
       self, SLOT("onUrlActivated(QString)"), ConnectionType.QueuedConnection)
     discard QObject.connect(urlSchemeEvent, SIGNAL("shareTextActivated(QString)"),
       self, SLOT("onShareTextActivated(QString)"), ConnectionType.QueuedConnection)
+    discard QObject.connect(urlSchemeEvent, SIGNAL("appForegrounded()"),
+      self, SLOT("onAppForegrounded()"), ConnectionType.QueuedConnection)
 
   proc delete*(self: UrlsManager) =
     self.QObject.delete
@@ -73,6 +75,13 @@ QtObject:
       .multiReplace(("\r\n", ""))
       .multiReplace(("\n", ""))
     self.intake.submit(ExternalIntakeEvent(kind: ExternalIntakeUrl, url: url))
+
+  proc onAppForegrounded*(self: UrlsManager) {.slot.} =
+    ## Wake-less fallback (iOS): the app came to the foreground; if the share
+    ## extension left a payload in the slot because its unsupported openURL
+    ## wake failed or was dropped, deliver it now instead of waiting for the
+    ## next full app start. No-op when the slot is inactive or empty.
+    self.consumePendingIntake()
 
   proc onShareTextActivated*(self: UrlsManager, text: string) {.slot.} =
     ## Share-target hand-off (Android SEND intent): shared text/links launch
