@@ -235,6 +235,7 @@ add_library(StatusQ ${LIB_TYPE}
         src/urlutils.cpp
         src/statuslayoutstate.cpp
         src/ios_utils.h
+        include/StatusQ/shareintake.h
 
         src/StatusQ/Controls/NativeSwipeHandlerItem.cpp
         src/StatusQ/Controls/NativeIndicatorItem.cpp
@@ -273,6 +274,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     qt_import_plugins(${PROJECT_NAME} INCLUDE Qt6::QDarwinCameraPermissionPlugin)
     target_sources(StatusQ PRIVATE
         src/shareutils_other.cpp
+        src/shareintake_other.cpp
         src/keychain_apple.mm
         src/osnotification_apple.mm
         src/StatusQ/Controls/NativeSwipeHandlerItem_macos.mm
@@ -292,6 +294,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
     target_sources(StatusQ PRIVATE
         src/ios_utils.mm
         src/shareutils_ios.mm
+        src/shareintake_ios.mm
         src/keychain_apple.mm
         src/StatusQ/Controls/NativeSwipeHandlerItem_ios.mm
         src/StatusQ/Controls/NativeIndicatorItem_ios.mm
@@ -305,10 +308,12 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
         src/StatusQ/Controls/NativeSwipeHandlerItem_android.cpp
         src/StatusQ/Controls/NativeIndicatorItem_android.cpp
         src/shareutils_android.cpp
+        src/shareintake_other.cpp
     )
 else ()
     target_sources(StatusQ PRIVATE
         src/shareutils_other.cpp
+        src/shareintake_other.cpp
         src/keychain_other.cpp
     )
 endif ()
