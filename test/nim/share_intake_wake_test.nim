@@ -9,8 +9,9 @@
 ##    blank/unknown-type/malformed payloads are cleared and dispatch nothing;
 ##  - appReady delivers a payload left behind when the wake never arrived
 ##    (degraded fallback: next manual app open, no data loss);
-##  - the Android SEND hand-off (shareTextActivated signal) reaches
-##    SIGNAL_EXTERNAL_SHARE_INTAKE, with pre-ready buffering.
+##  - the Android SEND/SEND_MULTIPLE hand-off (shareActivated signal) reaches
+##    SIGNAL_EXTERNAL_SHARE_INTAKE — text-only and with cached image paths —
+##    with pre-ready buffering.
 
 import unittest, os
 import nimqml
@@ -51,8 +52,11 @@ suite "share_intake_wake":
     let slot = newPendingIntakeSlot(slotDir)
     let manager = newUrlsManager(events, urlSchemeEvent, singleInstance, "", slot)
     var sharedTexts: seq[string] = @[]
+    var sharedImagePaths: seq[seq[string]] = @[]
     events.on(SIGNAL_EXTERNAL_SHARE_INTAKE) do(e: Args):
-      sharedTexts.add(ExternalShareIntakeArgs(e).text)
+      let args = ExternalShareIntakeArgs(e)
+      sharedTexts.add(args.text)
+      sharedImagePaths.add(args.imagePaths)
 
   teardown:
     removeDir(slotDir)
@@ -118,6 +122,16 @@ suite "share_intake_wake":
     check not fileExists(slot.filePath())
     check sharedTexts.len == 0
 
+  test "slot share payload with image paths reaches the intake seam":
+    manager.appReady()
+    slot.write("""{"type":"share","text":"pic","imagePaths":["/cache/share-intake/img.png"]}""")
+
+    statusq_urlscheme_emit_deeplink(urlSchemeEvent.vptr, ShareIntakeWakeUrl.cstring)
+    processEventsUntil(proc(): bool = not fileExists(slot.filePath()))
+
+    check sharedTexts == @["pic"]
+    check sharedImagePaths == @[@["/cache/share-intake/img.png"]]
+
   test "malformed slot payload is cleared and dispatches nothing":
     manager.appReady()
     slot.write("not json at all")
@@ -131,14 +145,36 @@ suite "share_intake_wake":
   test "android share text reaches the intake seam once ready":
     manager.appReady()
 
-    statusq_urlscheme_emit_sharetext(urlSchemeEvent.vptr,
-      "look at this https://example.com/article")
+    statusq_urlscheme_emit_share(urlSchemeEvent.vptr,
+      "look at this https://example.com/article", "[]")
     processEventsUntil(proc(): bool = sharedTexts.len > 0)
 
     check sharedTexts == @["look at this https://example.com/article"]
+    check sharedImagePaths == @[newSeq[string]()]
+
+  test "android share with cached image paths reaches the intake seam":
+    manager.appReady()
+
+    statusq_urlscheme_emit_share(urlSchemeEvent.vptr, "gallery caption",
+      """["/cache/share-intake/a.png","/cache/share-intake/b.jpg"]""")
+    processEventsUntil(proc(): bool = sharedTexts.len > 0)
+
+    check sharedTexts == @["gallery caption"]
+    check sharedImagePaths ==
+      @[@["/cache/share-intake/a.png", "/cache/share-intake/b.jpg"]]
+
+  test "android image share with no text reaches the intake seam":
+    manager.appReady()
+
+    statusq_urlscheme_emit_share(urlSchemeEvent.vptr, "",
+      """["/cache/share-intake/screenshot.png"]""")
+    processEventsUntil(proc(): bool = sharedTexts.len > 0)
+
+    check sharedTexts == @[""]
+    check sharedImagePaths == @[@["/cache/share-intake/screenshot.png"]]
 
   test "share text before appReady is buffered and delivered at appReady":
-    statusq_urlscheme_emit_sharetext(urlSchemeEvent.vptr, "pre-login share")
+    statusq_urlscheme_emit_share(urlSchemeEvent.vptr, "pre-login share", "[]")
     drainEvents() # let the queued slot run; the seam must buffer, not dispatch
     check sharedTexts.len == 0
 
