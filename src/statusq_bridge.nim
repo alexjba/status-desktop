@@ -19,6 +19,7 @@ proc statusq_urlscheme_create*(): pointer {.cdecl, importc.}
 proc statusq_urlscheme_set_instance*(obj: pointer) {.cdecl, importc.}
 proc statusq_urlscheme_install_event_filter*(obj: pointer) {.cdecl, importc.}
 proc statusq_urlscheme_emit_deeplink*(obj: pointer, url: cstring) {.cdecl, importc.}
+proc statusq_urlscheme_emit_sharetext*(obj: pointer, text: cstring) {.cdecl, importc.}
 proc statusq_urlscheme_delete*(obj: pointer) {.cdecl, importc.}
 
 # Pending intake slot dir (iOS share-extension App Group hand-off); "" on

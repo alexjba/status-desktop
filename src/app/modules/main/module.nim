@@ -146,6 +146,7 @@ type
     pendingSpectateRequest: SpectateRequest
     statusDeepLinkToActivate: string
     urlToOpenInNewBrowserTab: string
+    shareTextToDeliver: string
 
 {.push warning[Deprecated]: off.}
 
@@ -153,6 +154,7 @@ type
 proc switchToContactOrDisplayUserProfile[T](self: Module[T], publicKey: string)
 method activateStatusDeepLink*[T](self: Module[T], statusDeepLink: string)
 method openUrlInNewBrowserTab*[T](self: Module[T], url: string)
+method launchShareFlow*[T](self: Module[T], text: string)
 proc checkIfWeHaveNotifications[T](self: Module[T])
 proc createMemberItem[T](self: Module[T], memberId: string, requestId: string, state: MembershipRequestState, role: MemberRole, airdropAddress: string = ""): MemberItem
 proc getAllCommunityMemberItems[T](self: Module[T], community: CommunityDto): seq[MemberItem]
@@ -1014,6 +1016,11 @@ method onChatsLoaded*[T](
     let url = self.urlToOpenInNewBrowserTab
     self.urlToOpenInNewBrowserTab = ""
     self.openUrlInNewBrowserTab(url)
+
+  if self.shareTextToDeliver != "":
+    let text = self.shareTextToDeliver
+    self.shareTextToDeliver = ""
+    self.launchShareFlow(text)
 
 method onCommunityDataLoaded*[T](
   self: Module[T],
@@ -2103,6 +2110,16 @@ method openUrlInNewBrowserTab*[T](self: Module[T], url: string) =
     self.urlToOpenInNewBrowserTab = url
     return
   self.view.emitOpenUrlInNewBrowserTabSignal(url)
+
+method launchShareFlow*[T](self: Module[T], text: string) =
+  ## Share route of the external intake seam: content shared to Status from
+  ## another app launches the share flow (destination picker -> preview ->
+  ## send). Buffered until the main view is loaded, mirroring the deep-link
+  ## and browser-tab routes above.
+  if not self.chatsLoaded:
+    self.shareTextToDeliver = text
+    return
+  self.view.emitLaunchShareFlowSignal(text)
 
 method onDeactivateChatLoader*[T](self: Module[T], sectionId: string, chatId: string) =
   if (sectionId.len > 0 and self.chatSectionModules.contains(sectionId)):
