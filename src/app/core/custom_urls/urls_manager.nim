@@ -3,8 +3,11 @@ import ./url_scheme_event
 import app/global/single_instance
 import ../eventemitter
 import ../intake/external_intake
+import ../intake/pending_intake_slot
 
 import ../../global/app_signals
+
+export ShareIntakeWakeUrl
 
 logScope:
   topics = "urls-manager"
@@ -16,6 +19,7 @@ QtObject:
   type UrlsManager* = ref object of QObject
     events: EventEmitter
     intake: ExternalIntake
+    intakeSlot: PendingIntakeSlot
 
   proc setup(self: UrlsManager, urlSchemeEvent: UrlSchemeEvent,
       singleInstance: SingleInstance) =
@@ -28,6 +32,16 @@ QtObject:
   proc delete*(self: UrlsManager) =
     self.QObject.delete
 
+  proc consumePendingIntake(self: UrlsManager) =
+    ## Delivers (reads + clears) the App Group pending intake slot written by
+    ## the iOS share extension. Do-nothing slice (#13): the payload is only
+    ## logged; later slices feed it into the external intake seam.
+    if self.intakeSlot.isNil:
+      return
+    let payload = self.intakeSlot.take()
+    if payload.len > 0:
+      info "share intake delivered from pending intake slot", payload
+
   proc convertInternalLinkToExternal*(self: UrlsManager, statusDeepLink: string): string =
     let idx = find(statusDeepLink, StatusInternalLink)
     result = statusDeepLink
@@ -36,17 +50,25 @@ QtObject:
       result = StatusExternalLink & result
 
   proc onUrlActivated*(self: UrlsManager, urlRaw: string) {.slot.} =
+    if urlRaw.strip().startsWith(ShareIntakeWakeUrl):
+      # Wake ping from the share extension — not a routable deep link; the
+      # actual payload travels through the App Group pending intake slot.
+      self.consumePendingIntake()
+      return
+
     let url = urlRaw.multiReplace((" ", ""))
       .multiReplace(("\r\n", ""))
       .multiReplace(("\n", ""))
     self.intake.submit(ExternalIntakeEvent(kind: ExternalIntakeUrl, url: url))
 
   proc newUrlsManager*(events: EventEmitter, urlSchemeEvent: UrlSchemeEvent,
-      singleInstance: SingleInstance, protocolUriOnStart: string): UrlsManager =
+      singleInstance: SingleInstance, protocolUriOnStart: string,
+      intakeSlot: PendingIntakeSlot = nil): UrlsManager =
     new(result)
     result.setup(urlSchemeEvent, singleInstance)
     result.events = events
     result.intake = newExternalIntake()
+    result.intakeSlot = intakeSlot
 
     let self = result
     result.intake.onDeepLinkUrl = proc(url: string) =
@@ -62,3 +84,7 @@ QtObject:
 
   proc appReady*(self: UrlsManager) =
     self.intake.setReady()
+    # Degraded fallback: if the extension's unsupported openURL wake never
+    # arrived (killed, or the OS dropped it), the payload is still sitting in
+    # the slot — deliver it on this (manual) open. No-op when the slot is empty.
+    self.consumePendingIntake()

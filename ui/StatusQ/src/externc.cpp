@@ -10,6 +10,7 @@
 
 #include <StatusQ/typesregistration.h>
 #include <StatusQ/osnotification.h>
+#include <StatusQ/shareintake.h>
 #include <StatusQ/urlschemeevent.h>
 #ifdef MONITORING
 #include <QProcessEnvironment>
@@ -132,6 +133,14 @@ Q_DECL_EXPORT void statusq_urlscheme_emit_deeplink(void* obj, const char* url) {
 
 Q_DECL_EXPORT void statusq_urlscheme_delete(void* obj) {
     static_cast<QObject*>(obj)->deleteLater();
+}
+
+// Pending intake slot directory (iOS share-extension App Group hand-off);
+// "" on platforms without an App Group container. The returned pointer stays
+// valid for the process lifetime.
+Q_DECL_EXPORT const char* statusq_shareintake_pending_dir() {
+    static const QByteArray dir = Status::ShareIntake::pendingIntakeDir().toUtf8();
+    return dir.constData();
 }
 
 #ifdef MONITORING

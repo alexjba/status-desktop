@@ -21,6 +21,10 @@ proc statusq_urlscheme_install_event_filter*(obj: pointer) {.cdecl, importc.}
 proc statusq_urlscheme_emit_deeplink*(obj: pointer, url: cstring) {.cdecl, importc.}
 proc statusq_urlscheme_delete*(obj: pointer) {.cdecl, importc.}
 
+# Pending intake slot dir (iOS share-extension App Group hand-off); "" on
+# platforms without an App Group container. Pointer valid for process lifetime.
+proc statusq_shareintake_pending_dir*(): cstring {.cdecl, importc.}
+
 when defined(monitoring):
   proc statusq_registerMonitoringType*() {.cdecl, importc.}
   proc statusq_initializeMonitoring*(engine: pointer) {.cdecl, importc.}
