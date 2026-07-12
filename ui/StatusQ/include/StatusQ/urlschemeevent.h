@@ -12,6 +12,7 @@ namespace Status
 
         public:
             void emitDeepLinkToQt(const QString& url);
+            void emitShareTextToQt(const QString& text);
             static void setInstance(UrlSchemeEvent* instance);
 
             void registerUrlHandler();
@@ -24,6 +25,7 @@ namespace Status
 
         signals:
             void urlActivated(const QString& url);
+            void shareTextActivated(const QString& text);
     };
 }
 

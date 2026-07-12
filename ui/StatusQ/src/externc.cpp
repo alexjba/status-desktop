@@ -131,6 +131,10 @@ Q_DECL_EXPORT void statusq_urlscheme_emit_deeplink(void* obj, const char* url) {
     static_cast<Status::UrlSchemeEvent*>(obj)->emitDeepLinkToQt(QString::fromUtf8(url));
 }
 
+Q_DECL_EXPORT void statusq_urlscheme_emit_sharetext(void* obj, const char* text) {
+    static_cast<Status::UrlSchemeEvent*>(obj)->emitShareTextToQt(QString::fromUtf8(text));
+}
+
 Q_DECL_EXPORT void statusq_urlscheme_delete(void* obj) {
     static_cast<QObject*>(obj)->deleteLater();
 }
