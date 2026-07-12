@@ -17,10 +17,10 @@ import std/os
 
 const
   PendingIntakeFileName* = "share.json"
-  ## Wake ping sent by the share extension via openURL. Carries no data — the
-  ## payload travels through the slot file. Must match kWakeUrl in
-  ## mobile/ios/shareExtension/ShareViewController.m.
   ShareIntakeWakeUrl* = "status-app://share-intake"
+    ## Wake ping sent by the share extension via openURL. Carries no data — the
+    ## payload travels through the slot file. Must match kWakeUrl in
+    ## mobile/ios/shareExtension/ShareViewController.m.
 
 type PendingIntakeSlot* = ref object
   slotDir: string
@@ -53,10 +53,11 @@ proc write*(self: PendingIntakeSlot, payload: string) =
 
 proc take*(self: PendingIntakeSlot): string =
   ## Reads and clears the pending payload; "" when there is none.
-  if not self.isActive() or not fileExists(self.filePath()):
+  let path = self.filePath()
+  if not self.isActive() or not fileExists(path):
     return ""
   try:
-    result = readFile(self.filePath())
-    removeFile(self.filePath())
+    result = readFile(path)
+    removeFile(path)
   except CatchableError:
     result = ""
