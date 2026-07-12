@@ -12,7 +12,7 @@ namespace Status
 
         public:
             void emitDeepLinkToQt(const QString& url);
-            void emitShareTextToQt(const QString& text);
+            void emitShareToQt(const QString& text, const QStringList& imagePaths);
             void emitAppForegroundedToQt();
             static void setInstance(UrlSchemeEvent* instance);
 
@@ -27,7 +27,10 @@ namespace Status
 
         signals:
             void urlActivated(const QString& url);
-            void shareTextActivated(const QString& text);
+            // Share-target hand-off: shared text/links plus app-private cached
+            // copies of shared images, as a JSON array of absolute paths (a
+            // JSON string keeps the Nim slot signature to plain QStrings).
+            void shareActivated(const QString& text, const QString& imagePathsJson);
             void appForegrounded();
     };
 }

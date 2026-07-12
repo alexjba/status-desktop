@@ -2,6 +2,8 @@
 #include <QObject>
 #include <QString>
 #include <QByteArray>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlNetworkAccessManagerFactory>
@@ -132,8 +134,17 @@ Q_DECL_EXPORT void statusq_urlscheme_emit_deeplink(void* obj, const char* url) {
     static_cast<Status::UrlSchemeEvent*>(obj)->emitDeepLinkToQt(QString::fromUtf8(url));
 }
 
-Q_DECL_EXPORT void statusq_urlscheme_emit_sharetext(void* obj, const char* text) {
-    static_cast<Status::UrlSchemeEvent*>(obj)->emitShareTextToQt(QString::fromUtf8(text));
+// imagePathsJson: JSON array of absolute paths of app-private cached copies
+// of the shared images (may be null or "[]" for text-only shares).
+Q_DECL_EXPORT void statusq_urlscheme_emit_share(void* obj, const char* text, const char* imagePathsJson) {
+    QStringList paths;
+    if (imagePathsJson) {
+        const auto doc = QJsonDocument::fromJson(QByteArray(imagePathsJson));
+        const auto array = doc.array();
+        for (const auto& value : array)
+            paths << value.toString();
+    }
+    static_cast<Status::UrlSchemeEvent*>(obj)->emitShareToQt(QString::fromUtf8(text), paths);
 }
 
 Q_DECL_EXPORT void statusq_urlscheme_emit_appforegrounded(void* obj) {
