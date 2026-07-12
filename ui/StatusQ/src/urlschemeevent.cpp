@@ -10,6 +10,7 @@ using namespace Status;
 #endif // Q_OS_ANDROID
 
 #include <QDesktopServices>
+#include <QGuiApplication>
 
 void UrlSchemeEvent::registerUrlHandler()
 {
@@ -41,6 +42,28 @@ bool UrlSchemeEvent::eventFilter(QObject* obj, QEvent* event)
 #endif
 
     return QObject::eventFilter(obj, event);
+}
+
+void UrlSchemeEvent::watchApplicationState()
+{
+    // Pending intake slot contract (src/app/core/intake/pending_intake_slot.nim):
+    // the host takes the payload when it comes to the foreground. This covers
+    // the wake-less iOS fallback for an already-running app — the share
+    // extension wrote the slot but its unsupported openURL wake failed or was
+    // dropped. Harmless elsewhere: consuming an inactive/empty slot is a no-op.
+    // Under QCoreApplication (unit tests) there is no application state; skip.
+    if (auto* app = qobject_cast<QGuiApplication*>(QCoreApplication::instance())) {
+        connect(app, &QGuiApplication::applicationStateChanged, this,
+                [this](Qt::ApplicationState state) {
+                    if (state == Qt::ApplicationActive)
+                        emit appForegrounded();
+                });
+    }
+}
+
+void UrlSchemeEvent::emitAppForegroundedToQt()
+{
+    emit appForegrounded();
 }
 
 void UrlSchemeEvent::emitDeepLinkToQt(const QString& url)

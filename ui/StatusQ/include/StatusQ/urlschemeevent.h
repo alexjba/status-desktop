@@ -13,9 +13,11 @@ namespace Status
         public:
             void emitDeepLinkToQt(const QString& url);
             void emitShareTextToQt(const QString& text);
+            void emitAppForegroundedToQt();
             static void setInstance(UrlSchemeEvent* instance);
 
             void registerUrlHandler();
+            void watchApplicationState();
 
         protected:
             bool eventFilter(QObject* obj, QEvent* event) override;
@@ -26,6 +28,7 @@ namespace Status
         signals:
             void urlActivated(const QString& url);
             void shareTextActivated(const QString& text);
+            void appForegrounded();
     };
 }
 
