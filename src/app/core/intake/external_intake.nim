@@ -62,10 +62,10 @@ proc routeForUrl*(url: string): UrlIntakeRoute =
   ## Status links keep their deep-link behavior; any other web URL opens in a
   ## browser tab. Non-web schemes keep the historical deep-link path (the
   ## deep-link pipeline already falls back for unsupported links).
+  if isStatusWebUrl(url):
+    return UrlIntakeDeepLink
   let scheme = parseUri(url).scheme.toLowerAscii()
   if scheme == "http" or scheme == "https":
-    if isStatusWebUrl(url):
-      return UrlIntakeDeepLink
     return UrlIntakeBrowserTab
   return UrlIntakeDeepLink
 
