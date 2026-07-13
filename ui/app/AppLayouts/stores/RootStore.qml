@@ -221,6 +221,10 @@ QtObject {
                 root.launchShareFlow(text, JSON.parse(imagePathsJson), destinationChatId)
             }
 
+            function onMessageSentToChat(chatId) {
+                root.messageSentToChat(chatId)
+            }
+
             function onOpenActivityCenter(group) {
                 root.activityCenterStore.setActiveNotificationGroup(group)
                 root.openActivityCenter()
@@ -262,6 +266,9 @@ QtObject {
     signal openUrl(string link)
     signal openUrlInNewBrowserTab(string link)
     signal launchShareFlow(string text, var imagePaths, string destinationChatId)
+    // A message the user sent to chatId was accepted (in-app and share-flow
+    // sends alike) — the per-send hook behind the iOS share-sheet suggestions
+    signal messageSentToChat(string chatId)
     signal openActivityCenter()
     signal wcLinkActivated(string link)
     signal displayUserProfile(string publicKey)

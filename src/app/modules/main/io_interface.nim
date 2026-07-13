@@ -343,6 +343,9 @@ method launchShareFlow*(self: AccessInterface, text: string, imagePaths: seq[str
 method releaseShareIntakeFiles*(self: AccessInterface, imagePathsJson: string) {.base.} =
   raise newException(ValueError, "No implementation available")
 
+method onMessageSent*(self: AccessInterface, chatId: string) {.base.} =
+  raise newException(ValueError, "No implementation available")
+
 method setCommunityIdToSpectate*(self: AccessInterface, commnityId: string) {.base.} =
   raise newException(ValueError, "No implementation available")
 
