@@ -17,6 +17,9 @@ The app's entry in the OS share sheet. Declaring content types there is a contra
 **Direct-share shortcut**:
 A recent postable destination published to the OS so it appears as a one-tap target in the share sheet, above the app row. Lives outside the app (name + avatar visible to the OS even while the app isn't running); must be cleared on logout.
 
+**Send-message intent donation**:
+The iOS analog of a direct-share shortcut: after each successful send, the destination (conversation id + name + avatar) is donated to the OS as an INSendMessageIntent, and iOS surfaces donated conversations as one-tap suggestion chips in the share sheet (the share extension declares INSendMessageIntent support). Same privacy rule: all donated interactions are deleted on logout; they repopulate organically as the user sends.
+
 **Postable destination**:
 A chat the logged-in user can post to: 1-1 chat, group chat, or community channel with post rights.
 
