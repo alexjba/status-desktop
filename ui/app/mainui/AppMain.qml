@@ -2740,6 +2740,14 @@ Item {
             closePolicy: Popup.NoAutoClose
             padding: Theme.padding
 
+            background: StatusDialogBackground {
+                radius: appMain.isPortraitMode ? 0 : Theme.radius
+            }
+
+            Overlay.modal: Rectangle {
+                color: Theme.palette.backdropColor
+            }
+
             Component.onCompleted: applyPreselectedDestination()
 
             onClosed: shareFlowLoader.active = false
