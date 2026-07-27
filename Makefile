@@ -1107,6 +1107,11 @@ nim-test-run/test/nim/collectibles_selector_bench.nim: | statusq
 nim-test-run/test/nim/collectibles_selector_model_bench.nim: NIM_PARAMS += --passL:"-L$(STATUSQ_LIB_PATH)" --passL:"-lStatusQ"
 nim-test-run/test/nim/collectibles_selector_model_bench.nim: | statusq
 
+# chat_search_model_test imports app_search/io_interface, whose service imports
+# reach signal_handler -> statusq_invoke_method_queued (like the tests above).
+nim-test-run/test/nim/chat_search_model_test.nim: NIM_PARAMS += --passL:"-L$(STATUSQ_LIB_PATH)" --passL:"-lStatusQ"
+nim-test-run/test/nim/chat_search_model_test.nim: | statusq
+
 # Model-spy tests call inspection accessors gated behind
 # `when defined(testing) or defined(QT_MODEL_SPY)` or assert on the granular
 # signals model_sync records only under QT_MODEL_SPY. The define is applied
