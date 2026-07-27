@@ -47,15 +47,16 @@ Item {
     property var stickersPopup
     property bool areTestNetworksEnabled
 
-    property string activeChatId: parentModule && parentModule.activeItem.id
-    property int chatsCount: parentModule && parentModule.model ? parentModule.model.count : 0
-    property int activeChatType: parentModule && parentModule.activeItem.type
+    readonly property string activeChatId: parentModule && parentModule.activeItem.id
+    readonly property int chatsCount: parentModule && parentModule.model ? parentModule.model.count : 0
+    readonly property int activeChatType: rootStore.activeChatType
     property bool stickersLoaded: false
     property bool canPost: true
     property var viewAndPostHoldingsModel
     property bool amISectionAdmin: false
     property bool amIBanned: false
     property bool sendViaPersonalChatEnabled
+    property bool messageLinkSharingEnabled
     property string disabledTooltipText
     property bool paymentRequestFeatureEnabled
     property bool joined
@@ -330,6 +331,7 @@ Item {
                         stickersLoaded: root.stickersLoaded
                         isBlocked: model.blocked
                         sendViaPersonalChatEnabled: root.sendViaPersonalChatEnabled
+                        messageLinkSharingEnabled: root.messageLinkSharingEnabled
                         disabledTooltipText: root.disabledTooltipText
                         areTestNetworksEnabled: root.areTestNetworksEnabled
                         extraLeftPadding: root.extraLeftPadding
@@ -420,6 +422,7 @@ Item {
                     textInput.readOnly: d.sendingInProgress
 
                     usersModel: root.usersModel
+                    usersModelIncludeAtEveryone: root.activeChatType !== Constants.chatType.oneToOne
                     linkPreviewModel: !!d.activeChatContentModule ? d.activeChatContentModule.inputAreaModule.linkPreviewModel : null
                     paymentRequestModel: !!d.activeChatContentModule ? d.activeChatContentModule.inputAreaModule.paymentRequestModel : null
                     formatBalance: d.formatBalance

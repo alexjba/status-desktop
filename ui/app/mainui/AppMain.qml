@@ -62,6 +62,14 @@ import MobileUI
 Item {
     id: appMain
 
+    focus: true
+    Component.onCompleted: {
+        // Ensure the app is focused on start to properly receive key events
+        appMain.forceActiveFocus()
+        // record only the initial value - no binding
+        d.lastRecordedSectionId = appMain.rootStore.activeSectionId
+    }
+
     // Primary store container — all additional stores should be initialized under this root
     readonly property AppStores.RootStore rootStore: AppStores.RootStore {
         localBackupEnabled: appMain.featureFlagsStore.localBackupEnabled
@@ -71,6 +79,7 @@ Item {
         onOpenUrlInNewBrowserTab: (link) => d.openUrlInNewBrowserTab(link)
         onLaunchShareFlow: (text, imagePaths, destinationChatId) => d.launchShareFlow(text, imagePaths, destinationChatId)
         onOpenActivityCenter: () => {
+            d.closeActivityCenterOnNextBack = false
             mainLayoutItem.openACCenterPanel = true
         }
         onWcLinkActivated: (link) => {
@@ -158,8 +167,36 @@ Item {
 
     readonly property bool isPortraitMode: appMain.width < ThemeUtils.portraitBreakpoint.width
 
+    // Whether Back has anything to do: an open overlay, the active section's
+    // internal back, or the cross-section history. Drives the desktop Back entry
+    // points (StandardKey shortcut + mouse Back button).
+    readonly property bool canGoBackAnywhere: createChatView.opened
+            || (appMain.isPortraitMode && mainLayoutItem.openACCenterPanel)
+            || (mainLayoutItem.openACCenterPanel && d.closeActivityCenterOnNextBack)
+            || d.sectionCanGoBack || sectionNavigationHistory.canGoBack
+
     function showEnableBiometricsFlow() {
         popupRequestsHandler.openEnableBiometricsPopup()
+    }
+
+    SQUtils.NavigationHistory {
+        id: sectionNavigationHistory
+        maxDepth: 16
+    }
+
+    // Records the *previous* active section id whenever the active section
+    // changes, unless the change came from the back-handler (re-entrancy guard).
+    Connections {
+        target: appMain.rootStore
+        function onActiveSectionIdChanged() {
+            if (d.skipNextSectionHistoryRecordFor !== ""
+                    && d.lastRecordedSectionId === d.skipNextSectionHistoryRecordFor) {
+                d.skipNextSectionHistoryRecordFor = ""
+            } else if (!d.navigatingBack && d.lastRecordedSectionId) {
+                sectionNavigationHistory.record(d.lastRecordedSectionId)
+            }
+            d.lastRecordedSectionId = appMain.rootStore.activeSectionId
+        }
     }
 
     ContactDetails {
@@ -226,13 +263,31 @@ Item {
         }
 
         function onMailserverNotWorking() {
-            if (d.activeSectionType === Constants.appSection.chat || d.activeSectionType === Constants.appSection.community)
+            if (d.isMessagingRelatedSectionType)
                 mailserverConnectionBanner.show()
+        }
+
+        function onMessagingNetworkConnected() {
+            d.messagingNetworkDisconnected = false
+            d.doShowMessagingBanner = false
+            d.messagingNetworkBannerDismissed = false
+        }
+
+        function onMessagingNetworkDisconnected() {
+            d.messagingNetworkDisconnected = true
+            d.doShowMessagingBanner = false
+            d.messagingNetworkBannerDismissed = false
         }
 
         function onActiveSectionChanged() {
             createChatView.opened = false
             profileLoader.settingsSubSubsection = -1
+
+            if (!d.isMessagingRelatedSectionType) {
+                d.doShowMessagingBanner = false
+            } else if (d.messagingNetworkDisconnected && !messagingNetworkDisconnectDebounce.running) {
+                d.doShowMessagingBanner = true
+            }
         }
 
         function onShowToastAccountAdded(name: string) {
@@ -817,6 +872,70 @@ Item {
     QtObject {
         id: d
 
+        property bool messagingNetworkDisconnected: !appMain.rootStore.isMessagingNetworkConnected
+        property bool doShowMessagingBanner: false
+        property bool messagingNetworkBannerDismissed: false
+        readonly property bool canShowMessagingBanner: d.messagingNetworkDisconnected
+                                                        && d.isMessagingRelatedSectionType
+                                                        && !d.messagingNetworkBannerDismissed
+                                                        && d.networkChecker.isOnline
+
+        // True while the back-handler is navigating; suppresses recording the
+        // synthetic section change as a new history entry.
+        property bool navigatingBack: false
+
+        // Most-recently-observed activeSectionId; the recorder pushes the
+        // *previous* id when activeSectionId changes.
+        property string lastRecordedSectionId: ""
+
+        readonly property string activityCenterHistoryToken: "__activityCenterPanel"
+        property string skipNextSectionHistoryRecordFor: ""
+        property bool closeActivityCenterOnNextBack: false
+
+        function recordActivityCenterHistory() {
+            d.skipNextSectionHistoryRecordFor = appMain.rootStore.activeSectionId
+            sectionNavigationHistory.record(appMain.rootStore.activeSectionId)
+            sectionNavigationHistory.record(d.activityCenterHistoryToken)
+            Backpressure.setTimeout(appMain, 100, () => {
+                d.skipNextSectionHistoryRecordFor = ""
+            })
+        }
+
+        function restoreActivityCenterFromHistory() {
+            if (sectionNavigationHistory.peek() !== d.activityCenterHistoryToken)
+                return false
+
+            sectionNavigationHistory.back()
+            d.closeActivityCenterOnNextBack = true
+            mainLayoutItem.openACCenterPanel = true
+            return true
+        }
+
+        function tryHandleActivityCenterBack() {
+            if (mainLayoutItem.openACCenterPanel
+                    && (appMain.isPortraitMode || d.closeActivityCenterOnNextBack)) {
+                d.closeActivityCenterOnNextBack = false
+                mainLayoutItem.openACCenterPanel = false
+                return true
+            }
+
+            return d.restoreActivityCenterFromHistory()
+        }
+
+        // The active section's loaded item (appView's children stay in sync with
+        // currentIndex). May be null while a section is still loading.
+        function activeSectionItem() {
+            const loader = appView.children[appView.currentIndex]
+            return loader ? loader.item : null
+        }
+
+        // True when the active section can step back internally (e.g. portrait
+        // SwipeView panels). Reactive on section switch, lazy load and canGoBack.
+        readonly property bool sectionCanGoBack: {
+            const item = d.activeSectionItem()
+            return !!item && item.canGoBack === true
+        }
+
         // strict online/offline checker, doesn't care about the wallet services
         readonly property var networkChecker: NetworkChecker {
             active: {
@@ -831,6 +950,8 @@ Item {
         }
 
         readonly property int activeSectionType: appMain.rootStore.activeSectionType
+        readonly property bool isMessagingRelatedSectionType: activeSectionType === Constants.appSection.chat ||
+                                                              activeSectionType === Constants.appSection.community
         readonly property bool isWalletRelatedSectionType: activeSectionType === Constants.appSection.wallet ||
                                                            activeSectionType === Constants.appSection.swap || activeSectionType === Constants.appSection.market ||
                                                            activeSectionType === Constants.appSection.dApp
@@ -871,7 +992,11 @@ Item {
         }
 
         function connectionChange() {
-            appMain.rootStore.connectionChange(d.networkChecker.connectionType, d.networkChecker.isExpensive)
+            appMain.rootStore.connectionChange(
+                d.networkChecker.connectionType,
+                d.networkChecker.isExpensive,
+                d.networkChecker.isOnline
+            )
         }
 
         function openLinkInBrowser(link: string) {
@@ -969,8 +1094,6 @@ Item {
         property bool enablePushNotificationsFreshInstallSeen
         property bool enablePushNotificationsDontAskAgain
         property string enablePushNotificationsLastShownVersion
-        property var recentEmojis: []
-        property string skinColor // NB: must be a string for the twemoji lib to work; we don't want the `#` in the name
         property int theme: ThemeUtils.Style.System
         property int fontSize: {
             if (appMain.isPortraitMode) {
@@ -984,30 +1107,24 @@ Item {
             }
             return ThemeUtils.PaddingFactor.PaddingM
         }
-        readonly property int defaultFontSize: ThemeUtils.FontSize.FontSizeM
-        readonly property int defaultPaddingFactor: ThemeUtils.PaddingFactor.PaddingM
 
         Component.onCompleted: {
             ThemeUtils.setTheme(appMain.Window.window, appMainLocalSettings.theme)
-            // NB: always returning default font/padding as part of the global scaling epic: https://github.com/status-im/status-app/issues/20169
-            // ThemeUtils.setFontSize(appMain.Window.window, appMainLocalSettings.defaultFontSize)
-            // ThemeUtils.setPaddingFactor(appMain.Window.window, appMainLocalSettings.defaultPaddingFactor)
-            ThemeUtils.setFontSize(appMain.Window.window, appMainLocalSettings.defaultFontSize)
-            ThemeUtils.setPaddingFactor(appMain.Window.window, appMainLocalSettings.defaultPaddingFactor)
+            ThemeUtils.setFontSize(appMain.Window.window, appMainLocalSettings.fontSize)
+            ThemeUtils.setPaddingFactor(appMain.Window.window, appMainLocalSettings.paddingFactor)
 
             // Show the navigation education dialog the first time the app
             // is opened after the new menu is introduce, if the nav bar is in collapsed mode
             d.tryOpenNavigationEducationPopup()
         }
 
-        // NB: disabled as part of the global scaling epic: https://github.com/status-im/status-app/issues/20169
-        // readonly property var _conn: Connections {
-        //     target: appMain
-        //     function onIsPortraitModeChanged() {
-        //         ThemeUtils.setFontSize(appMain.Window.window, appMainLocalSettings.fontSize)
-        //         ThemeUtils.setPaddingFactor(appMain.Window.window, appMainLocalSettings.paddingFactor)
-        //     }
-        // }
+        readonly property var _conn: Connections {
+            target: appMain
+            function onIsPortraitModeChanged() {
+                ThemeUtils.setFontSize(appMain.Window.window, appMainLocalSettings.fontSize)
+                ThemeUtils.setPaddingFactor(appMain.Window.window, appMainLocalSettings.paddingFactor)
+            }
+        }
     }
 
     PopupsLoader {
@@ -1397,11 +1514,8 @@ Item {
         sourceComponent: StatusEmojiPopup {
             directParent: appMain.Window.window.contentItem
             height: 440
-            recentEmojis: appMainLocalSettings.recentEmojis
-            skinColor: appMainLocalSettings.skinColor
+            userUID: allContacsAdaptor.selfContactDetails.publicKey
             emojiModel: SQUtils.Emoji.emojiModel
-            onSetSkinColorRequested: color => appMainLocalSettings.skinColor = color
-            onSetRecentEmojisRequested: recentEmojis => appMainLocalSettings.recentEmojis = recentEmojis
         }
     }
 
@@ -1512,6 +1626,30 @@ Item {
                 type: ModuleWarning.Warning
                 text: qsTr("Can not connect to store node. Retrying automatically")
                 onCloseClicked: hide()
+                Layout.fillWidth: true
+            }
+
+            Timer {
+                id: messagingNetworkDisconnectDebounce
+                // Debounce the messaging network disconnect banner to avoid showing it for brief disconnects
+                interval: 3000
+                repeat: false
+                
+                running: d.canShowMessagingBanner
+                         && !d.doShowMessagingBanner
+                onTriggered: d.doShowMessagingBanner = true
+            }
+
+            ModuleWarning {
+                id: messagingNetworkConnectionBanner
+                active: d.doShowMessagingBanner && d.canShowMessagingBanner
+                delay: false
+                type: ModuleWarning.Warning
+                text: qsTr("Cannot connect to the Logos Messaging network. Messaging may not work. Retrying automatically.")
+                onCloseClicked: {
+                    d.doShowMessagingBanner = false
+                    d.messagingNetworkBannerDismissed = true
+                }
                 Layout.fillWidth: true
             }
 
@@ -1661,6 +1799,8 @@ Item {
                 } else if (isPortraitMode && !openACCenterPanel) {
                     acPortraitPopup.close()
                 }
+                if (!openACCenterPanel)
+                    d.closeActivityCenterOnNextBack = false
             }
 
             // Ensure closing the popup when changing from portrait to landscape,
@@ -1781,6 +1921,12 @@ Item {
                     anchors.fill: parent
                 }
 
+                Shortcut {
+                    enabled: acPortraitPopup.opened
+                    sequences: [StandardKey.Back, StandardKey.Cancel]
+                    onActivated: d.tryHandleActivityCenterBack()
+                }
+
                 // Sync the main property when autoclose
                 onClosed: { mainLayoutItem.openACCenterPanel = false }
             }
@@ -1844,6 +1990,7 @@ Item {
                 onMarkNotificationUnread: (notificationId) => { appMain.activityCenterStore.markActivityCenterNotificationUnread(notificationId) }
                 onAvatarClicked: (avatarId) => { Global.openProfilePopup(avatarId) }
                 onRedirectToDetails: (sectionId, subsectionId, subsectionItemId) => {
+                                         d.recordActivityCenterHistory()
                                          appMain.rootStore.setNavToMsgDetailsFlag(true) // It covers in-app link navigation in portrait mode
                                          appMain.activityCenterStore.switchTo(sectionId, subsectionId, subsectionItemId)
 
@@ -1851,12 +1998,14 @@ Item {
                                          acPortraitPopup.close()
                                      }
                 onRedirectToSection: (sectionId) => {
+                                         d.recordActivityCenterHistory()
                                          appMain.changeAppSectionBySectionId(sectionId)
 
                                          // Guard in case of portrait
                                          acPortraitPopup.close()
                                      }
                 onRedirectToCommunitySettingsSubsection: (communityId, subsection, subsectionItem) => {
+                                                             d.recordActivityCenterHistory()
                                                              appMain.changeAppSectionBySectionId(communityId)
                                                              Global.switchToCommunitySettingsSubsection(communityId, subsection, subsectionItem)
 
@@ -1864,6 +2013,7 @@ Item {
                                                              acPortraitPopup.close()
                                                          }
                 onRedirectToPopup: (notification) => {
+                                       d.recordActivityCenterHistory()
                                        // Right now, this is the only popup open, when more, we can add a popup type to determine it
                                        Global.openNewsMessagePopupRequested(notification)
 
@@ -1871,6 +2021,7 @@ Item {
                                        acPortraitPopup.close()
                                    }
                 onRedirectToWallet: (address, txHash) => {
+                                        d.recordActivityCenterHistory()
                                         Global.changeAppSectionBySectionType(Constants.appSection.wallet,
                                                                              WalletLayout.LeftPanelSelection.Address,
                                                                              WalletLayout.RightPanelSelection.Activity,
@@ -1980,6 +2131,7 @@ Item {
                         }
                     }
                     onCurrentIndexChanged: {
+                        // We cannot use isMessagingRelatedSectionType here because it is not updated yet
                         if (d.activeSectionType === Constants.appSection.chat || d.activeSectionType === Constants.appSection.community) {
                             if (d.maybeDisplayIntroduceYourselfPopup()) {
                                 // we displayed the popup, so we should not display the enable message backup popup
@@ -2321,7 +2473,10 @@ Item {
                 }
                 thirdpartyServicesEnabled: appMain.rootStore.thirdpartyServicesEnabled
 
-                onActivityCenterRequested: function(shouldShow) { mainLayoutItem.openACCenterPanel = shouldShow }
+                onActivityCenterRequested: function(shouldShow) {
+                    d.closeActivityCenterOnNextBack = false
+                    mainLayoutItem.openACCenterPanel = shouldShow
+                }
                 onSetCurrentUserStatusRequested: status => appMain.rootStore.setCurrentUserStatus(status)
                 onViewProfileRequested: pubKey => Global.openProfilePopup(pubKey)
                 onShareOwnProfileRequested: Global.shareProfileDialogRequested(ownContactDetails.publicKey)
@@ -2940,7 +3095,7 @@ Item {
             }
 
             accounts: {
-                if (showQR.showSingleAccount || showQR.showForSavedAddress) {
+                 if (showQR.showSingleAccount || showQR.showForSavedAddress) {
                     return null
                 }
                 return appMain.walletRootStore.accounts
@@ -3164,5 +3319,91 @@ Item {
         target: appMain.walletRootStore
         property: "palette"
         value: appMain.Theme.palette
+    }
+
+    // Back entry point for the mobile Back key. On Android the event may not reach
+    // QML at all (e.g. during onboarding, before AppMain is loaded); main.qml's
+    // onClosing is the failsafe and offers the press to tryGoBack() before
+    // minimizing. The desktop StandardKey.Back shortcut is handled by the Shortcut
+    // below, not here.
+    Keys.onPressed: function(event) {
+        if (event.key !== Qt.Key_Back) // Back key on mobile
+            return
+
+        if (tryGoBack()) {
+            event.accepted = true
+            return
+        }
+
+         if (SQUtils.Utils.isMobile) {
+             event.accepted = true
+             MobileUI.backToHomeScreen()
+         }
+    }
+
+    // Desktop Back (Alt+← / Cmd+[). A Shortcut, not Keys.onPressed: the shortcut map
+    // is consulted before the key event reaches the focus chain, which is the only
+    // route that works in the Browser — a focused WebEngineView accepts every key
+    // event and nothing bubbles out of it.
+    Shortcut {
+        sequences: [StandardKey.Back]
+        enabled: !SQUtils.Utils.isMobile && appMain.canGoBackAnywhere
+        onActivated: appMain.tryGoBack()
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        acceptedButtons: Qt.BackButton
+        enabled: appMain.canGoBackAnywhere
+        cursorShape: undefined // fall thru
+        onClicked: function(mouse) {
+            if (mouse.button !== Qt.BackButton)
+                return
+            tryGoBack()
+        }
+    }
+
+    // The back-navigation chain, also callable from main.qml's onClosing.
+    // Returns true if the Back press was handled, false if exhausted (caller
+    // then falls through to Quit/minimize).
+    function tryGoBack() {
+        // Link 1: AppMain overlays/panels (e.g. Activity Center, CreateChatView)
+        // that are not always native Qt Popups, so native popup-close misses them.
+        if (d.tryHandleActivityCenterBack())
+            return true
+
+        if (createChatView.opened) {
+            createChatView.opened = false
+            return true
+        }
+
+        // Link 2: let the active section handle Back internally (web history,
+        // sub-panels, subsection history). Sections without tryGoBack() are skipped.
+        const sectionItem = d.activeSectionItem()
+        if (sectionItem && typeof sectionItem.tryGoBack === "function"
+                && sectionItem.tryGoBack()) {
+            return true
+        }
+
+        // Link 3: pop section history, skipping stale tokens.
+        while (sectionNavigationHistory.canGoBack) {
+            const token = sectionNavigationHistory.back()
+            if (token === d.activityCenterHistoryToken) {
+                d.closeActivityCenterOnNextBack = true
+                mainLayoutItem.openACCenterPanel = true
+                return true
+            }
+            if (SQUtils.ModelUtils.indexOf(appMain.rootStore.sectionsModel, "id", token) >= 0) {
+                d.navigatingBack = true
+                try {
+                    appMain.rootStore.setActiveSectionById(token)
+                } finally {
+                    d.navigatingBack = false
+                }
+                return true
+            }
+            // token referred to a section no longer in the model; pop again
+        }
+        return false
     }
 }

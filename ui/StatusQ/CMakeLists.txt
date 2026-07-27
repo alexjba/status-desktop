@@ -280,6 +280,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         src/shareintake_other.cpp
         src/keychain_apple.mm
         src/osnotification_apple.mm
+        src/accessibility_crash_filter.mm
         src/StatusQ/Controls/NativeSwipeHandlerItem_macos.mm
         src/StatusQ/Controls/NativeIndicatorItem_macos.mm
     )
@@ -299,6 +300,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
         src/shareutils_ios.mm
         src/shareintake_ios.mm
         src/keychain_apple.mm
+        src/accessibility_crash_filter.mm
         src/StatusQ/Controls/NativeSwipeHandlerItem_ios.mm
         src/StatusQ/Controls/NativeIndicatorItem_ios.mm
         src/localnetworkpermission_ios.mm
@@ -333,7 +335,7 @@ if(IOS OR ANDROID OR CMAKE_SYSTEM_NAME MATCHES "Darwin")
       MobileWebView
 
       GIT_REPOSITORY https://github.com/status-im/mobilewebview.git
-      GIT_TAG b1917e84037ccae2acce76a5f4f60e989a8310f5
+      GIT_TAG 92a4c62212702048715c69a85c82fd87fab47666
       SOURCE_SUBDIR mobilewebview
     )
     FetchContent_MakeAvailable(MobileWebView)
@@ -420,6 +422,10 @@ target_link_libraries(StatusQ PRIVATE
 if(NOT (IOS OR ANDROID))
     find_package(Qt${QT_VERSION_MAJOR} COMPONENTS WebEngineQuick QUIET)
     if(TARGET Qt::WebEngineQuick)
+        target_sources(StatusQ PRIVATE
+            include/StatusQ/browserprofileutils.h
+            src/browserprofileutils.cpp
+        )
         target_link_libraries(StatusQ PRIVATE Qt::WebEngineQuick)
         target_compile_definitions(StatusQ PRIVATE STATUSQ_HAS_QTWEBENGINE=1)
     endif()

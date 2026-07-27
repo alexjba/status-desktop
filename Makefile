@@ -247,6 +247,10 @@ ifneq ($(mkspecs),win32)
 
  else
   NIM_PARAMS += --passL:"-L$(QT_LIBDIR)"
+  # GNU ld resolves transitive shared-lib deps (libStatusQ.so -> libQt6WebEngineQuick.so.6)
+  # through -rpath-link, not -L; without it linking fails when Qt lives outside the
+  # system library paths
+  NIM_PARAMS += --passL:"-Wl,-rpath-link,$(QT_LIBDIR)"
  endif
  QT_SEAQT_EXTRA_LIBS = $(shell PKG_CONFIG_PATH="$(QT_PCFILEDIR)" PKG_CONFIG_PREFIX_OVERRIDE="Qt*=$(QT_PC_PREFIX)" $(QT_PC_PKGCONFIG) --libs Qt"$(QT_MAJOR_VERSION)"Core Qt"$(QT_MAJOR_VERSION)"Qml Qt"$(QT_MAJOR_VERSION)"Gui Qt"$(QT_MAJOR_VERSION)"Quick Qt"$(QT_MAJOR_VERSION)"QuickControls2 Qt"$(QT_MAJOR_VERSION)"Widgets Qt"$(QT_MAJOR_VERSION)"Svg Qt"$(QT_MAJOR_VERSION)"Multimedia Qt"$(QT_MAJOR_VERSION)"WebView Qt"$(QT_MAJOR_VERSION)"WebChannel)
 else
@@ -1060,12 +1064,35 @@ nim-test-run/test/nim/url_scheme_event_test.nim: | statusq
 nim-test-run/test/nim/share_intake_wake_test.nim: NIM_PARAMS += --passL:"-L$(STATUSQ_LIB_PATH)" --passL:"-lStatusQ"
 nim-test-run/test/nim/share_intake_wake_test.nim: | statusq
 
+# typed_completion_test drives finishTyped -> signal_handler -> statusq_invoke_method_queued,
+# so it needs the StatusQ library linked (like signal_handler_test above).
+nim-test-run/test/nim/typed_completion_test.nim: NIM_PARAMS += --passL:"-L$(STATUSQ_LIB_PATH)" --passL:"-lStatusQ"
+nim-test-run/test/nim/typed_completion_test.nim: | statusq
+
+# Model-spy tests call inspection accessors gated behind
+# `when defined(testing) or defined(QT_MODEL_SPY)` or assert on the granular
+# signals model_sync records only under QT_MODEL_SPY. The define is applied
+# per-file, NOT globally, so the timing benches keep measuring uninstrumented
+# models.
+nim-test-run/test/nim/assets_adaptor_model_test.nim: NIM_PARAMS += -d:QT_MODEL_SPY
+nim-test-run/test/nim/token_selector_model_test.nim: NIM_PARAMS += -d:QT_MODEL_SPY
+nim-test-run/test/nim/collectibles_selector_model_test.nim: NIM_PARAMS += -d:QT_MODEL_SPY
+nim-test-run/test/nim/token_selector_producer_view_test.nim: NIM_PARAMS += -d:QT_MODEL_SPY
+nim-test-run/test/nim/model_sync_move_test.nim: NIM_PARAMS += -d:QT_MODEL_SPY
+nim-test-run/test/nim/model_sync_unified_test.nim: NIM_PARAMS += -d:QT_MODEL_SPY
+nim-test-run/test/nim/token_groups_model_test.nim: NIM_PARAMS += -d:QT_MODEL_SPY
+nim-test-run/test/nim/grouped_account_assets_model_test.nim: NIM_PARAMS += -d:QT_MODEL_SPY
+
 ifneq ($(mkspecs),win32)
 nim-test-run/%: NIM_PARAMS += --passL:"$(QT_SEAQT_EXTRA_LIBS)"
 endif
+# --mm:orc matches the production build (Makefile app targets); it also makes a
+# dropped child QObject's free ORDER relative to its parent's remove signal
+# deterministic, so the `when defined(gcOrc)` use-after-free regressions
+# actually execute here instead of compiling to a skip.
 nim-test-run/%: | qt-pkgconfig $(STATUSGO) $(QRCODEGEN)
 	LD_LIBRARY_PATH="$(QT_LIBDIR)":"$(NIMSDS_LIBDIR)":"$(STATUSGO_LIBDIR)":"$(EXTRA_LIBS_PATH)":"$(LD_LIBRARY_PATH)" $(ENV_SCRIPT) \
-	nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --mm:refc --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" --passL:"$(QRCODEGEN)" -r $(subst nim-test-run/,,$@)
+	nim c $(NIM_PARAMS) $(NIM_EXTRA_PARAMS) --mm:orc --passL:"-L$(STATUSGO_LIBDIR)" --passL:"-lstatus" --passL:"$(QRCODEGEN)" -r $(subst nim-test-run/,,$@)
 
 tests-nim-linux: $(NIM_TESTS)
 

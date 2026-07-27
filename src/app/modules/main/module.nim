@@ -249,6 +249,7 @@ proc newModule*[T](
   result.walletAccountService = walletAccountService
   result.savedAddressService = savedAddressService
   result.followingAddressService = followingAddressService
+  result.networkConnectionService = networkConnectionService
   result.stickersService = stickersService
   result.communityTokensService = communityTokensService
   result.transactionService = transactionService
@@ -524,7 +525,7 @@ proc sendNotification[T](self: Module[T], status: string, sendDetails: SendDetai
     if txType == SendType.Bridge:
       txToName = "Hop" # no translations, currently we hardcode providers here, when we add more, this info should come from the status-go side.
     elif txType == SendType.Swap:
-      txToName = "Velora" # no translations, currently we hardcode providers here, when we add more, this info should come from the status-go side.
+      txToName = "LI.FI"
     else:
       accDto = self.walletAccountService.getAccountByAddress(txTo)
       if not accDto.isNil:
@@ -1193,6 +1194,15 @@ method emitMailserverWorking*[T](self: Module[T]) =
 method emitMailserverNotWorking*[T](self: Module[T]) =
   self.view.emitMailserverNotWorking()
 
+method emitMessagingNetworkConnected*[T](self: Module[T]) =
+  self.view.emitMessagingNetworkConnected()
+
+method emitMessagingNetworkDisconnected*[T](self: Module[T]) =
+  self.view.emitMessagingNetworkDisconnected()
+
+method isMessagingNetworkConnected*[T](self: Module[T]): bool =
+  self.controller.isMessagingNetworkConnected()
+
 method setCommunityIdToSpectate*[T](self: Module[T], communityId: string) =
   self.pendingSpectateRequest.communityId = communityId
   self.pendingSpectateRequest.channelUuid = ""
@@ -1296,15 +1306,6 @@ method onNotificationsUpdated[T](self: Module[T], sectionId: string, sectionHasU
 
 method onPlayNotificationSound[T](self: Module[T]) =
   self.view.playNotificationSound()
-
-method onNetworkConnected[T](self: Module[T]) =
-  self.view.setConnected(true)
-
-method onNetworkDisconnected[T](self: Module[T]) =
-  self.view.setConnected(false)
-
-method isConnected[T](self: Module[T]): bool =
-  self.controller.isConnected()
 
 method getAppSearchModule*[T](self: Module[T]): QVariant =
   self.appSearchModule.getModuleAsVariant()
@@ -1658,9 +1659,6 @@ method newCommunityMembershipRequestReceived*[T](self: Module[T], membershipRequ
 method communityMembershipRequestCanceled*[T](self: Module[T], communityId: string, requestId: string, pubKey: string) =
   self.view.model().removeMember(communityId, pubKey)
 
-method meMentionedCountChanged*[T](self: Module[T], allMentions: int) =
-  singletonInstance.globalEvents.meMentionedIconBadgeNotification(allMentions)
-
 method displayEphemeralNotification*[T](
     self: Module[T],
     title: string,
@@ -1933,6 +1931,21 @@ proc activateChatDeepLink[T](self: Module[T], statusDeepLink: string): bool =
 
   return true
 
+proc activateMessageDeepLink[T](self: Module[T], statusDeepLink: string): bool =
+  let data = self.sharedUrlsModule.parseMessageUrl(statusDeepLink)
+  if data.chatId.len == 0 or data.messageId.len == 0:
+    return false
+
+  var sectionId = singletonInstance.userProfile.getPubKey()
+  if data.communityId.len > 0:
+    sectionId = data.communityId
+
+  if self.getActiveSectionId() != sectionId:
+    self.setActiveSectionById(sectionId)
+
+  self.view.emitNavigateToMessageDetailsSignal()
+  return self.openSectionChatAndMessage(sectionId, data.chatId, data.messageId)
+
 method onStatusUrlRequested*[T](self: Module[T], action: StatusUrlAction, communityId: string, channelId: string,
     url: string, userId: string) =
 
@@ -2084,6 +2097,8 @@ method activateStatusDeepLink*[T](self: Module[T], statusDeepLink: string) =
   if statusDeepLink.contains("/wc?"):
     self.view.wcLinkActivated(statusDeepLink)
     return
+  if self.activateMessageDeepLink(statusDeepLink):
+    return
   # Generic, id-less navigation deep links (e.g. bundled in remote push notifications).
   # Matched before the chat/community/contact routes so the reserved keywords never
   # collide with a public-chat link of the form `status-app://<id>`.
@@ -2186,7 +2201,9 @@ method windowActivated*[T](self: Module[T]) =
 method windowDeactivated*[T](self: Module[T]) =
   self.controller.speedupArchivesImport()
 
-method connectionChange*[T](self: Module[T], connectionType: string, isExpensive: bool) =
+method connectionChange*[T](self: Module[T], connectionType: string, isExpensive: bool, isOnline: bool) =
+  self.view.setConnected(isOnline)
+  self.networkConnectionService.networkConnected(isOnline)
   self.controller.connectionChange(connectionType, isExpensive)
 
 method communityMembersRevealedAccountsLoaded*[T](self: Module[T], communityId: string, membersRevealedAccounts: MembersRevealedAccounts) =
@@ -2219,9 +2236,11 @@ method addressWasShown*[T](self: Module[T], address: string) =
     return
   self.walletAccountService.addressWasShown(address)
 
-method openSectionChatAndMessage*[T](self: Module[T], sectionId: string, chatId: string, messageId: string) =
-  if sectionId in self.chatSectionModules:
-    self.chatSectionModules[sectionId].openCommunityChatAndScrollToMessage(chatId, messageId)
+method openSectionChatAndMessage*[T](self: Module[T], sectionId: string, chatId: string, messageId: string): bool =
+  if sectionId notin self.chatSectionModules:
+    return false
+
+  return self.chatSectionModules[sectionId].openCommunityChatAndScrollToMessage(chatId, messageId)
 
 method updateRequestToJoinState*[T](self: Module[T], sectionId: string, requestToJoinState: RequestToJoinState) =
   if sectionId in self.chatSectionModules:

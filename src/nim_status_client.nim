@@ -23,7 +23,6 @@ when defined(qmldebug):
   import seaqt/qqmldebuggingenabler
 
 import app/global/global_singleton
-import app/global/local_app_settings
 import app/global/app_lifecycle
 import app/boot/app_controller
 
@@ -186,7 +185,7 @@ proc enableHDPI(uiScaleFilePath: string) =
     echo "[Warning] ", scaleEnvVar, " already set, will NOT enable custom Status scaling"
     return
 
-  QGuiApplication.setHighDpiScaleFactorRoundingPolicy(5) # Qt.HighDpiScaleFactorRoundingPolicy.PassThrough enumerator not exported by seaqt :/
+  QGuiApplication.setHighDpiScaleFactorRoundingPolicy(HighDpiScaleFactorRoundingPolicyEnum.PassThrough)
 
   if fileExists(uiScaleFilePath):
     # Reads the file and strips any trailing/leading whitespace (like newlines)
@@ -234,6 +233,12 @@ proc mainProc() =
 
   ensureDirectories(DATADIR, TMPDIR, LOGDIR)
 
+  # Open the log file and set the log level before any subsystem starts logging.
+  # On iOS the stdout sink is disabled (no valid stdout FILE*), so logs go to the
+  # file sink only; opening it here guarantees every startup log has a valid sink
+  # instead of lazily opening a default path mid-init.
+  prepareLogging()
+
   let isExperimental = isExperimental()
   let resourcesPath = determineResourcePath()
   let openUri = determineOpenUri()
@@ -246,8 +251,6 @@ proc mainProc() =
 
   # Enable HDPI (replaces dos_qguiapplication_enable_hdpi)
   let uiScaleFilePath = joinPath(DATADIR, "ui-scale")
-  gen_qguiapplication.QGuiApplication.setHighDpiScaleFactorRoundingPolicy(
-    cint(HighDpiScaleFactorRoundingPolicyEnum.PassThrough))
   enableHDPI(uiScaleFilePath)
 
   # Enable threaded renderer (replaces dos_qguiapplication_try_enable_threaded_renderer)
@@ -269,8 +272,14 @@ proc mainProc() =
     defaultConfig.setCaCertificates(certList)
     QSslConfiguration.setDefaultConfiguration(defaultConfig)
 
+  # static qApp setup
+  QCoreApplication.setApplicationName("Status Desktop")
+  QCoreApplication.setOrganizationName("Status")
+  QCoreApplication.setOrganizationDomain("status.app")
+  QCoreApplication.setApplicationVersion(APP_VERSION)
+  QGuiApplication.setDesktopFileName("nim-status")
+
   let app = newQGuiApplication()
-  gen_qcoreapplication.QCoreApplication.setApplicationName("Status")
   singletonInstance.setApplication(app)
 
   when defined(qmldebug):
@@ -301,7 +310,6 @@ proc mainProc() =
   if not main_constants.IS_MACOS:
     app.icon(app.applicationDirPath & statusAppIconPath)
 
-  prepareLogging()
   statusq_installMessageHandler(logHandlerCallback)
 
   when defined(USE_QML_SERVER):

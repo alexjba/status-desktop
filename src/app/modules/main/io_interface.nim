@@ -161,6 +161,15 @@ method emitMailserverWorking*(self: AccessInterface) {.base.} =
 method emitMailserverNotWorking*(self: AccessInterface) {.base.} =
   raise newException(ValueError, "No implementation available")
 
+method emitMessagingNetworkConnected*(self: AccessInterface) {.base.} =
+  raise newException(ValueError, "No implementation available")
+
+method emitMessagingNetworkDisconnected*(self: AccessInterface) {.base.} =
+  raise newException(ValueError, "No implementation available")
+
+method isMessagingNetworkConnected*(self: AccessInterface): bool {.base.} =
+  raise newException(ValueError, "No implementation available")
+
 method activeSectionSet*(self: AccessInterface, sectionId: string, skipSavingInSettings: bool = false) {.base.} =
   raise newException(ValueError, "No implementation available")
 
@@ -238,16 +247,7 @@ method newCommunityMembershipRequestReceived*(self: AccessInterface, membershipR
 method communityMembershipRequestCanceled*(self: AccessInterface, communityId: string, requestId: string, pubKey: string) {.base.} =
   raise newException(ValueError, "No implementation available")
 
-method meMentionedCountChanged*(self: AccessInterface, allMentions: int) {.base.} =
-  raise newException(ValueError, "No implementation available")
-
 method onPlayNotificationSound*(self: AccessInterface) {.base.} =
-  raise newException(ValueError, "No implementation available")
-
-method onNetworkConnected*(self: AccessInterface) {.base.} =
-  raise newException(ValueError, "No implementation available")
-
-method onNetworkDisconnected*(self: AccessInterface) {.base.} =
   raise newException(ValueError, "No implementation available")
 
 method viewDidLoad*(self: AccessInterface) {.base.} =
@@ -418,7 +418,7 @@ method windowActivated*(self: AccessInterface) {.base.} =
 method windowDeactivated*(self: AccessInterface) {.base.} =
   raise newException(ValueError, "No implementation available")
 
-method connectionChange*(self: AccessInterface, connectionType: string, isExpensive: bool) {.base.} =
+method connectionChange*(self: AccessInterface, connectionType: string, isExpensive: bool, isOnline: bool) {.base.} =
   raise newException(ValueError, "No implementation available")
 
 method communityMembersRevealedAccountsLoaded*(self: AccessInterface, communityId: string, membersRevealedAccounts: MembersRevealedAccounts) {.base.} =
@@ -434,7 +434,7 @@ method onCommunityTokensDetailsLoaded*(self: AccessInterface, communityId: strin
 method addressWasShown*(self: AccessInterface, address: string) {.base.} =
   raise newException(ValueError, "No implementation available")
 
-method openSectionChatAndMessage*(self: AccessInterface, sectionId: string, chatId: string, messageId: string) {.base.} =
+method openSectionChatAndMessage*(self: AccessInterface, sectionId: string, chatId: string, messageId: string): bool {.base.} =
   raise newException(ValueError, "No implementation available")
 
 method updateRequestToJoinState*(self: AccessInterface, sectionId: string, requestToJoinState: RequestToJoinState) {.base.} =

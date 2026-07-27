@@ -55,12 +55,16 @@
         <translation>Nápověda Status</translation>
     </message>
     <message>
-        <source>Status desktop’s GitHub Repositories</source>
-        <translation>GitHub repozitáře Status desktop</translation>
+        <source>status-app</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>status-desktop</source>
-        <translation>status-desktop</translation>
+        <source>logos-delivery-go</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status App&apos;s GitHub Repositories</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>status-go</source>
@@ -69,10 +73,6 @@
     <message>
         <source>StatusQ</source>
         <translation>StatusQ</translation>
-    </message>
-    <message>
-        <source>go-waku</source>
-        <translation>go-waku</translation>
     </message>
     <message>
         <source>Legal &amp; Privacy Documents</source>
@@ -1070,10 +1070,6 @@
         <translation>Oprávnění ENS komunity povolena</translation>
     </message>
     <message>
-        <source>WakuV2 options</source>
-        <translation>Možnosti WakuV2</translation>
-    </message>
-    <message>
         <source>The account will be logged out. When you login again, the selected mode will be enabled</source>
         <translation>Účet bude odhlášen. Po opětovném přihlášení bude vybraný režim povolen</translation>
     </message>
@@ -1094,10 +1090,6 @@
         <translation>Režim Relay</translation>
     </message>
     <message>
-        <source>History nodes</source>
-        <translation>Historické uzly</translation>
-    </message>
-    <message>
         <source>Developer features</source>
         <translation>Vývojářské funkce</translation>
     </message>
@@ -1108,6 +1100,10 @@
     <message>
         <source>Debug</source>
         <translation>Ladění</translation>
+    </message>
+    <message>
+        <source>Logos Messaging options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>The value is overridden with runtime options</source>
@@ -1654,6 +1650,10 @@ z &quot;%1&quot; na &quot;%2&quot;</translation>
     <message>
         <source>Import community &apos;%1&apos; was canceled</source>
         <translation>Import komunity &apos;%1&apos; byl zrušen</translation>
+    </message>
+    <message>
+        <source>Cannot connect to the Logos Messaging network. Messaging may not work. Retrying automatically.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>CoinGecko connection successful</source>
@@ -2592,6 +2592,10 @@ Přejete si obejít bezpečnostní kontrolu a pokračovat?</translation>
         <translation>Vývojářské nástroje</translation>
     </message>
     <message>
+        <source>Force reload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Clear site data</source>
         <translation>Vyčistit data stránky</translation>
     </message>
@@ -2600,16 +2604,16 @@ Přejete si obejít bezpečnostní kontrolu a pokračovat?</translation>
         <translation>Použijte k obnovení aktuální stránky, pokud se nenačítá nebo nefunfuje správně.</translation>
     </message>
     <message>
-        <source>Clearing cache...</source>
-        <translation>Čistí se cache...</translation>
+        <source>Clearing browsing data...</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Clear cache</source>
-        <translation>Vyčistit cache</translation>
+        <source>Clear browsing data</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Clears cached files, cookies, and history for the entire browser. Browsing is paused until it is done.</source>
-        <translation>Vyčistí soubory, cookies a historii celého prohlížeče. Prohlížení je pozastaveno, dokud není hotovo.</translation>
+        <source>Clears the cache and cookies for the entire browser. Browsing is paused until it is done.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings</source>
@@ -2710,6 +2714,14 @@ Přejete si obejít bezpečnostní kontrolu a pokračovat?</translation>
     <message>
         <source>Buy via %1</source>
         <translation>Koupit přes %1</translation>
+    </message>
+    <message>
+        <source>Your assets on %1</source>
+        <translation type="unfinished">Vaše aktiva na %1</translation>
+    </message>
+    <message>
+        <source>Popular assets</source>
+        <translation type="unfinished">Populární aktiva</translation>
     </message>
     <message>
         <source>Ways to buy %1 for %2</source>
@@ -5721,24 +5733,12 @@ key pair. Keycard will be required for signing</source>
         <translation>Status messenger je nejbezpečnější plně decentralizovaný messenger na světě</translation>
     </message>
     <message>
-        <source>Full metadata privacy means it’s impossible to tell who you are talking to by surveilling your internet traffic</source>
-        <translation>Úplné soukromí metadat znamená, že sledováním vašeho internetového provozu nelze zjistit, s kým komunikujete</translation>
-    </message>
-    <message>
         <source>Status is truly private - none of your personal details (or any other information) are sent to us</source>
         <translation>Status je skutečně soukromý – neposílají se nám žádné vaše osobní údaje (ani žádné jiné informace)</translation>
     </message>
     <message>
         <source>Messages sent using Status are end to end encrypted and can only be opened by the recipient</source>
         <translation>Zprávy odeslané pomocí Statusu jsou šifrovány metodou end-to-end a může je otevřít pouze příjemce</translation>
-    </message>
-    <message>
-        <source>Status uses the Waku p2p gossip messaging protocol — an evolution of the EF’s original Whisper protocol</source>
-        <translation>Status používá p2p gossip protokol pro zasílání zpráv Waku – evoluci původního protokolu Whisper od EF</translation>
-    </message>
-    <message>
-        <source>Status is home to crypto’s leading multi-chain self-custodial wallet</source>
-        <translation>Status je domovem přední multi-chain self-custodial peněženky v kryptosvětě</translation>
     </message>
     <message>
         <source>Status removes intermediaries to keep your messages private and your assets secure</source>
@@ -5757,14 +5757,6 @@ key pair. Keycard will be required for signing</source>
         <translation>Token sítě Status (SNT) je modulární užitkový token, který pohání síť Status</translation>
     </message>
     <message>
-        <source>Your cryptographic key pair encrypts all of your messages which can only be unlocked by the intended recipient</source>
-        <translation>Váš kryptografický pár klíčů šifruje všechny vaše zprávy, které může odemknout pouze zamýšlený příjemce</translation>
-    </message>
-    <message>
-        <source>Status’ Web3 browser requires all DApps to ask permission before connecting to your wallet</source>
-        <translation>Web3 prohlížeč Statusu vyžaduje, aby všechny DApps před připojením k vaší peněžence požádaly o povolení</translation>
-    </message>
-    <message>
         <source>Your non-custodial wallet gives you full control over your funds without the use of a server</source>
         <translation>Vaše non-custodial peněženka vám dává plnou kontrolu nad vašimi prostředky bez použití serveru</translation>
     </message>
@@ -5773,8 +5765,28 @@ key pair. Keycard will be required for signing</source>
         <translation>Status je decentralizovaný a bez serverů – chatujte, provádějte transakce a prohlížejte bez sledování a cenzury</translation>
     </message>
     <message>
-        <source>Status is open source software that lets you use with p2p networks. Status itself doesn’t provide any services</source>
-        <translation>Status je open source software, který vám umožňuje používat p2p sítě. Status sám o sobě neposkytuje žádné služby</translation>
+        <source>Full metadata privacy means it&apos;s impossible to tell who you are talking to by surveilling your internet traffic</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status uses the Waku p2p gossip messaging protocol — an evolution of the EF&apos;s original Whisper protocol</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status is home to crypto&apos;s leading multi-chain self-custodial wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your cryptographic key pairs encrypt all of your messages which can only be unlocked by the intended recipient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status&apos; Web3 browser requires all DApps to ask permission before connecting to your wallet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status is open source software that lets you interact with p2p networks. Status itself doesn&apos;t provide any services</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Status is a way to access p2p networks that are permissionlessly created and run by individuals around the world</source>
@@ -5805,8 +5817,36 @@ key pair. Keycard will be required for signing</source>
         <translation>Status se řídí kryptoekonomickým principem odolnosti vůči cenzuře</translation>
     </message>
     <message>
-        <source>Status is a public good licensed under the MIT open source license, for anyone to share, modify and benefit from</source>
-        <translation>Status je veřejný statek licencovaný pod open source licencí MIT, aby jej mohl kdokoli sdílet, upravovat a těžit z něj</translation>
+        <source>Status is a public good licensed under the MPL-2.0 open source license, for anyone to share, modify and benefit from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The only continent that doesn&apos;t (yet!) have any Status core contributors is Antarctica</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>We are the 5th most active crypto project on GitHub</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Many other messengers with e2e encryption don&apos;t have metadata privacy!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Help to translate Status into your native language. See https://status.app/translations for more info</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status has a multi-chain wallet which will allow quick and easy multi-chain txns.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status&apos; Nimbus team is collaborating with the Ethereum Foundation to create the Portal Network</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status&apos; Portal Network client (Fluffy) will let Status users interact with Ethereum in a fully decentralised way</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Status supports free communication without the approval or oversight of big tech</source>
@@ -5825,20 +5865,8 @@ key pair. Keycard will be required for signing</source>
         <translation>Status je zcela open source a je tvořen přispěvateli z celého světa</translation>
     </message>
     <message>
-        <source>Status is a globally distributed team of 150+ specialist core contributors</source>
-        <translation>Status je globálně distribuovaný tým více než 150 specializovaných hlavních přispěvatelů</translation>
-    </message>
-    <message>
         <source>Our team of core contributors work remotely from over 50+ countries spread across 6 continents</source>
         <translation>Náš tým hlavních přispěvatelů pracuje na dálku z více než 50 zemí na 6 kontinentech</translation>
-    </message>
-    <message>
-        <source>The only continent that doesn’t (yet!) have any Status core contributors is Antarctica</source>
-        <translation>Jediný kontinent, který (zatím!) nemá žádné hlavní přispěvatele Statusu, je Antarktida</translation>
-    </message>
-    <message>
-        <source>We are the 5th most active crypto project on github</source>
-        <translation>Jsme 5. nejaktivnější krypto projekt na GitHubu</translation>
     </message>
     <message>
         <source>We are dedicated to transitioning our governance model to being decentralised and autonomous</source>
@@ -5865,48 +5893,12 @@ key pair. Keycard will be required for signing</source>
         <translation>Váš mobilní operátor a vláda mohou vidět obsah všech vašich soukromých SMS zpráv</translation>
     </message>
     <message>
-        <source>Many other messengers with e2e encryption don’t have metadata privacy!</source>
-        <translation>Mnoho jiných messengerů s e2e šifrováním nemá soukromí metadat!</translation>
-    </message>
-    <message>
-        <source>Help to translate Status into your native language see https://translate.status.im/ for more info</source>
-        <translation>Pomozte přeložit Status do svého rodného jazyka, více informací na https://translate.status.im/</translation>
-    </message>
-    <message>
         <source>By using Keycard, you can ensure your funds are safe even if your phone is stolen</source>
         <translation>Použitím Keycard můžete zajistit, že vaše prostředky budou v bezpečí, i když vám ukradnou telefon</translation>
     </message>
     <message>
         <source>You can enhance security by using Keycard + PIN entry as two-factor authentication</source>
         <translation>Bezpečnost můžete zvýšit použitím Keycard + zadání PINu jako dvoufaktorové autentizace</translation>
-    </message>
-    <message>
-        <source>Status is currently working on a multi-chain wallet which will allow quick and easy multi-chain txns.</source>
-        <translation>Status v současné době pracuje na multi-chain peněžence, která umožní rychlé a snadné transakce napříč řetězci.</translation>
-    </message>
-    <message>
-        <source>The new Status mobile app is being actively developed and is earmarked for release in 2023</source>
-        <translation>Nová mobilní aplikace Status je aktivně vyvíjena a její vydání je naplánováno na rok 2023</translation>
-    </message>
-    <message>
-        <source>The all new Status desktop app is being actively developed and is earmarked for release in 2023</source>
-        <translation>Zcela nová desktopová aplikace Status je aktivně vyvíjena a její vydání je naplánováno na rok 2023</translation>
-    </message>
-    <message>
-        <source>Status also builds the Nimbus Ethereum consensus, execution and light clients</source>
-        <translation>Status také vyvíjí Nimbus Ethereum consensus, execution a light klienty</translation>
-    </message>
-    <message>
-        <source>Status’s Nimbus team is collaborating with the Ethereum Foundation to create the Portal Network</source>
-        <translation>Tým Nimbus ve Statusu spolupracuje s Ethereum Foundation na vytvoření sítě Portal Network</translation>
-    </message>
-    <message>
-        <source>Status’s Portal Network client (Fluffy) will let Status users interact with Ethereum in a fully decenteralised way</source>
-        <translation>Klient Portal Network od Statusu (Fluffy) umožní uživatelům Statusu interagovat s Ethereem plně decentralizovaným způsobem</translation>
-    </message>
-    <message>
-        <source>We are currently working on a tool to let you import an existing Telegram or Discord group into Status</source>
-        <translation>V současné době pracujeme na nástroji, který vám umožní importovat existující skupinu z Telegramu nebo Discordu do Statusu</translation>
     </message>
 </context>
 <context>
@@ -8279,11 +8271,11 @@ Opravdu to chcete udělat?</translation>
     <name>HandlersManager</name>
     <message>
         <source>Info</source>
-        <translation>Info</translation>
+        <translation type="unfinished">Info</translation>
     </message>
     <message>
         <source>Swap is not available in the testnet mode.</source>
-        <translation>Směna není k dispozici v režimu testnet.</translation>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Push notifications enabled</source>
@@ -10975,6 +10967,10 @@ selhalo</translation>
         <translation>Kopírovat ID zprávy</translation>
     </message>
     <message>
+        <source>Copy link to message</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Unpin</source>
         <translation>Odepnout</translation>
     </message>
@@ -11401,6 +11397,26 @@ selhalo</translation>
     <message>
         <source>Zoom Fit</source>
         <translation type="unfinished">Přizpůsobit velikost</translation>
+    </message>
+    <message>
+        <source>Compatibility mode</source>
+        <translation type="unfinished">Režim kompatibility</translation>
+    </message>
+    <message>
+        <source>Force reload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear site data</source>
+        <translation type="unfinished">Vyčistit data stránky</translation>
+    </message>
+    <message>
+        <source>Clearing browsing data...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear browsing data</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Settings</source>
@@ -14799,6 +14815,14 @@ selhalo</translation>
         <source>Token that you&apos;re trying to send is not supported.</source>
         <translation>Token, který se snažíte odeslat, není podporovaný.</translation>
     </message>
+    <message>
+        <source>Your assets on %1</source>
+        <translation type="unfinished">Vaše aktiva na %1</translation>
+    </message>
+    <message>
+        <source>Popular assets</source>
+        <translation type="unfinished">Populární aktiva</translation>
+    </message>
 </context>
 <context>
     <name>SendModalHeader</name>
@@ -16569,16 +16593,20 @@ selhalo</translation>
         <source>Receive</source>
         <translation>Přijmout</translation>
     </message>
+    <message>
+        <source>Your assets on %1</source>
+        <translation type="unfinished">Vaše aktiva na %1</translation>
+    </message>
+    <message>
+        <source>Popular assets</source>
+        <translation type="unfinished">Populární aktiva</translation>
+    </message>
 </context>
 <context>
     <name>SwapModal</name>
     <message>
         <source>Swap</source>
         <translation>Směnit</translation>
-    </message>
-    <message>
-        <source>On:</source>
-        <translation>Na:</translation>
     </message>
     <message>
         <source>Add assets</source>
@@ -17514,17 +17542,6 @@ Tuto akci nelze vzít zpět.</translation>
     <message>
         <source>Collectibles</source>
         <translation>Sbírky</translation>
-    </message>
-</context>
-<context>
-    <name>TokenSelectorViewAdaptor</name>
-    <message>
-        <source>Popular assets</source>
-        <translation>Populární aktiva</translation>
-    </message>
-    <message>
-        <source>Your assets on %1</source>
-        <translation>Vaše aktiva na %1</translation>
     </message>
 </context>
 <context>

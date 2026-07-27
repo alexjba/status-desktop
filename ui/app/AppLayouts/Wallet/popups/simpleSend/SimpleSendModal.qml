@@ -40,18 +40,18 @@ StatusDialog {
     required property var accountsModel
     /**
     Expected model structure:
-    - tokensKey: unique string ID of the token (asset); e.g. "ETH" or contract address
+    - key: unique string ID of the token group; e.g. "ETH" or contract address
     - name: user visible token name (e.g. "Ethereum")
     - symbol: user visible token symbol (e.g. "ETH")
+    - logoUri: string
     - decimals: number of decimal places
-    - communityId:optional; ID of the community this token belongs to, if any
-    - marketDetails: object containing props like `currencyPrice` for the computed values below
-    - balances: submodel[ chainId:int, account:string, balance:BigIntString, iconUrl:string ]
+    - cryptoPrice: current price of one token in the user's fiat currency
     - currentBalance: amount of tokens
     - currencyBalance: e.g. `1000.42` in user's fiat currency
-    - currencyBalanceAsString: e.g. "1 000,42 CZK" formatted as a string according to the user's locale
-    - balanceAsString: `1.42` formatted as e.g. "1,42" in user's locale
-    - iconSource: string
+    - sectionName: title of the section this row belongs to (owned / popular)
+    - balances: submodel[ chainId:int, iconUrl:string, chainName:string,
+                          balance:real, rawBalance:string ]
+    - tokens: submodel[ key:string, chainId:int ]
     **/
     required property var assetsModel
     /**
@@ -387,13 +387,16 @@ StatusDialog {
             }
             !!d.selectedAssetEntry.item.balances ? d.selectedAssetEntry.item.balances.ModelCount.count : null
             if (selectedCollectibleEntryValid) {
-                let collectibleBalance = SQUtils.ModelUtils.getByKey(selectedCollectibleEntry.item.ownership, "accountAddress", root.selectedAccountAddress, "balance")
+                // The flat collectibles model is already filtered to the selected
+                // account, so its `balance` role is that account's owned amount
+                // (ERC-1155 count; 1 for ERC-721).
+                let collectibleBalance = selectedCollectibleEntry.item.balance
                 return !!collectibleBalance ? collectibleBalance: 0
             } else if (!!d.selectedAssetEntry.item && d.selectedAssetEntryValid) {
                 let maxCryptoBalance = 0.0
                 let balanceOnChain = SQUtils.ModelUtils.getByKey(d.selectedAssetEntry.item.balances, "chainId", root.selectedChainId)
                 if (!!balanceOnChain) {
-                    let bigIntBalance = SQUtils.AmountsArithmetic.fromString(balanceOnChain.balance)
+                    let bigIntBalance = SQUtils.AmountsArithmetic.fromString(balanceOnChain.rawBalance)
                     maxCryptoBalance = SQUtils.AmountsArithmetic.toNumber(bigIntBalance, d.selectedAssetEntry.item.decimals)
                 }
                 return WalletUtils.calculateMaxSafeSendAmount(maxCryptoBalance, d.selectedCryptoTokenSymbol, root.selectedChainId)
@@ -423,7 +426,7 @@ StatusDialog {
                     return allowSend
                 }
 
-                const bigIntBalance = SQUtils.AmountsArithmetic.fromString(balanceOnChain.balance)
+                const bigIntBalance = SQUtils.AmountsArithmetic.fromString(balanceOnChain.rawBalance)
                 const oneGwei = SQUtils.AmountsArithmetic.fromString("1000000000") // 1 GWei
                 if(SQUtils.AmountsArithmetic.cmp(oneGwei, bigIntBalance) >= 0) {
                     // if the balance is less than or equal 1GWei, let the user enter any amount, this way for L2 chains the app allows sending
@@ -603,6 +606,7 @@ StatusDialog {
                 networksModel: root.networksModel
                 assetsModel: root.assetsModel
                 collectiblesModel: root.collectiblesModel
+                formatCurrencyBalance: (amount) => root.fnFormatCurrencyAmount(amount, root.currentCurrency)
 
                 selectedChainId: root.selectedChainId
 
@@ -661,6 +665,7 @@ StatusDialog {
                     networksModel: root.networksModel
                     assetsModel: root.assetsModel
                     collectiblesModel: root.collectiblesModel
+                    formatCurrencyBalance: (amount) => root.fnFormatCurrencyAmount(amount, root.currentCurrency)
 
                     selectedChainId: root.selectedChainId
 

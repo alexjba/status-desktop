@@ -210,12 +210,13 @@ SettingsContentBase {
                 anchors.right: parent.right
                 anchors.leftMargin: Theme.padding
                 anchors.rightMargin: Theme.padding
-                text: qsTr("WakuV2 options")
+                text: qsTr("Logos Messaging options")
                 topPadding: Theme.bigPadding
                 bottomPadding: Theme.padding
             }
 
             Row {
+                bottomPadding: Theme.padding
                 anchors.left: parent.left
                 anchors.right: parent.right
                 anchors.leftMargin: Theme.padding
@@ -278,21 +279,8 @@ SettingsContentBase {
                 }
             }
 
-            // SYNC WAKU SECTION
-
-            StatusListItem {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.leftMargin: Theme.padding
-                anchors.rightMargin: Theme.padding
-                title: qsTr("History nodes")
-                label: root.messagingSettingsStore.activeMailserverId || "---"
-                components: [
-                    StatusIcon {
-                        icon: "next"
-                        color: Theme.palette.baseColor1
-                    }
-                ]
+            Separator {
+                width: parent.width
             }
 
             StatusSectionHeadline {
@@ -303,10 +291,6 @@ SettingsContentBase {
                 text: qsTr("Developer features")
                 topPadding: Theme.bigPadding
                 bottomPadding: Theme.padding
-            }
-
-            Separator {
-                width: parent.width
             }
 
             StatusSettingsLineButton {
