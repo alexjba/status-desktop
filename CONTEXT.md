@@ -24,7 +24,7 @@ The iOS analog of a direct-share shortcut: after each successful send, the desti
 A chat the logged-in user can post to: 1-1 chat, group chat, or community channel with post rights.
 
 **Destination picker**:
-The in-app screen where the user chooses a single postable destination for shared content — recency-sorted, searchable.
+The in-app screen where the user chooses a single postable destination for shared content — searchable, ranked like the shortcuts: destinations the user recently sent to first (by own-send recency), then never-sent-to ones by any-message recency.
 
 **Pending intake slot**:
 The single, last-wins buffer holding an external intake until the app can act on it (`mainWindowReady`, i.e. after login or onboarding completes). Shared image streams are copied to app-private cache at receipt — the slot holds copied paths, never OS-managed URIs (their read grants expire).
