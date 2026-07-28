@@ -59,6 +59,12 @@ Control {
 
     property string chatInputPlaceholder: qsTr("Type something")
 
+    /* When true the text area grows to fill the height given to the input
+       instead of capping at 200px — for hosts that hand the input all the
+       space between header and screen bottom (e.g. the share preview). The
+       in-chat usage keeps the default (false) and with it the 200px cap. */
+    property bool fillAvailableHeight: false
+
     property alias textInput: messageInputField
 
     property var fileUrlsAndSources: []
@@ -607,6 +613,7 @@ Control {
 
         ColumnLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: root.fillAvailableHeight
             spacing: 0
 
             StatusChatInputReplyPanel {
@@ -658,6 +665,8 @@ Control {
             ColumnLayout {
                 id: inputLayout
 
+                Layout.fillHeight: root.fillAvailableHeight
+
                 ChatInputLinksPreviewArea {
                     id: linkPreviewArea
 
@@ -695,7 +704,9 @@ Control {
                     Layout.preferredHeight: messageInputField.implicitHeight
 
                     Layout.fillWidth: true
-                    Layout.maximumHeight: 200
+                    Layout.fillHeight: root.fillAvailableHeight
+                    Layout.maximumHeight: root.fillAvailableHeight ? Number.POSITIVE_INFINITY
+                                                                   : 200
 
                     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
                     ScrollBar.vertical.implicitWidth: Theme.halfPadding
