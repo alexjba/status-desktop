@@ -453,6 +453,9 @@ method updateContactDetails*(self: Module, contactId: string) =
 
     item.linkPreviewModel.setContactInfo(updatedContact)
 
+method onMediaServerStarted*(self: Module, port: int) =
+  self.view.model().updateMediaServerPort(port)
+
 method deleteMessage*(self: Module, messageId: string) =
   self.controller.deleteMessage(messageId)
 

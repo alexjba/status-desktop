@@ -390,3 +390,65 @@ suite "mark message as unread":
     # and marker is insert last at position : position('0xb') - 1 equals to position 2 here
     check(model.items[2].seen == true)
     check(model.items[3].seen == false)
+
+# The status-go media server restarts on a new ephemeral port when iOS
+# suspends/resumes the app; cached absolute media URLs must be re-pointed
+# at the new port while every other URL stays untouched (issue #47).
+suite "media server port refresh":
+  const oldBase = "https://localhost:34567"
+  const newBase = "https://localhost:40000"
+  const remoteAvatar = "https://cdn.example.com/avatar.png"
+
+  proc createImageMessageItem(id: string, clock: int64): Item =
+    return message_model.createMessageItemFromDtos(
+      message = MessageDto(
+        id: id,
+        clock: clock,
+        contentType: ContentType.Image,
+        image: oldBase & "/messages/images?messageId=" & id,
+        albumId: "album-1",
+        sticker: Sticker(url: oldBase & "/ipfs?hash=0xdeadbeef"),
+      ),
+      communityId = "",
+      sender = ContactDetails(
+        icon: oldBase & "/contactImages?publicKey=0xsender&imageName=thumbnail",
+      ),
+      isCurrentUser = false,
+      renderedMessageText = "",
+      clearText = "",
+      albumImages = @[oldBase & "/messages/images?messageId=" & id],
+      albumMessageIds = @[id],
+      quotedMessageAuthorDetails = ContactDetails(
+        icon: remoteAvatar,
+        dto: ContactsDto(image: Images(thumbnail: remoteAvatar)),
+      ),
+    )
+
+  test "updateMediaServerPort re-points cached local media URLs":
+    let model = newModel()
+    model.insertItemsBasedOnClock(@[createImageMessageItem("0x1", 1)])
+
+    model.updateMediaServerPort(40000)
+
+    let item = model.items[0]
+    check(item.messageImage == newBase & "/messages/images?messageId=0x1")
+    check(item.senderIcon == newBase & "/contactImages?publicKey=0xsender&imageName=thumbnail")
+    check(item.albumMessageImages == @[newBase & "/messages/images?messageId=0x1"])
+    check(item.sticker == newBase & "/ipfs?hash=0xdeadbeef")
+
+  test "updateMediaServerPort leaves remote URLs untouched":
+    let model = newModel()
+    model.insertItemsBasedOnClock(@[createImageMessageItem("0x1", 1)])
+
+    model.updateMediaServerPort(40000)
+
+    check(model.items[0].quotedMessageAuthorAvatar == remoteAvatar)
+
+  test "updateMediaServerPort is idempotent":
+    let model = newModel()
+    model.insertItemsBasedOnClock(@[createImageMessageItem("0x1", 1)])
+
+    model.updateMediaServerPort(40000)
+    model.updateMediaServerPort(40000)
+
+    check(model.items[0].messageImage == newBase & "/messages/images?messageId=0x1")

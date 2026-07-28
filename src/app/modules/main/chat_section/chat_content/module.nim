@@ -213,6 +213,9 @@ method newPinnedMessagesLoaded*(self: Module, pinnedMessages: seq[PinnedMessageD
     return
   self.view.pinnedModel().insertItemsBasedOnClock(viewItems)
 
+method onMediaServerStarted*(self: Module, port: int) =
+  self.view.pinnedModel().updateMediaServerPort(port)
+
 method unpinMessage*(self: Module, messageId: string) =
   self.controller.unpinMessage(messageId)
 

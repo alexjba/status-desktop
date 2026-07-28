@@ -1,4 +1,5 @@
 import json, std/strformat, nimqml, chronicles
+import ../../../common/media_server_url
 include ../../../common/json_utils
 
 QtObject:
@@ -81,6 +82,14 @@ QtObject:
       "url": self.url,
       "dataUri": self.dataUri
     }
+
+  proc updateMediaServerPort*(self: LinkPreviewThumbnail, port: int) =
+    ## Re-points a media-server-served thumbnail at the freshly bound port
+    ## (no-op for remote/data-URI thumbnails).
+    let updated = withMediaServerPort(self.url, port)
+    if updated != self.url:
+      self.url = updated
+      self.urlChanged()
 
   proc update*(self: LinkPreviewThumbnail, width: int, height: int, url: string, dataUri: string) =
     if self.width != width:

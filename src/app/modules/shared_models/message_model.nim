@@ -642,6 +642,26 @@ QtObject:
     for i in 0 ..< self.items.len:
       yield self.items[i]
 
+  proc updateMediaServerPort*(self: Model, port: int) =
+    ## Re-points every cached media-server URL at the freshly bound port
+    ## after a media-server restart (mobile suspend/resume). Rows whose
+    ## URLs changed re-emit their image-carrying roles so delegates reload.
+    for i in 0 ..< self.items.len:
+      if not self.items[i].updateMediaServerPort(port):
+        continue
+      let index = self.createIndex(i, 0, nil)
+      defer: index.delete
+      self.dataChanged(index, index, @[
+        ModelRole.SenderIcon.int,
+        ModelRole.MessageImage.int,
+        ModelRole.Sticker.int,
+        ModelRole.DeletedByContactIcon.int,
+        ModelRole.QuotedMessageAuthorThumbnailImage.int,
+        ModelRole.QuotedMessageAlbumMessageImages.int,
+        ModelRole.AlbumMessageImages.int,
+        ModelRole.MessageAttachments.int,
+      ])
+
   iterator modelContactUpdateIterator*(self: Model, contactId: string): Item =
     for i in 0 ..< self.items.len:
       let senderMatches = self.items[i].senderId == contactId
