@@ -1,4 +1,4 @@
-import Nimqml, json, std/strformat
+import nimqml, json, std/strformat
 
 import ../../../app_service/service/message/dto/message
 
