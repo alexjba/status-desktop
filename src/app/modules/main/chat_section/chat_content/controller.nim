@@ -56,6 +56,10 @@ proc delete*(self: Controller) =
   self.events.disconnect()
 
 proc init*(self: Controller) =
+  self.events.on(SignalType.MediaServerStarted.event) do(e: Args):
+    let args = MediaServerStartedSignal(e)
+    self.delegate.onMediaServerStarted(args.port)
+
   self.events.on(SIGNAL_PINNED_MESSAGES_LOADED) do(e:Args):
     let args = PinnedMessagesLoadedArgs(e)
     if(self.chatId != args.chatId or args.pinnedMessages.len == 0):

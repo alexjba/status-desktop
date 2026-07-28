@@ -1,5 +1,6 @@
 import json, std/strformat, strutils
 import app/global/global_singleton
+import ../../../app_service/common/media_server_url
 import ../../../app_service/common/types
 import ../../../app_service/service/contacts/dto/contact_details
 import ../../../app_service/service/message/dto/message
@@ -698,3 +699,26 @@ proc quotedMessageAlbumImagesCount*(self: Item): int {.inline.} =
 
 proc `quotedMessageAlbumImagesCount=`*(self: Item, value: int) {.inline.} =
   self.quotedMessageAlbumImagesCount = value
+
+proc updateMediaServerPort*(self: Item, port: int): bool =
+  ## Re-points every cached media-server URL of this message at the freshly
+  ## bound port (the media server restarts on a new ephemeral port when the
+  ## mobile OS suspends and resumes the app). Non-media URLs are untouched.
+  ## Returns true when at least one field changed; link-preview thumbnails
+  ## notify QML directly and do not affect the return value.
+  refreshMediaServerUrl(self.senderIcon, port, result)
+  refreshMediaServerUrl(self.messageImage, port, result)
+  refreshMediaServerUrl(self.sticker, port, result)
+  refreshMediaServerUrl(self.quotedMessageAuthorAvatar, port, result)
+  refreshMediaServerUrl(self.quotedMessageAuthorDetails.dto.image.thumbnail, port, result)
+  refreshMediaServerUrl(self.quotedMessageAuthorDetails.dto.image.large, port, result)
+  refreshMediaServerUrl(self.deletedByContactDetails.dto.image.thumbnail, port, result)
+  refreshMediaServerUrl(self.deletedByContactDetails.dto.image.large, port, result)
+  for i in 0 ..< self.albumMessageImages.len:
+    refreshMediaServerUrl(self.albumMessageImages[i], port, result)
+  for i in 0 ..< self.quotedMessageAlbumMessageImages.len:
+    refreshMediaServerUrl(self.quotedMessageAlbumMessageImages[i], port, result)
+  for i in 0 ..< self.messageAttachments.len:
+    refreshMediaServerUrl(self.messageAttachments[i], port, result)
+  if self.linkPreviewModel != nil:
+    self.linkPreviewModel.updateMediaServerPort(port)

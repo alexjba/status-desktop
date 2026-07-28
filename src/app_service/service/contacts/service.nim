@@ -8,6 +8,7 @@ import app/core/tasks/[qt, threadpool]
 import ../../common/types as common_types
 import ../../common/conversion as service_conversion
 import ../../common/activity_center
+import ../../common/media_server_url
 
 import ../settings/service as settings_service
 import ../network/service as network_service
@@ -111,7 +112,6 @@ QtObject:
     contactsStatus: Table[string, StatusUpdateDto] # [contact_id, StatusUpdateDto]
     events: EventEmitter
     closingApp: bool
-    imageServerUrl: string
 
   # Forward declaration
   proc getContactById*(self: Service, id: string): ContactsDto
@@ -119,6 +119,7 @@ QtObject:
   proc requestContactInfo*(self: Service, pubkey: string)
   proc constructContactDetails(self: Service, contactDto: ContactsDto, isCurrentUser: bool = false): ContactDetails
   proc parseContactsResponse*(self: Service, contacts: JsonNode, fromBackup: bool = false)
+  proc onMediaServerStarted(self: Service, port: int)
 
   proc delete*(self: Service)
   proc newService*(
@@ -268,14 +269,31 @@ QtObject:
       if receivedData.statusUpdates.len > 0:
         self.updateAndEmitStatuses(receivedData.statusUpdates)
 
-  proc setImageServerUrl(self: Service) =
-    try:
-      let response = status_contacts.getImageServerURL()
-      self.imageServerUrl = response.result.getStr()
-    except Exception as e:
-      let errDesription = e.msg
-      error "error: ", errDesription
-      return
+    self.events.on(SignalType.MediaServerStarted.event) do(e: Args):
+      let args = MediaServerStartedSignal(e)
+      self.onMediaServerStarted(args.port)
+
+  proc onMediaServerStarted(self: Service, port: int) =
+    ## The media server rebinds to a new ephemeral port when the mobile OS
+    ## suspends/resumes the app. Re-point every cached contact image URL and
+    ## notify consumers so avatars keep loading (issue #47).
+    var changedContactIds: seq[string]
+    for contactId, details in self.contacts.mpairs:
+      var changed = false
+      refreshMediaServerUrl(details.icon, port, changed)
+      refreshMediaServerUrl(details.dto.image.thumbnail, port, changed)
+      refreshMediaServerUrl(details.dto.image.large, port, changed)
+      if changed:
+        changedContactIds.add(contactId)
+
+    for contactId in changedContactIds:
+      self.events.emit(SIGNAL_CONTACT_UPDATED, ContactArgs(contactId: contactId))
+
+    # The logged-in user's own avatar is cached in the user profile
+    # singleton; its setters emit imageChanged only when the value differs.
+    let userProfile = singletonInstance.userProfile
+    userProfile.setThumbnailImage(withMediaServerPort(userProfile.getThumbnailImage(), port))
+    userProfile.setLargeImage(withMediaServerPort(userProfile.getLargeImage(), port))
 
   proc onLoggedInUserNameChange*(self: Service) {.slot.} =
     let data = Args()

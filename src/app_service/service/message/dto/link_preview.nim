@@ -1,6 +1,7 @@
 import json, std/strformat, tables
 import ./status_link_preview, ./standard_link_preview
 import ./status_contact_link_preview, ./status_community_link_preview, ./status_community_channel_link_preview
+import ./link_preview_thumbnail
 import ../../contacts/dto/contact_details
 include ../../../common/json_utils
 
@@ -129,6 +130,25 @@ proc getCommunityId*(self: LinkPreview): string =
   if self.previewType == PreviewType.StatusCommunityChannelPreview:
     return self.statusCommunityChannelPreview.getCommunity().getCommunityId()
   return ""
+
+proc updateMediaServerPort*(self: LinkPreview, port: int) =
+  ## Media-server-served thumbnails embed the server's ephemeral port;
+  ## re-point them after a media-server restart. Safe on any preview:
+  ## only loopback media URLs are rewritten.
+  template refresh(thumbnail: LinkPreviewThumbnail) =
+    if thumbnail != nil:
+      thumbnail.updateMediaServerPort(port)
+
+  if self.standardPreview != nil:
+    refresh(self.standardPreview.getThumbnail())
+  if self.statusContactPreview != nil:
+    refresh(self.statusContactPreview.getIcon())
+  if self.statusCommunityPreview != nil:
+    refresh(self.statusCommunityPreview.getIcon())
+    refresh(self.statusCommunityPreview.getBanner())
+  if self.statusCommunityChannelPreview != nil and self.statusCommunityChannelPreview.getCommunity() != nil:
+    refresh(self.statusCommunityChannelPreview.getCommunity().getIcon())
+    refresh(self.statusCommunityChannelPreview.getCommunity().getBanner())
 
 proc setContactInfo*(self: LinkPreview, contactDetails: ContactDetails): bool =
   if self.previewType == PreviewType.StatusContactPreview:

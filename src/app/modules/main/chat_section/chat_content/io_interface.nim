@@ -30,6 +30,9 @@ method onNotificationsUpdated*(self: AccessInterface, hasUnreadMessages: bool, n
 method newPinnedMessagesLoaded*(self: AccessInterface, pinnedMessages: seq[PinnedMessageDto], reactions: seq[ReactionDto]) {.base.} =
   raise newException(ValueError, "No implementation available")
 
+method onMediaServerStarted*(self: AccessInterface, port: int) {.base.} =
+  raise newException(ValueError, "No implementation available")
+
 method onUnpinMessage*(self: AccessInterface, messageId: string) {.base.} =
   raise newException(ValueError, "No implementation available")
 

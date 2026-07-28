@@ -10,6 +10,7 @@ import ../../../../../../app_service/service/mailservers/service as mailservers_
 import ../../../../../../app_service/service/wallet_account/service as wallet_account_service
 import ../../../../../../app_service/service/shared_urls/service as shared_urls_service
 import ../../../../../core/eventemitter
+import ../../../../../core/signals/types as signal_types
 import ../../../../../core/unique_event_emitter
 
 logScope:
@@ -53,6 +54,10 @@ proc delete*(self: Controller) =
   self.events.disconnect()
 
 proc init*(self: Controller) =
+  self.events.on(SignalType.MediaServerStarted.event) do(e: Args):
+    let args = MediaServerStartedSignal(e)
+    self.delegate.onMediaServerStarted(args.port)
+
   self.events.on(SIGNAL_MESSAGES_LOADED) do(e:Args):
     let args = MessagesLoadedArgs(e)
     if self.chatId != args.chatId:

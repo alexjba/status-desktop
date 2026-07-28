@@ -99,6 +99,9 @@ method onChatsLoaded*(
   ) {.base.} =
   raise newException(ValueError, "No implementation available")
 
+method onMediaServerStarted*(self: AccessInterface, port: int) {.base.} =
+  raise newException(ValueError, "No implementation available")
+
 method onCommunityDataLoaded*(
     self: AccessInterface,
     events: EventEmitter,
