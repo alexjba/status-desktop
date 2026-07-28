@@ -65,10 +65,6 @@ proc sendContactUpdate*(publicKey, ensName, thumbnail: string): RpcResponse[Json
   let payload = %* [publicKey, ensName, thumbnail]
   result = callPrivateRPC("sendContactUpdate".prefix, payload)
 
-proc getImageServerURL*(): RpcResponse[JsonNode] =
-  let payload = %* []
-  result = callPrivateRPC("imageServerURL".prefix, payload)
-
 proc markAsTrusted*(pubkey: string): RpcResponse[JsonNode] =
   let payload = %* [pubkey]
   result = callPrivateRPC("markAsTrusted".prefix, payload)

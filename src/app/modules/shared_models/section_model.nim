@@ -283,14 +283,9 @@ QtObject:
     ## at the freshly bound port after a media-server restart.
     for i in 0 ..< self.items.len:
       var changed = false
-      template refresh(field: untyped) =
-        let updated = withMediaServerPort(field, port)
-        if updated != field:
-          field = updated
-          changed = true
-      refresh(self.items[i].image)
-      refresh(self.items[i].bannerImageData)
-      refresh(self.items[i].icon)
+      refreshMediaServerUrl(self.items[i].image, port, changed)
+      refreshMediaServerUrl(self.items[i].bannerImageData, port, changed)
+      refreshMediaServerUrl(self.items[i].icon, port, changed)
       if changed:
         let dataIndex = self.createIndex(i, 0, nil)
         defer: dataIndex.delete
