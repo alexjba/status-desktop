@@ -4,6 +4,7 @@ import app/core/eventemitter
 import app/core/signals/signals_manager
 import app/core/signals/signal_type_scan
 import app/core/signals/remote_signals/signal_type
+import app/core/signals/remote_signals/mediaserver
 
 # Exercises the real ManageSignals dispatch path (`processSignal`) to prove that
 # the cheap-triage guard skips unhandled types before parsing
@@ -55,6 +56,33 @@ suite "SignalsManager - unhandled signal-type skipping":
 
     check dispatchedCount == 1
     check unhandledSignalCount() == 1
+
+  test "mediaserver.started decodes the port and dispatches a typed signal":
+    # iOS restarts the media server on resume; the new port must survive the
+    # decode so subscribers can rewrite cached media URLs (issue #47).
+    let emitter = createEventEmitter()
+    var receivedPort = 0
+    emitter.on(SignalType.MediaServerStarted.event) do(a: Args):
+      receivedPort = MediaServerStartedSignal(a).port
+
+    let manager = newSignalsManager(emitter)
+    manager.processSignal("""{"type":"mediaserver.started","event":{"port":43210}}""")
+
+    check receivedPort == 43210
+
+  test "mediaserver.started with a null event dispatches with port 0":
+    let emitter = createEventEmitter()
+    var dispatched = false
+    var receivedPort = -1
+    emitter.on(SignalType.MediaServerStarted.event) do(a: Args):
+      dispatched = true
+      receivedPort = MediaServerStartedSignal(a).port
+
+    let manager = newSignalsManager(emitter)
+    manager.processSignal("""{"type":"mediaserver.started","event":null}""")
+
+    check dispatched
+    check receivedPort == 0
 
   test "a handled type in a whitespaced envelope still dispatches (scan-miss fallback)":
     # The fast substring scan assumes status-go's compact `"type":"` byte token.

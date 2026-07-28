@@ -104,6 +104,12 @@ proc delete*(self: Controller) =
   discard
 
 proc init*(self: Controller) =
+  self.events.on(SignalType.MediaServerStarted.event) do(e: Args):
+    # The media server rebinds to a new ephemeral port when the mobile OS
+    # suspends/resumes the app; cached media URLs must be re-pointed.
+    let args = MediaServerStartedSignal(e)
+    self.delegate.onMediaServerStarted(args.port)
+
   self.events.on(SIGNAL_ACTIVE_CHATS_LOADED) do(e:Args):
     self.delegate.onChatsLoaded(
       self.events,

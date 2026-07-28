@@ -5,6 +5,7 @@ import json
 import section_item, member_model, member_item
 import ../main/communities/tokens/models/[token_item, token_model]
 import model_utils
+import ../../../app_service/common/media_server_url
 import ../../../app_service/common/types
 import app/global/global_singleton
 
@@ -285,6 +286,28 @@ QtObject:
     let dataIndex = self.createIndex(index, 0, nil)
     defer: dataIndex.delete
     self.dataChanged(dataIndex, dataIndex, @[ModelRole.Muted.int])
+
+  proc updateMediaServerPort*(self: SectionModel, port: int) =
+    ## Re-points cached media-server URLs (community images/banners/icons)
+    ## at the freshly bound port after a media-server restart.
+    for i in 0 ..< self.items.len:
+      var changed = false
+      template refresh(field: untyped) =
+        let updated = withMediaServerPort(field, port)
+        if updated != field:
+          field = updated
+          changed = true
+      refresh(self.items[i].image)
+      refresh(self.items[i].bannerImageData)
+      refresh(self.items[i].icon)
+      if changed:
+        let dataIndex = self.createIndex(i, 0, nil)
+        defer: dataIndex.delete
+        self.dataChanged(dataIndex, dataIndex, @[
+          ModelRole.Image.int,
+          ModelRole.BannerImageData.int,
+          ModelRole.Icon.int,
+        ])
 
   proc editItem*(self: SectionModel, item: SectionItem) =
     updateItemRolesAndNotify self.getItemIndex(item.id):

@@ -325,6 +325,13 @@ QtObject:
     defer: modelIndex.delete
     self.dataChanged(modelIndex, modelIndex, roles)
 
+  proc updateMediaServerPort*(self: Model, port: int) =
+    # Thumbnails are QObjects with notify signals, so QML picks up the URL
+    # change without a dataChanged emission.
+    for item in self.items:
+      if item.linkPreview != nil:
+        item.linkPreview.updateMediaServerPort(port)
+
   proc setContactInfo*(self: Model, contactDetails: ContactDetails) =
     for row, item in self.items:
       if item.linkPreview.setContactInfo(contactDetails):

@@ -1036,6 +1036,9 @@ method onChatsLoaded*[T](
     self.shareDestinationChatIdToDeliver = ""
     self.launchShareFlow(text, imagePaths, destinationChatId)
 
+method onMediaServerStarted*[T](self: Module[T], port: int) =
+  self.view.model().updateMediaServerPort(port)
+
 method onCommunityDataLoaded*[T](
   self: Module[T],
   events: EventEmitter,
