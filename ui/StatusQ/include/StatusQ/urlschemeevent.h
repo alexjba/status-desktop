@@ -12,6 +12,9 @@ namespace Status
 
         public:
             void emitDeepLinkToQt(const QString& url);
+            void emitAppForegroundedToQt();
+            void emitAppBackgroundedToQt();
+            void watchApplicationState();
             static void setInstance(UrlSchemeEvent* instance);
 
             void registerUrlHandler();
@@ -24,6 +27,12 @@ namespace Status
 
         signals:
             void urlActivated(const QString& url);
+            void appForegrounded();
+            // Emitted only on Qt::ApplicationSuspended — a real backgrounding
+            // (iOS applicationDidEnterBackground). Qt::ApplicationInactive is
+            // NOT backgrounded: share sheets and system alerts briefly
+            // deactivate the app without suspending it.
+            void appBackgrounded();
     };
 }
 

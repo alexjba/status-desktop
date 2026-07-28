@@ -20,6 +20,7 @@ NIM_TESTS_LINK_STATUSQ := \
 	send_handler_adaptors_bench \
 	send_handler_lookup_bench \
 	send_modal_instantiation_bench \
+	services_pause_bridge_test \
 	signal_handler_test \
 	swap_key_harvest_bench \
 	swap_modal_instantiation_bench \

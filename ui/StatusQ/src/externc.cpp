@@ -115,6 +115,7 @@ Q_DECL_EXPORT void statusq_invoke_method_queued(void* obj, const char* method, c
 Q_DECL_EXPORT void* statusq_urlscheme_create() {
     auto* ev = new Status::UrlSchemeEvent();
     ev->registerUrlHandler();
+    ev->watchApplicationState();
     return ev;
 }
 
@@ -128,6 +129,14 @@ Q_DECL_EXPORT void statusq_urlscheme_install_event_filter(void* obj) {
 
 Q_DECL_EXPORT void statusq_urlscheme_emit_deeplink(void* obj, const char* url) {
     static_cast<Status::UrlSchemeEvent*>(obj)->emitDeepLinkToQt(QString::fromUtf8(url));
+}
+
+Q_DECL_EXPORT void statusq_urlscheme_emit_appforegrounded(void* obj) {
+    static_cast<Status::UrlSchemeEvent*>(obj)->emitAppForegroundedToQt();
+}
+
+Q_DECL_EXPORT void statusq_urlscheme_emit_appbackgrounded(void* obj) {
+    static_cast<Status::UrlSchemeEvent*>(obj)->emitAppBackgroundedToQt();
 }
 
 Q_DECL_EXPORT void statusq_urlscheme_delete(void* obj) {
