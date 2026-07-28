@@ -15,6 +15,7 @@ namespace Status
             void emitShareToQt(const QString& text, const QStringList& imagePaths,
                                const QString& destinationChatId);
             void emitAppForegroundedToQt();
+            void emitAppBackgroundedToQt();
             static void setInstance(UrlSchemeEvent* instance);
 
             void registerUrlHandler();
@@ -37,6 +38,11 @@ namespace Status
             void shareActivated(const QString& text, const QString& imagePathsJson,
                                 const QString& destinationChatId);
             void appForegrounded();
+            // Emitted only on Qt::ApplicationSuspended — a real backgrounding
+            // (iOS applicationDidEnterBackground). Qt::ApplicationInactive is
+            // NOT backgrounded: share sheets and system alerts briefly
+            // deactivate the app without suspending it.
+            void appBackgrounded();
     };
 }
 
