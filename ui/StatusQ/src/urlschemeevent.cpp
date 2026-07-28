@@ -68,12 +68,17 @@ void UrlSchemeEvent::watchApplicationState()
     // the wake-less iOS fallback for an already-running app — the share
     // extension wrote the slot but its unsupported openURL wake failed or was
     // dropped. Harmless elsewhere: consuming an inactive/empty slot is a no-op.
+    // appBackgrounded/appForegrounded also drive the iOS pausable-services
+    // bridge (src/app/core/services_pause_bridge.nim): pause on suspension,
+    // resume — and media-server rebind — on return to the foreground.
     // Under QCoreApplication (unit tests) there is no application state; skip.
     if (auto* app = qobject_cast<QGuiApplication*>(QCoreApplication::instance())) {
         connect(app, &QGuiApplication::applicationStateChanged, this,
                 [this](Qt::ApplicationState state) {
                     if (state == Qt::ApplicationActive)
                         emit appForegrounded();
+                    else if (state == Qt::ApplicationSuspended)
+                        emit appBackgrounded();
                 });
     }
 }
@@ -81,6 +86,11 @@ void UrlSchemeEvent::watchApplicationState()
 void UrlSchemeEvent::emitAppForegroundedToQt()
 {
     emit appForegrounded();
+}
+
+void UrlSchemeEvent::emitAppBackgroundedToQt()
+{
+    emit appBackgrounded();
 }
 
 void UrlSchemeEvent::emitDeepLinkToQt(const QString& url)

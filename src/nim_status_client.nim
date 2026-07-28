@@ -14,6 +14,10 @@ import app/core/custom_urls/url_scheme_event
 import app/core/intake/pending_intake_slot
 import app/global/single_instance
 
+when defined(ios):
+  import app/core/services_pause_bridge
+  import backend/pausable_services as backend_pausable_services
+
 import seaqt/qguiapplication
 import seaqt/qsslconfiguration
 import seaqt/qsslcertificate
@@ -299,6 +303,19 @@ proc mainProc() =
   statusFoundation.initUrlSchemeManager(urlSchemeEvent, singleInstance, openUri,
     pendingIntakeSlot, $statusq_shareintake_cache_dir())
 
+  when defined(ios):
+    # iOS runs status-go in-process, so the app lifecycle must drive the
+    # pausable services itself: backgrounding pauses them, foregrounding
+    # resumes them — which rebinds the media server iOS kills during
+    # suspension and re-emits mediaserver.started (the media-URL refresh).
+    # Android's service process drives this from binder visibility instead;
+    # desktop apps are never suspended.
+    let servicesPauseBridge = newServicesPauseBridge(urlSchemeEvent,
+      PausableServicesCalls(
+        pausableServiceNames: backend_pausable_services.pausableServiceNames,
+        pauseServices: backend_pausable_services.pauseServices,
+        resumeServices: backend_pausable_services.resumeServices))
+
   let appController = newAppController(statusFoundation)
 
   let isProductionQVariant = newQVariant(if defined(production): true else: false)
@@ -353,6 +370,8 @@ proc mainProc() =
     signalsManagerQVariant.delete()
     appController.delete()
     statusFoundation.delete()
+    when defined(ios):
+      servicesPauseBridge.delete()
     singleInstance.delete()
     app.delete()
 
