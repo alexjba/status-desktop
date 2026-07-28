@@ -376,6 +376,7 @@ suite "mark message as unread":
     # and marker is insert last at position : position('0xb') - 1 equals to position 2 here
     check(model.items[2].seen == true)
     check(model.items[3].seen == false)
+
 # The status-go media server restarts on a new ephemeral port when iOS
 # suspends/resumes the app; cached absolute media URLs must be re-pointed
 # at the new port while every other URL stays untouched (issue #47).

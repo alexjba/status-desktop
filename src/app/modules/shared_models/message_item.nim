@@ -706,25 +706,19 @@ proc updateMediaServerPort*(self: Item, port: int): bool =
   ## mobile OS suspends and resumes the app). Non-media URLs are untouched.
   ## Returns true when at least one field changed; link-preview thumbnails
   ## notify QML directly and do not affect the return value.
-  template refresh(field: untyped) =
-    let updated = withMediaServerPort(field, port)
-    if updated != field:
-      field = updated
-      result = true
-
-  refresh(self.senderIcon)
-  refresh(self.messageImage)
-  refresh(self.sticker)
-  refresh(self.quotedMessageAuthorAvatar)
-  refresh(self.quotedMessageAuthorDetails.dto.image.thumbnail)
-  refresh(self.quotedMessageAuthorDetails.dto.image.large)
-  refresh(self.deletedByContactDetails.dto.image.thumbnail)
-  refresh(self.deletedByContactDetails.dto.image.large)
+  refreshMediaServerUrl(self.senderIcon, port, result)
+  refreshMediaServerUrl(self.messageImage, port, result)
+  refreshMediaServerUrl(self.sticker, port, result)
+  refreshMediaServerUrl(self.quotedMessageAuthorAvatar, port, result)
+  refreshMediaServerUrl(self.quotedMessageAuthorDetails.dto.image.thumbnail, port, result)
+  refreshMediaServerUrl(self.quotedMessageAuthorDetails.dto.image.large, port, result)
+  refreshMediaServerUrl(self.deletedByContactDetails.dto.image.thumbnail, port, result)
+  refreshMediaServerUrl(self.deletedByContactDetails.dto.image.large, port, result)
   for i in 0 ..< self.albumMessageImages.len:
-    refresh(self.albumMessageImages[i])
+    refreshMediaServerUrl(self.albumMessageImages[i], port, result)
   for i in 0 ..< self.quotedMessageAlbumMessageImages.len:
-    refresh(self.quotedMessageAlbumMessageImages[i])
+    refreshMediaServerUrl(self.quotedMessageAlbumMessageImages[i], port, result)
   for i in 0 ..< self.messageAttachments.len:
-    refresh(self.messageAttachments[i])
+    refreshMediaServerUrl(self.messageAttachments[i], port, result)
   if self.linkPreviewModel != nil:
     self.linkPreviewModel.updateMediaServerPort(port)

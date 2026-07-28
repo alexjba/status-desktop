@@ -30,3 +30,12 @@ proc withMediaServerPort*(url: string, port: int): string =
   if idx < 0:
     return url
   url[0 ..< idx] & u.hostname & ":" & $port & url[idx + hostPort.len .. ^1]
+
+template refreshMediaServerUrl*(field, port, changed: untyped) =
+  ## Re-points `field` in place via `withMediaServerPort` and sets `changed`
+  ## to true when the URL actually changed. `changed` is left untouched
+  ## otherwise, so one flag can accumulate over several fields.
+  let updated = withMediaServerPort(field, port)
+  if updated != field:
+    field = updated
+    changed = true

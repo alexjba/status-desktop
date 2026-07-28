@@ -280,14 +280,9 @@ QtObject:
     var changedContactIds: seq[string]
     for contactId, details in self.contacts.mpairs:
       var changed = false
-      template refresh(field: untyped) =
-        let updated = withMediaServerPort(field, port)
-        if updated != field:
-          field = updated
-          changed = true
-      refresh(details.icon)
-      refresh(details.dto.image.thumbnail)
-      refresh(details.dto.image.large)
+      refreshMediaServerUrl(details.icon, port, changed)
+      refreshMediaServerUrl(details.dto.image.thumbnail, port, changed)
+      refreshMediaServerUrl(details.dto.image.large, port, changed)
       if changed:
         changedContactIds.add(contactId)
 
