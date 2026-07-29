@@ -9,6 +9,7 @@ import unittest, tables, sequtils
 import nimqml
 
 import app/modules/main/wallet_section/all_tokens/token_groups_model
+import app/modules/main/wallet_section/all_tokens/tokens_model
 import app/modules/main/wallet_section/all_tokens/io_interface
 import app/modules/main/wallet_section/all_tokens/market_details_item
 import app/modules/shared/qt_model_spy
@@ -46,6 +47,25 @@ proc newModel(): TokenGroupsModel =
   newTokenGroupsModel(groupsDataSource(), marketValuesDataSource())
 
 proc moves(spy: QtModelSpy): int = spy.calls.filterIt(it.kind == BeginMoveRows).len
+
+proc mkGroup2(key: string): TokenGroupItem =
+  ## Group with TWO tokens, distinguishable from mkGroup's one via rowCount.
+  result = mkGroup(key)
+  result.tokens.add(createTokenItem(TokenDto(
+    chainId: 10, address: "0x2" & key, crossChainId: key,
+    name: key, symbol: key, decimals: 18)))
+
+proc tokensRole(m: TokenGroupsModel): int =
+  for k, v in m.roleNames():
+    if v == "tokens": return k
+  doAssert false, "tokens role not found"
+
+proc readTokensRole(m: TokenGroupsModel, row: int) =
+  ## Read the tokens role through data(), the way the Qt view layer does.
+  let idx = m.createIndex(row, 0, nil)
+  defer: idx.delete
+  let v = m.data(idx, m.tokensRole())
+  if not v.isNil: v.delete
 
 suite "token_groups_model - identity, reorder, stable-set":
 
@@ -199,3 +219,87 @@ suite "token_groups_model - identity, reorder, stable-set":
     # within this same modelsUpdated call rather than empty until a later signal.
     for key in m.groupKeysInOrder():
       check not m.marketDetailsItemForKey(key).isNil
+
+suite "token_groups_model - tokens submodel lifetime":
+  ## QML consumers (ModelEntry item maps, delegates) cache the QObject pointer
+  ## returned for the "tokens" role. Destroying a previously handed-out submodel
+  ## on a later data() read leaves those consumers with a dangling pointer —
+  ## the send-modal network-switch UAF crash (rowCount on freed Nim object).
+
+  setup:
+    let spy = newQtModelSpy()
+    spy.enable()
+
+  teardown:
+    spy.disable()
+
+  test "re-reading the tokens role never destroys a previously handed-out submodel":
+    gGroups = @[mkGroup("a"), mkGroup("b")]
+    let m = newModel()
+    m.modelsUpdated()
+
+    let before = tokensModelDeleteCount
+    m.readTokensRole(0)   # hand out row a's submodel (QML caches the pointer)
+    m.readTokensRole(1)   # reading another row must not kill row a's submodel
+    m.readTokensRole(0)   # re-reading the same row must not kill row b's either
+    check tokensModelDeleteCount == before
+
+  test "same submodel instance handed out for the same group across reads and refreshes":
+    gGroups = @[mkGroup("a"), mkGroup("b")]
+    let m = newModel()
+    m.modelsUpdated()
+
+    let subA = m.ensureTokensSubmodel("a")
+    m.readTokensRole(0)                       # data() must reuse, not re-create
+    check m.ensureTokensSubmodel("a") == subA
+
+    gGroups = @[mkGroup("a"), mkGroup("b")]   # stable refresh
+    m.modelsUpdated()
+    check m.ensureTokensSubmodel("a") == subA
+
+  test "submodel follows its group key when rows shift, not its creation index":
+    gGroups = @[mkGroup("a"), mkGroup2("b")]
+    let m = newModel()
+    m.modelsUpdated()
+
+    let subB = m.ensureTokensSubmodel("b")
+    check subB.rowCount(nil) == 2
+
+    gGroups = @[mkGroup2("b"), mkGroup("a")]  # b moves to row 0
+    m.modelsUpdated()
+    check subB.rowCount(nil) == 2
+    check m.ensureTokensSubmodel("a").rowCount(nil) == 1
+
+  test "removed group's submodel is deleted after the remove; a returning key gets a fresh one":
+    gGroups = @[mkGroup("a"), mkGroup("b")]
+    let m = newModel()
+    m.modelsUpdated()
+
+    discard m.ensureTokensSubmodel("a")
+    let before = tokensModelDeleteCount
+
+    gGroups = @[mkGroup("b")]
+    m.modelsUpdated()
+    # Row gone -> its submodel is dropped and destroyed (consumers were notified
+    # by the remove signals and detach via destroyed()).
+    check tokensModelDeleteCount == before + 1
+
+    gGroups = @[mkGroup("b"), mkGroup("a")]
+    m.modelsUpdated()
+    check m.ensureTokensSubmodel("a").rowCount(nil) == 1   # fresh instance
+
+  test "submodel resets only on content change, never on a stable refresh":
+    gGroups = @[mkGroup("a"), mkGroup("b")]
+    let m = newModel()
+    m.modelsUpdated()
+    discard m.ensureTokensSubmodel("a")
+
+    var before = tokensModelResetCount
+    gGroups = @[mkGroup("a"), mkGroup("b")]   # stable
+    m.modelsUpdated()
+    check tokensModelResetCount == before
+
+    before = tokensModelResetCount
+    gGroups = @[mkGroup2("a"), mkGroup("b")]  # a's token set changes
+    m.modelsUpdated()
+    check tokensModelResetCount == before + 1 # exactly the submodel's own reset

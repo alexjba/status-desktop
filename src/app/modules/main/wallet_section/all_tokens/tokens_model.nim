@@ -18,12 +18,20 @@ type
     CommunityId
     Type
 
+when defined(testing) or defined(QT_MODEL_SPY):
+  # Destruction sentinel: QML consumers cache the submodel pointer, so tests
+  # assert a handed-out instance is never destroyed while its parent model lives.
+  var tokensModelDeleteCount*: int
+  # Reset sentinel: content changes must be announced through the cached
+  # submodel's own reset; stable refreshes must stay silent.
+  var tokensModelResetCount*: int
+
 QtObject:
   type TokensModel* = ref object of QAbstractListModel
     delegate: io_interface.TokensModelDataSource
 
   proc setup(self: TokensModel)
-  proc delete(self: TokensModel)
+  proc delete*(self: TokensModel)
 
   proc newTokensModel*(delegate: io_interface.TokensModelDataSource): TokensModel =
     new(result, delete)
@@ -89,11 +97,16 @@ QtObject:
         return newQVariant(ord(item.`type`))
 
   proc modelsUpdated*(self: TokensModel) =
+    when defined(testing) or defined(QT_MODEL_SPY):
+      inc tokensModelResetCount
     self.beginResetModel()
     self.endResetModel()
 
   proc setup(self: TokensModel) =
     self.QAbstractListModel.setup
 
-  proc delete(self: TokensModel) =
+  proc delete*(self: TokensModel) =
+    when defined(testing) or defined(QT_MODEL_SPY):
+      if cast[pointer](self.vptr) != nil:
+        inc tokensModelDeleteCount
     self.QAbstractListModel.delete

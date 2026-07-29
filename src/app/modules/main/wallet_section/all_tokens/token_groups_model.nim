@@ -31,10 +31,27 @@ type
     Position
 
 
+proc tokensContentEqual(a, b: seq[TokenItem]): bool =
+  ## Equality of the token fields tokens_model displays (incl. customToken).
+  if a.len != b.len:
+    return false
+  for i in 0 ..< a.len:
+    if a[i].key != b[i].key or a[i].name != b[i].name or
+       a[i].symbol != b[i].symbol or a[i].decimals != b[i].decimals or
+       a[i].chainId != b[i].chainId or a[i].address != b[i].address or
+       a[i].logoUri != b[i].logoUri or
+       a[i].communityData.id != b[i].communityData.id or
+       a[i].customToken != b[i].customToken or a[i].`type` != b[i].`type`:
+      return false
+  true
+
 QtObject:
   type TokenGroupsModel* = ref object of QAbstractListModel
     delegate: io_interface.TokenGroupsModelDataSource
-    tokensModel: TokensModel
+    # Per-group "tokens" submodels, row lifetime: deleted after the parent's
+    # remove/reset signals, so consumers detach via the notification first.
+    tokensModels: Table[string, TokensModel]
+    emptyTokens: seq[TokenItem]
     marketValuesDelegate: io_interface.TokenMarketValuesDataSource
     # Market details keyed by group key (not row index): identity-independent of
     # insert/remove/move so survivors keep the SAME MarketDetailsItem instance the
@@ -66,6 +83,7 @@ QtObject:
     result.delegate = delegate
     result.marketValuesDelegate = marketValuesDelegate
     result.tokenMarketDetails = initTable[string, MarketDetailsItem]()
+    result.tokensModels = initTable[string, TokensModel]()
     result.modelModes = modelModes
     result.lazyLoadingBatchSize = lazyLoadingBatchSize
     result.lazyLoadingInitialCount = lazyLoadingInitialCount
@@ -131,10 +149,24 @@ QtObject:
       ModelRole.Position.int:"position"
     }.toTable
 
-  proc getTokensModelDataSource*(self: TokenGroupsModel, index: int): TokensModelDataSource =
+  proc tokensForGroupKey(self: TokenGroupsModel, groupKey: string): var seq[TokenItem] =
+    for i in 0 ..< self.getDisplayModel().len:
+      if self.getDisplayModel()[i].key == groupKey:
+        return self.getDisplayModel()[i].tokens
+    # Row gone: no rows, never another row's tokens.
+    self.emptyTokens.setLen(0)
+    return self.emptyTokens
+
+  proc getTokensModelDataSource*(self: TokenGroupsModel, groupKey: string): TokensModelDataSource =
     return (
-      getTokens: proc(): var seq[TokenItem] = self.getDisplayModel()[index].tokens,
+      getTokens: proc(): var seq[TokenItem] = self.tokensForGroupKey(groupKey),
     )
+
+  proc ensureTokensSubmodel*(self: TokenGroupsModel, groupKey: string): TokensModel =
+    ## One submodel per group key, reused across reads: consumers cache the pointer.
+    if not self.tokensModels.hasKey(groupKey):
+      self.tokensModels[groupKey] = newTokensModel(self.getTokensModelDataSource(groupKey))
+    return self.tokensModels[groupKey]
 
   method data(self: TokenGroupsModel, index: QModelIndex, role: int): QVariant =
     guardModelData(index, self.rowCount(), role, ModelRole)
@@ -159,9 +191,7 @@ QtObject:
       of ModelRole.LogoUri:
         return newQVariant(item.logoUri)
       of ModelRole.Tokens:
-        self.tokensModel = newTokensModel(self.getTokensModelDataSource(index.row))
-        self.tokensModel.modelsUpdated()
-        return newQVariant(self.tokensModel)
+        return newQVariant(self.ensureTokensSubmodel(item.key))
       of ModelRole.CommunityId:
         # since each token gorup item has at least one token, we're safe to use the first token's data
         return newQVariant(item.tokens[0].communityData.id)
@@ -247,20 +277,52 @@ QtObject:
     if oldItem.decimals != newItem.decimals: result.add(ModelRole.Decimals.int)
     if oldItem.logoUri != newItem.logoUri: result.add(ModelRole.LogoUri.int)
     if oldItem.`type` != newItem.`type`: result.add(ModelRole.Type.int)
-    # Tokens is a ref seq — compare by content signature, not reference identity.
-    # Includes customToken (tokens_model shows it) so a customToken flip on a
-    # surviving token key re-reads the Tokens sub-model.
-    let oldSig = oldItem.tokens.mapIt((it.key, it.name, it.symbol, it.decimals,
-      it.chainId, it.address, it.logoUri, it.communityData.id, it.customToken, it.`type`))
-    let newSig = newItem.tokens.mapIt((it.key, it.name, it.symbol, it.decimals,
-      it.chainId, it.address, it.logoUri, it.communityData.id, it.customToken, it.`type`))
-    if oldSig != newSig:
+    # Tokens is a ref seq — compare by content, not reference identity.
+    if not tokensContentEqual(oldItem.tokens, newItem.tokens):
       result.add(ModelRole.Tokens.int)
       result.add(ModelRole.MarketDetails.int)
       result.add(ModelRole.CommunityId.int)
       # Description is community-branched (isCommunityTokenGroup); a community-status
       # flip is captured by communityData.id in the signature above, so re-read it.
       result.add(ModelRole.Description.int)
+
+  proc planTokensSubmodelUpdates(self: TokenGroupsModel, newGroups: seq[TokenGroupItem]):
+      tuple[toReset: seq[TokensModel], removed: seq[string]] =
+    ## Per live submodel: reset when its token content changed, delete when its
+    ## key is gone. Computed pre-sync, applied after the row signals.
+    for key, sub in self.tokensModels:
+      var found = false
+      for item in newGroups:
+        if item.key != key:
+          continue
+        found = true
+        var changed = true
+        for old in self.getDisplayModel():
+          if old.key == key:
+            changed = not tokensContentEqual(old.tokens, item.tokens)
+            break
+        if changed:
+          result.toReset.add(sub)
+        break
+      if not found:
+        result.removed.add(key)
+
+  proc resetTokensSubmodels(self: TokenGroupsModel) =
+    ## After a full reset: drop removed keys' submodels, reset the survivors.
+    var removed: seq[string] = @[]
+    for key, sub in self.tokensModels:
+      var found = false
+      for item in self.getDisplayModel():
+        if item.key == key:
+          found = true
+          break
+      if found:
+        sub.modelsUpdated()
+      else:
+        removed.add(key)
+    for key in removed:
+      self.tokensModels[key].delete
+      self.tokensModels.del(key)
 
   proc modelsUpdated*(self: TokenGroupsModel, resetModelSize: bool = false, mandatoryKeys: seq[string] = @[]) =
     let isMainModel = ModelMode.UseLazyLoading notin self.modelModes and
@@ -288,11 +350,24 @@ QtObject:
       # signal fired. rebuildMarketDetails is identity-preserving, so survivors keep
       # their instances and the transient gating of a being-removed row is harmless.
       self.rebuildMarketDetails(newGroups)
+      let (toReset, removedKeys) = self.planTokensSubmodelUpdates(newGroups)
       self.modelSync(self.cachedGroups, newGroups)
       self.hasMoreItemsChanged()
+      # After the row signals: consumers must see them before submodels change.
+      for sub in toReset:
+        sub.modelsUpdated()
+      for key in removedKeys:
+        # Explicit delete: the self-capturing data-source closure makes the
+        # submodel a cycle candidate, so a plain ref drop frees it only at some
+        # later cycle collection.
+        self.tokensModels[key].delete
+        self.tokensModels.del(key)
       return
 
     self.beginResetModel()
+    defer:
+      # First-registered defer runs LAST — after endResetModel below.
+      self.resetTokensSubmodels()
     defer:
       self.endResetModel()
       self.hasMoreItemsChanged()

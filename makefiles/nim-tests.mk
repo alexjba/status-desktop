@@ -41,6 +41,7 @@ NIM_TESTS_MODEL_SPY := \
 	model_sync_move_test \
 	model_sync_unified_test \
 	token_groups_model_test \
+	token_lists_model_test \
 	token_selector_model_bench \
 	token_selector_model_test \
 	token_selector_producer_view_test
