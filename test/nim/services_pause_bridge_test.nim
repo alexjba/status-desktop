@@ -108,12 +108,14 @@ suite "services_pause_bridge":
       @[@["mediaserver", "messenger", "localbackups", "downloader"]]
 
   test "an empty pausable set drives no pause and no resume":
-    # Node not running: backgrounded on the login screen.
+    # Node not running: backgrounded on the login screen. Nothing was paused,
+    # so the paused latch stays clear and the foreground event returns before
+    # fetching — only the backgrounding fetches.
     names = @[]
     statusq_urlscheme_emit_appbackgrounded(urlSchemeEvent.vptr)
     statusq_urlscheme_emit_appforegrounded(urlSchemeEvent.vptr)
 
-    check fetches == 2
+    check fetches == 1
     check pauseCalls.len == 0
     check resumeCalls.len == 0
 
