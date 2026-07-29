@@ -31,7 +31,11 @@ suite "services_pause_bridge":
   setup:
     let urlSchemeEvent = newUrlSchemeEvent()
     var names = @["mediaserver", "messenger", "localbackups"]
-    var fetches = 0
+    # unittest's setup vars live at module scope: a `= 0` constant initializer is
+    # emitted once and not re-run per case, so the counter must be reset here
+    # explicitly (unlike the seqs, whose `@[]` runtime init already resets).
+    var fetches: int
+    fetches = 0
     var pauseCalls: seq[seq[string]] = @[]
     var resumeCalls: seq[seq[string]] = @[]
     let bridge = newServicesPauseBridge(urlSchemeEvent, PausableServicesCalls(
