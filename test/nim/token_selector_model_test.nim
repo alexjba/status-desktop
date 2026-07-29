@@ -174,6 +174,17 @@ suite "TokenSelectorModel - nested balances submodel":
   teardown:
     spy.disable()
 
+  test "deleting a model actually deletes the C++ object (owner flag set)":
+    # nimqml-seaqt QAbstractItemModel/ListModel/TableModel setups assign vptr but
+    # never set QObject.owner, so delete() silently no-ops: the C++ model leaks
+    # alive with a dangling Nim pointer, and any consumer callback afterwards
+    # (view rowAt -> rowCount, ModelQuery roleNames) is a use-after-free — the
+    # send-modal token-selector crash.
+    let doomed = newTokenSelectorBalancesModel(@[])
+    check doomed.vptr != nil
+    doomed.QAbstractListModel.delete()
+    check doomed.vptr == nil   # delete must reach the C++ side, not early-return
+
   test "balances submodel exposes the chips joined per chain":
     let m = newTokenSelectorModel()
     m.setSourceItems(@[
