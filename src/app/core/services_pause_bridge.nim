@@ -47,10 +47,10 @@ QtObject:
   proc onAppBackgrounded*(self: ServicesPauseBridge) {.slot.} =
     if self.paused:
       return
-    self.paused = true
     let names = self.calls.pausableServiceNames()
     if names.len == 0:
       return
+    self.paused = true
     info "app backgrounded, pausing services", names
     self.calls.pauseServices(names)
 
