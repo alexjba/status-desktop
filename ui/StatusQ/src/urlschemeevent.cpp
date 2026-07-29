@@ -9,6 +9,7 @@ using namespace Status;
     #include <QJniObject>
 #endif // Q_OS_ANDROID
 
+#include <QDebug>
 #include <QDesktopServices>
 #include <QGuiApplication>
 
@@ -53,10 +54,21 @@ void UrlSchemeEvent::watchApplicationState()
     if (auto* app = qobject_cast<QGuiApplication*>(QCoreApplication::instance())) {
         connect(app, &QGuiApplication::applicationStateChanged, this,
                 [this](Qt::ApplicationState state) {
-                    if (state == Qt::ApplicationActive)
+                    switch (state) {
+                    case Qt::ApplicationActive:
                         emit appForegrounded();
-                    else if (state == Qt::ApplicationSuspended)
+                        break;
+                    case Qt::ApplicationSuspended:
                         emit appBackgrounded();
+                        break;
+                    case Qt::ApplicationInactive:
+                        // Transient dip (share sheets, system alerts, app
+                        // switcher) — deliberately not a backgrounding.
+                        break;
+                    default:
+                        qWarning() << "Unhandled application state:" << state;
+                        break;
+                    }
                 });
     }
 }
