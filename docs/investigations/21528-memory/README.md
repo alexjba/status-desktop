@@ -70,9 +70,25 @@ scavenger has not returned yet: in the heapprofd run the service process dropped
 libsds (Nim refc heap, mmap-backed, also in "Unknown") and cgo malloc (sqlcipher, 7.6MB via
 heapprofd) are minor.
 
-The 500MB `SetMemoryLimit` is therefore not what holds memory; the burst is. Levers are (a) shrink
-the burst, (b) release faster after it (`debug.FreeOSMemory()` once login settles, or a lower
-limit/GOGC during the burst window).
+**Correction after measuring:** Go on Android advises freed pages with `MADV_FREE`, not
+`MADV_DONTNEED` — `runtime1.go` only defaults `madvdontneed=1` when `GOOS == "linux"`, and the
+runtime's `GOOS` is `android`. With `MADV_FREE` the kernel keeps the pages resident (and every
+meter keeps counting them) until it is under memory pressure. That is why HeapReleased was 346MB
+while `dumpsys` still showed the full HeapSys, and why the number only moved when zram pressure hit.
+
+Experiment (`ledger/profile-build-redmi-a5.csv`, rows `linkname-*`): flipping the runtime's advice
+to `MADV_DONTNEED` at init (`mobile/madvise_android.go`, `//go:linkname runtime.adviseUnused`;
+`//go:debug` refuses the unregistered setting and an env var set from Java never reaches the
+runtime, which copies the loader's original `envp`):
+
+| build | statusgo PSS at T+2min | Go anon ("Unknown") | HeapSys − HeapReleased |
+|---|---|---|---|
+| profile build, baseline (3 runs) | 354 / 392 / 569 | 278 / 302 / 477 | 105–146 |
+| profile build, MADV_DONTNEED | **219** | **120** | 120 |
+
+Total footprint drops from ~1000MB to ~655MB with no change to live data. The startup burst still
+happens (HeapSys 496MB) but leaves RSS as soon as the scavenger runs. `FreeOSMemory()` after login
+is only worth adding on top if the scavenger's own pace proves too slow; it did not in this run.
 
 Cumulative allocations since start (`profiles/statusgo-allocs-settle-top.txt`, 4.7GB in ~5 min):
 
