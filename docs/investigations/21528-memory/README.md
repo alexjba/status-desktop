@@ -86,7 +86,7 @@ runtime, which copies the loader's original `envp`):
 | profile build, baseline (3 runs) | 354 / 392 / 569 | 278 / 302 / 477 | 105–146 |
 | profile build, MADV_DONTNEED | **219** | **120** | 120 |
 
-Total footprint drops from ~1000MB to ~655MB with no change to live data. The startup burst still
+Total footprint drops from ~1000MB to ~655MB with no change to live data. Fix PR: status-im/status-go#7864 (`mobile/madvise_android.go`); upstream Go proposal draft: [upstream-go-issue-draft.md](upstream-go-issue-draft.md). The startup burst still
 happens (HeapSys 496MB) but leaves RSS as soon as the scavenger runs. `FreeOSMemory()` after login
 is only worth adding on top if the scavenger's own pace proves too slow; it did not in this run.
 
