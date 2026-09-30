@@ -1,0 +1,545 @@
+goroutine profile: total 282
+23 @ 0x71a211b54c 0x71a20abe20 0x71a20ab994 0x71a27cc4dc 0x71a2123934
+#	0x71a27cc4db	github.com/afex/hystrix-go/hystrix.(*metricExchange).Monitor+0x3b	github.com/afex/hystrix-go@v0.0.0-20180502004556-fa1af6a1f4f5/hystrix/metrics.go:53
+
+23 @ 0x71a211b54c 0x71a20abe20 0x71a20ab994 0x71a27cd5b8 0x71a2123934
+#	0x71a27cd5b7	github.com/afex/hystrix-go/hystrix.(*poolMetrics).Monitor+0x37	github.com/afex/hystrix-go@v0.0.0-20180502004556-fa1af6a1f4f5/hystrix/pool_metrics.go:44
+
+13 @ 0x71a2123934
+
+11 @ 0x71a211b54c 0x71a20f885c 0x71a2b2682c 0x71a2b2dd9c 0x71a2ba58a4 0x71a2123934
+#	0x71a2b2682b	github.com/libp2p/go-yamux/v4.(*Session).AcceptStream+0xab		github.com/libp2p/go-yamux/v4@v4.0.2/session.go:272
+#	0x71a2b2dd9b	github.com/libp2p/go-libp2p/p2p/muxer/yamux.(*conn).AcceptStream+0x1b	github.com/libp2p/go-libp2p@v0.39.1/p2p/muxer/yamux/conn.go:43
+#	0x71a2ba58a3	github.com/libp2p/go-libp2p/p2p/net/swarm.(*Conn).start.func1+0x83	github.com/libp2p/go-libp2p@v0.39.1/p2p/net/swarm/swarm_conn.go:118
+
+11 @ 0x71a211b54c 0x71a20f885c 0x71a2b26fe8 0x71a2123934
+#	0x71a2b26fe7	github.com/libp2p/go-yamux/v4.(*Session).startMeasureRTT+0xa7	github.com/libp2p/go-yamux/v4@v4.0.2/session.go:356
+
+11 @ 0x71a211b54c 0x71a20f885c 0x71a2b284b4 0x71a2b281a0 0x71a2123934
+#	0x71a2b284b3	github.com/libp2p/go-yamux/v4.(*Session).sendLoop+0x2d3	github.com/libp2p/go-yamux/v4@v4.0.2/session.go:589
+#	0x71a2b2819f	github.com/libp2p/go-yamux/v4.(*Session).send+0x1f	github.com/libp2p/go-yamux/v4@v4.0.2/session.go:518
+
+9 @ 0x71a211b54c 0x71a20ddbc0 0x71a211a720 0x71a218f218 0x71a2190394 0x71a2190385 0x71a236ecd8 0x71a237ed94 0x71a2225ce8 0x71a213c988 0x71a2bc50dc 0x71a2bc50bd 0x71a2bc49c0 0x71a213c988 0x71a2b28ad8 0x71a2b28ab9 0x71a2b289f0 0x71a2123934
+#	0x71a211a71f	internal/poll.runtime_pollWait+0x9f								runtime/netpoll.go:351
+#	0x71a218f217	internal/poll.(*pollDesc).wait+0x27								internal/poll/fd_poll_runtime.go:84
+#	0x71a2190393	internal/poll.(*pollDesc).waitRead+0x233							internal/poll/fd_poll_runtime.go:89
+#	0x71a2190384	internal/poll.(*FD).Read+0x224									internal/poll/fd_unix.go:165
+#	0x71a236ecd7	net.(*netFD).Read+0x27										net/fd_posix.go:68
+#	0x71a237ed93	net.(*conn).Read+0x33										net/net.go:196
+#	0x71a2225ce7	bufio.(*Reader).Read+0x187									bufio/bufio.go:245
+#	0x71a213c987	io.ReadAtLeast+0x97										io/io.go:335
+#	0x71a2bc50db	io.ReadFull+0x3b										io/io.go:354
+#	0x71a2bc50bc	github.com/libp2p/go-libp2p/p2p/security/noise.(*secureSession).readNextInsecureMsgLen+0x1c	github.com/libp2p/go-libp2p@v0.39.1/p2p/security/noise/rw.go:133
+#	0x71a2bc49bf	github.com/libp2p/go-libp2p/p2p/security/noise.(*secureSession).Read+0x19f			github.com/libp2p/go-libp2p@v0.39.1/p2p/security/noise/rw.go:52
+#	0x71a213c987	io.ReadAtLeast+0x97										io/io.go:335
+#	0x71a2b28ad7	io.ReadFull+0xa7										io/io.go:354
+#	0x71a2b28ab8	github.com/libp2p/go-yamux/v4.(*Session).recvLoop+0x88						github.com/libp2p/go-yamux/v4@v4.0.2/session.go:674
+#	0x71a2b289ef	github.com/libp2p/go-yamux/v4.(*Session).recv+0x1f						github.com/libp2p/go-yamux/v4@v4.0.2/session.go:646
+
+8 @ 0x71a211b54c 0x71a20f885c 0x71a304e970 0x71a2123934
+#	0x71a304e96f	github.com/status-im/status-go/pkg/messaging/waku.(*Waku).processQueueLoop+0xbf	github.com/status-im/status-go/pkg/messaging/waku/gowaku.go:1342
+
+6 @ 0x71a211b54c 0x71a20f885c 0x71a2858f90 0x71a285a42c 0x71a2123934
+#	0x71a2858f8f	github.com/status-im/status-go/internal/pausable.(*PausableTicker).Run+0x1cf			github.com/status-im/status-go/internal/pausable/ticker.go:108
+#	0x71a285a42b	github.com/status-im/status-go/internal/rpc/chain/rpclimiter.(*RPCRpsLimiter).start.func1+0x10b	github.com/status-im/status-go/internal/rpc/chain/rpclimiter/rpc_limiter.go:255
+
+5 @ 0x71a211b54c 0x71a20f885c 0x71a2866038 0x71a2123934
+#	0x71a2866037	github.com/status-im/status-go/internal/healthmanager.(*BlockchainHealthManager).RegisterProvidersHealthManager.func1+0xc7	github.com/status-im/status-go/internal/healthmanager/blockchain_health_manager.go:82
+
+4 @ 0x71a211b54c 0x71a20f885c 0x71a2c9cc88 0x71a2123934
+#	0x71a2c9cc87	github.com/libp2p/go-libp2p/p2p/transport/quicreuse.(*reuse).gc+0xb7	github.com/libp2p/go-libp2p@v0.39.1/p2p/transport/quicreuse/reuse.go:219
+
+4 @ 0x71a211b54c 0x71a20f885c 0x71a34dbef0 0x71a2123934
+#	0x71a34dbeef	github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership.(*PeriodicalLoader).Start.func1+0x38f	github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership/periodical_loader.go:132
+
+3 @ 0x71a211b54c 0x71a20f885c 0x71a22360d4 0x71a2123934
+#	0x71a22360d3	database/sql.(*DB).connectionOpener+0x83	database/sql/sql.go:1261
+
+3 @ 0x71a211b54c 0x71a20f885c 0x71a30130a8 0x71a2123934
+#	0x71a30130a7	github.com/waku-org/go-waku/waku/v2/api/filter.(*Sub).multiplex.func2+0x87	github.com/waku-org/go-waku@v0.10.3/waku/v2/api/filter/filter.go:331
+
+3 @ 0x71a211b54c 0x71a20f885c 0x71a3013374 0x71a2123934
+#	0x71a3013373	github.com/waku-org/go-waku/waku/v2/api/filter.(*Sub).multiplex.func1+0x173	github.com/waku-org/go-waku@v0.10.3/waku/v2/api/filter/filter.go:314
+
+2 @ 0x71a211b54c 0x71a20abe20 0x71a20ab994 0x71a2567304 0x71a2123934
+#	0x71a2567303	gopkg.in/natefinch/lumberjack%2ev2.(*Logger).millRun+0x43	gopkg.in/natefinch/lumberjack.v2@v2.2.1/lumberjack.go:379
+
+2 @ 0x71a211b54c 0x71a20abe20 0x71a20ab994 0x71a2bbd57c 0x71a2baaffc 0x71a2123934
+#	0x71a2bbd57b	github.com/libp2p/go-libp2p/p2p/net/upgrader.(*listener).Accept+0x3b		github.com/libp2p/go-libp2p@v0.39.1/p2p/net/upgrader/listener.go:173
+#	0x71a2baaffb	github.com/libp2p/go-libp2p/p2p/net/swarm.(*Swarm).AddListenAddr.func2+0x9b	github.com/libp2p/go-libp2p@v0.39.1/p2p/net/swarm/swarm_listen.go:161
+
+2 @ 0x71a211b54c 0x71a20abe20 0x71a20ab994 0x71a304abf4 0x71a2123934
+#	0x71a304abf3	github.com/status-im/status-go/pkg/messaging/waku.(*Waku).SubscribeEnvelopeEvents.func1+0x113	github.com/status-im/status-go/pkg/messaging/waku/gowaku.go:744
+
+2 @ 0x71a211b54c 0x71a20ddbc0 0x71a211a720 0x71a218f218 0x71a2190394 0x71a2190385 0x71a236ecd8 0x71a237ed94 0x71a24784b8 0x71a21bbf80 0x71a247867c 0x71a2475fa8 0x71a247b9ac 0x71a247b9ad 0x71a213c988 0x71a2b28ad8 0x71a2b28ab9 0x71a2b289f0 0x71a2123934
+#	0x71a211a71f	internal/poll.runtime_pollWait+0x9f			runtime/netpoll.go:351
+#	0x71a218f217	internal/poll.(*pollDesc).wait+0x27			internal/poll/fd_poll_runtime.go:84
+#	0x71a2190393	internal/poll.(*pollDesc).waitRead+0x233		internal/poll/fd_poll_runtime.go:89
+#	0x71a2190384	internal/poll.(*FD).Read+0x224				internal/poll/fd_unix.go:165
+#	0x71a236ecd7	net.(*netFD).Read+0x27					net/fd_posix.go:68
+#	0x71a237ed93	net.(*conn).Read+0x33					net/net.go:196
+#	0x71a24784b7	crypto/tls.(*atLeastReader).Read+0x37			crypto/tls/conn.go:815
+#	0x71a21bbf7f	bytes.(*Buffer).ReadFrom+0x8f				bytes/buffer.go:229
+#	0x71a247867b	crypto/tls.(*Conn).readFromUntil+0xcb			crypto/tls/conn.go:837
+#	0x71a2475fa7	crypto/tls.(*Conn).readRecordOrCCS+0x337		crypto/tls/conn.go:626
+#	0x71a247b9ab	crypto/tls.(*Conn).readRecord+0x14b			crypto/tls/conn.go:588
+#	0x71a247b9ac	crypto/tls.(*Conn).Read+0x14c				crypto/tls/conn.go:1393
+#	0x71a213c987	io.ReadAtLeast+0x97					io/io.go:335
+#	0x71a2b28ad7	io.ReadFull+0xa7					io/io.go:354
+#	0x71a2b28ab8	github.com/libp2p/go-yamux/v4.(*Session).recvLoop+0x88	github.com/libp2p/go-yamux/v4@v4.0.2/session.go:674
+#	0x71a2b289ef	github.com/libp2p/go-yamux/v4.(*Session).recv+0x1f	github.com/libp2p/go-yamux/v4@v4.0.2/session.go:646
+
+2 @ 0x71a211b54c 0x71a20f885c 0x71a2af7ab0 0x71a2123934
+#	0x71a2af7aaf	github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoremem.(*memoryAddrBook).background+0xdf	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/peerstore/pstoremem/addr_book.go:242
+
+2 @ 0x71a211b54c 0x71a20f885c 0x71a2b9ab54 0x71a2123934
+#	0x71a2b9ab53	github.com/libp2p/go-libp2p/p2p/net/swarm.(*connectednessEventEmitter).runEmitter+0xc3	github.com/libp2p/go-libp2p@v0.39.1/p2p/net/swarm/connectedness_event_emitter.go:93
+
+2 @ 0x71a211b54c 0x71a20f885c 0x71a2ba6c50 0x71a2123934
+#	0x71a2ba6c4f	github.com/libp2p/go-libp2p/p2p/net/swarm.(*DialBackoff).background+0xaf	github.com/libp2p/go-libp2p@v0.39.1/p2p/net/swarm/swarm_dial.go:128
+
+2 @ 0x71a211b54c 0x71a20f885c 0x71a3125cec 0x71a2123934
+#	0x71a3125ceb	github.com/status-im/status-go/pkg/messaging/controller.(*Controller).cleanupLoop.func1+0xab	github.com/status-im/status-go/pkg/messaging/controller/controller.go:208
+
+2 @ 0x71a211b54c 0x71a20f885c 0x71a349c684 0x71a349c4b0 0x71a3497008 0x71a2123934
+#	0x71a349c683	github.com/status-im/status-go/pkg/services/wallet/walletevent.watch+0x123			github.com/status-im/status-go/pkg/services/wallet/walletevent/watcher.go:60
+#	0x71a349c4af	github.com/status-im/status-go/pkg/services/wallet/walletevent.(*Watcher).Start.func1+0x2f	github.com/status-im/status-go/pkg/services/wallet/walletevent/watcher.go:42
+#	0x71a3497007	github.com/status-im/status-go/pkg/services/wallet/async.(*Group).Add.func1+0x47		github.com/status-im/status-go/pkg/services/wallet/async/async.go:61
+
+1 @ 0x71a20da0cc 0x71a211a2c4 0x71a27809b4 0x71a27807e0 0x71a277dfe4 0x71a32556d4 0x71a3255f44 0x71a2523fa8 0x71a2525990 0x71a25410f0 0x71a252240c 0x71a2123934
+#	0x71a27809b3	runtime/pprof.writeRuntimeProfile+0xb3	runtime/pprof/pprof.go:851
+#	0x71a27807df	runtime/pprof.writeGoroutine+0x4f	runtime/pprof/pprof.go:784
+#	0x71a277dfe3	runtime/pprof.(*Profile).WriteTo+0x143	runtime/pprof/pprof.go:408
+#	0x71a32556d3	net/http/pprof.handler.ServeHTTP+0x413	net/http/pprof/pprof.go:273
+#	0x71a3255f43	net/http/pprof.Index+0xa3		net/http/pprof/pprof.go:397
+#	0x71a2523fa7	net/http.HandlerFunc.ServeHTTP+0x37	net/http/server.go:2286
+#	0x71a252598f	net/http.(*ServeMux).ServeHTTP+0x18f	net/http/server.go:2828
+#	0x71a25410ef	net/http.serverHandler.ServeHTTP+0xaf	net/http/server.go:3311
+#	0x71a252240b	net/http.(*conn).serve+0x51b		net/http/server.go:2073
+
+1 @ 0x71a211b54c 0x71a20abe20 0x71a20ab974 0x71a2f13f78 0x71a2123934
+#	0x71a2f13f77	github.com/libp2p/go-libp2p/config.(*Config).addAutoNAT.func6+0x37	github.com/libp2p/go-libp2p@v0.39.1/config/config.go:686
+
+1 @ 0x71a211b54c 0x71a20abe20 0x71a20ab974 0x71a35ab230 0x71a2123934
+#	0x71a35ab22f	github.com/status-im/status-go/pkg/services/wallet/leaderboard.(*ProxyFetcher).Start.func1+0x4f	github.com/status-im/status-go/pkg/services/wallet/leaderboard/fetcher.go:87
+
+1 @ 0x71a211b54c 0x71a20abe20 0x71a20ab994 0x71a307298c 0x71a2123934
+#	0x71a307298b	github.com/status-im/status-go/pkg/messaging/utils.BridgeChannelsSlice[...].func1+0x9b	github.com/status-im/status-go/pkg/messaging/utils/bridge_channels.go:22
+
+1 @ 0x71a211b54c 0x71a20abe20 0x71a20ab994 0x71a3072c54 0x71a2123934
+#	0x71a3072c53	github.com/status-im/status-go/pkg/messaging/utils.BridgeChannels[...].func1+0xa3	github.com/status-im/status-go/pkg/messaging/utils/bridge_channels.go:10
+
+1 @ 0x71a211b54c 0x71a20ddbc0 0x71a211a720 0x71a218f218 0x71a21933c4 0x71a21933b5 0x71a23703d8 0x71a2388294 0x71a238736c 0x71a24b4ba8 0x71a2527284 0x71a320f13c 0x71a320fa98 0x71a2123934
+#	0x71a211a71f	internal/poll.runtime_pollWait+0x9f						runtime/netpoll.go:351
+#	0x71a218f217	internal/poll.(*pollDesc).wait+0x27						internal/poll/fd_poll_runtime.go:84
+#	0x71a21933c3	internal/poll.(*pollDesc).waitRead+0x213					internal/poll/fd_poll_runtime.go:89
+#	0x71a21933b4	internal/poll.(*FD).Accept+0x204						internal/poll/fd_unix.go:613
+#	0x71a23703d7	net.(*netFD).accept+0x27							net/fd_unix.go:150
+#	0x71a2388293	net.(*TCPListener).accept+0x23							net/tcpsock_posix.go:159
+#	0x71a238736b	net.(*TCPListener).Accept+0x2b							net/tcpsock.go:387
+#	0x71a24b4ba7	crypto/tls.(*listener).Accept+0x27						crypto/tls/tls.go:78
+#	0x71a2527283	net/http.(*Server).Serve+0x243							net/http/server.go:3434
+#	0x71a320f13b	github.com/status-im/status-go/internal/httpserver.(*Server).serve+0x7b		github.com/status-im/status-go/internal/httpserver/server.go:233
+#	0x71a320fa97	github.com/status-im/status-go/internal/httpserver.(*Server).Start.func1+0x87	github.com/status-im/status-go/internal/httpserver/server.go:331
+
+1 @ 0x71a211b54c 0x71a20ddbc0 0x71a211a720 0x71a218f218 0x71a21933c4 0x71a21933b5 0x71a23703d8 0x71a2388294 0x71a238736c 0x71a2527284 0x71a2526f40 0x71a387ab24 0x71a2123934
+#	0x71a211a71f	internal/poll.runtime_pollWait+0x9f							runtime/netpoll.go:351
+#	0x71a218f217	internal/poll.(*pollDesc).wait+0x27							internal/poll/fd_poll_runtime.go:84
+#	0x71a21933c3	internal/poll.(*pollDesc).waitRead+0x213						internal/poll/fd_poll_runtime.go:89
+#	0x71a21933b4	internal/poll.(*FD).Accept+0x204							internal/poll/fd_unix.go:613
+#	0x71a23703d7	net.(*netFD).accept+0x27								net/fd_unix.go:150
+#	0x71a2388293	net.(*TCPListener).accept+0x23								net/tcpsock_posix.go:159
+#	0x71a238736b	net.(*TCPListener).Accept+0x2b								net/tcpsock.go:387
+#	0x71a2527283	net/http.(*Server).Serve+0x243								net/http/server.go:3434
+#	0x71a2526f3f	net/http.(*Server).ListenAndServe+0x7f							net/http/server.go:3360
+#	0x71a387ab23	github.com/status-im/status-go/pkg/backend.(*StatusBackend).StartPprof.func1+0x43	github.com/status-im/status-go/pkg/backend/geth_backend.go:3031
+
+1 @ 0x71a211b54c 0x71a20ddbc0 0x71a211a720 0x71a218f218 0x71a21933c4 0x71a21933b5 0x71a23703d8 0x71a2388294 0x71a238736c 0x71a2aefd08 0x71a2bbca9c 0x71a2123934
+#	0x71a211a71f	internal/poll.runtime_pollWait+0x9f						runtime/netpoll.go:351
+#	0x71a218f217	internal/poll.(*pollDesc).wait+0x27						internal/poll/fd_poll_runtime.go:84
+#	0x71a21933c3	internal/poll.(*pollDesc).waitRead+0x213					internal/poll/fd_poll_runtime.go:89
+#	0x71a21933b4	internal/poll.(*FD).Accept+0x204						internal/poll/fd_unix.go:613
+#	0x71a23703d7	net.(*netFD).accept+0x27							net/fd_unix.go:150
+#	0x71a2388293	net.(*TCPListener).accept+0x23							net/tcpsock_posix.go:159
+#	0x71a238736b	net.(*TCPListener).Accept+0x2b							net/tcpsock.go:387
+#	0x71a2aefd07	github.com/multiformats/go-multiaddr/net.(*maListener).Accept+0x27		github.com/multiformats/go-multiaddr@v0.14.0/net/net.go:243
+#	0x71a2bbca9b	github.com/libp2p/go-libp2p/p2p/net/upgrader.(*listener).handleIncoming+0x9b	github.com/libp2p/go-libp2p@v0.39.1/p2p/net/upgrader/listener.go:75
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2858f90 0x71a306e398 0x71a2123934
+#	0x71a2858f8f	github.com/status-im/status-go/internal/pausable.(*PausableTicker).Run+0x1cf				github.com/status-im/status-go/internal/pausable/ticker.go:108
+#	0x71a306e397	github.com/status-im/status-go/pkg/messaging/layers/transport.(*Transport).cleanFiltersLoop.func1+0xc7	github.com/status-im/status-go/pkg/messaging/layers/transport/transport.go:765
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2858f90 0x71a322b15c 0x71a322ae70 0x71a2123934
+#	0x71a2858f8f	github.com/status-im/status-go/internal/pausable.(*PausableTicker).Run+0x1cf	github.com/status-im/status-go/internal/pausable/ticker.go:108
+#	0x71a322b15b	github.com/status-im/status-go/internal/ipfs.(*Downloader).taskDispatcher+0xab	github.com/status-im/status-go/internal/ipfs/ipfs.go:149
+#	0x71a322ae6f	github.com/status-im/status-go/internal/ipfs.NewDownloader.func1+0x5f		github.com/status-im/status-go/internal/ipfs/ipfs.go:89
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2858f90 0x71a3242bb0 0x71a2123934
+#	0x71a2858f8f	github.com/status-im/status-go/internal/pausable.(*PausableTicker).Run+0x1cf		github.com/status-im/status-go/internal/pausable/ticker.go:108
+#	0x71a3242baf	github.com/status-im/status-go/internal/protocol/ens.(*Verifier).verifyLoop+0xef	github.com/status-im/status-go/internal/protocol/ens/verifier.go:136
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2858f90 0x71a37d1c54 0x71a2123934
+#	0x71a2858f8f	github.com/status-im/status-go/internal/pausable.(*PausableTicker).Run+0x1cf		github.com/status-im/status-go/internal/pausable/ticker.go:108
+#	0x71a37d1c53	github.com/status-im/status-go/pkg/services/backup.(*Controller).Start.func1+0xe3	github.com/status-im/status-go/pkg/services/backup/controller.go:106
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a28b4124 0x71a2123934
+#	0x71a28b4123	github.com/syndtr/goleveldb/leveldb.(*DB).compactionError+0x73	github.com/syndtr/goleveldb@v1.0.1-0.20220614013038-64ee5596c38a/leveldb/db_compaction.go:92
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a28b7cfc 0x71a2123934
+#	0x71a28b7cfb	github.com/syndtr/goleveldb/leveldb.(*DB).mCompaction+0xbb	github.com/syndtr/goleveldb@v1.0.1-0.20220614013038-64ee5596c38a/leveldb/db_compaction.go:782
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a28b8290 0x71a2123934
+#	0x71a28b828f	github.com/syndtr/goleveldb/leveldb.(*DB).tCompaction+0x43f	github.com/syndtr/goleveldb@v1.0.1-0.20220614013038-64ee5596c38a/leveldb/db_compaction.go:845
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a28bb788 0x71a2123934
+#	0x71a28bb787	github.com/syndtr/goleveldb/leveldb.(*DB).mpoolDrain+0x87	github.com/syndtr/goleveldb@v1.0.1-0.20220614013038-64ee5596c38a/leveldb/db_state.go:101
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a28c71d4 0x71a2123934
+#	0x71a28c71d3	github.com/syndtr/goleveldb/leveldb.(*session).refLoop+0x633	github.com/syndtr/goleveldb@v1.0.1-0.20220614013038-64ee5596c38a/leveldb/session_util.go:189
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2a8a378 0x71a2123934
+#	0x71a2a8a377	github.com/cenkalti/backoff/v4.(*Ticker).run+0xe7	github.com/cenkalti/backoff/v4@v4.3.0/ticker.go:70
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2aa1be8 0x71a2aa19f4 0x71a2123934
+#	0x71a2aa1be7	github.com/status-im/status-go/pkg/messaging/layers/encryption/publisher.(*Publisher).tickerLoop+0x127	github.com/status-im/status-go/pkg/messaging/layers/encryption/publisher/publisher.go:88
+#	0x71a2aa19f3	github.com/status-im/status-go/pkg/messaging/layers/encryption/publisher.(*Publisher).Start.func1+0x53	github.com/status-im/status-go/pkg/messaging/layers/encryption/publisher/publisher.go:60
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2b0e048 0x71a2123934
+#	0x71a2b0e047	github.com/libp2p/go-libp2p/p2p/host/resource-manager.(*resourceManager).background+0xd7	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/resource-manager/rcmgr.go:424
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2b333e0 0x71a2123934
+#	0x71a2b333df	github.com/libp2p/go-libp2p/p2p/net/connmgr.(*BasicConnMgr).background+0xef	github.com/libp2p/go-libp2p@v0.39.1/p2p/net/connmgr/connmgr.go:359
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2b36580 0x71a2123934
+#	0x71a2b3657f	github.com/libp2p/go-libp2p/p2p/net/connmgr.(*decayer).process+0x16f	github.com/libp2p/go-libp2p@v0.39.1/p2p/net/connmgr/decay.go:164
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2b39d94 0x71a2b39b50 0x71a2123934
+#	0x71a2b39d93	github.com/libp2p/go-flow-metrics.(*sweeper).runActive+0x163	github.com/libp2p/go-flow-metrics@v0.2.0/sweeper.go:80
+#	0x71a2b39b4f	github.com/libp2p/go-flow-metrics.(*sweeper).run+0x2f		github.com/libp2p/go-flow-metrics@v0.2.0/sweeper.go:54
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2e5fbbc 0x71a2123934
+#	0x71a2e5fbbb	github.com/libp2p/go-libp2p/p2p/host/autonat.(*AmbientAutoNAT).background+0x21b	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autonat/autonat.go:187
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2e646f8 0x71a2123934
+#	0x71a2e646f7	github.com/libp2p/go-libp2p/p2p/host/autonat.(*autoNATService).background+0xf7	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autonat/svc.go:288
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2e654c4 0x71a2123934
+#	0x71a2e654c3	github.com/libp2p/go-libp2p/p2p/host/pstoremanager.(*PeerstoreManager).background+0x1b3	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/pstoremanager/pstoremanager.go:98
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2e7fac4 0x71a2123934
+#	0x71a2e7fac3	github.com/libp2p/go-libp2p/p2p/protocol/identify.(*idService).loop+0x313	github.com/libp2p/go-libp2p@v0.39.1/p2p/protocol/identify/id.go:291
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2e7fc58 0x71a2123934
+#	0x71a2e7fc57	github.com/libp2p/go-libp2p/p2p/protocol/identify.(*idService).loop.func1+0xb7	github.com/libp2p/go-libp2p@v0.39.1/p2p/protocol/identify/id.go:281
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2e86a24 0x71a2123934
+#	0x71a2e86a23	github.com/libp2p/go-libp2p/p2p/protocol/identify.(*natEmitter).worker+0x113	github.com/libp2p/go-libp2p@v0.39.1/p2p/protocol/identify/nat_emitter.go:62
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2e889c8 0x71a2123934
+#	0x71a2e889c7	github.com/libp2p/go-libp2p/p2p/protocol/identify.(*ObservedAddrManager).worker+0xb7	github.com/libp2p/go-libp2p@v0.39.1/p2p/protocol/identify/obsaddr.go:329
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2e8f768 0x71a2123934
+#	0x71a2e8f767	github.com/libp2p/go-libp2p/p2p/protocol/holepunch.(*Service).waitForPublicAddr+0x1a7	github.com/libp2p/go-libp2p@v0.39.1/p2p/protocol/holepunch/svc.go:122
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2ec2640 0x71a2123934
+#	0x71a2ec263f	github.com/libp2p/go-libp2p/p2p/host/basic.(*BasicHost).background+0x15f	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/basic/basic_host.go:612
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2ecb5c8 0x71a2bbca9c 0x71a2123934
+#	0x71a2ecb5c7	github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/client.(*Listener).Accept+0xe7	github.com/libp2p/go-libp2p@v0.39.1/p2p/protocol/circuitv2/client/listen.go:21
+#	0x71a2bbca9b	github.com/libp2p/go-libp2p/p2p/net/upgrader.(*listener).handleIncoming+0x9b		github.com/libp2p/go-libp2p@v0.39.1/p2p/net/upgrader/listener.go:75
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2ecffb0 0x71a2ecfd78 0x71a2123934
+#	0x71a2ecffaf	github.com/libp2p/go-libp2p/p2p/host/autorelay.(*AutoRelay).background+0x1bf	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autorelay/autorelay.go:89
+#	0x71a2ecfd77	github.com/libp2p/go-libp2p/p2p/host/autorelay.(*AutoRelay).Start.func1+0x47	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autorelay/autorelay.go:76
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2ed217c 0x71a2123934
+#	0x71a2ed217b	github.com/libp2p/go-libp2p/p2p/host/autorelay.(*relayFinder).cleanupDisconnectedPeers+0x1eb	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autorelay/relay_finder.go:126
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2ed29fc 0x71a2ed6fd0 0x71a2123934
+#	0x71a2ed29fb	github.com/libp2p/go-libp2p/p2p/host/autorelay.(*relayFinder).background+0x4cb	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autorelay/relay_finder.go:202
+#	0x71a2ed6fcf	github.com/libp2p/go-libp2p/p2p/host/autorelay.(*relayFinder).Start.func1+0x4f	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autorelay/relay_finder.go:778
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2ed3d34 0x71a2ed2d20 0x71a2123934
+#	0x71a2ed3d33	github.com/libp2p/go-libp2p/p2p/host/autorelay.(*relayFinder).findNodes+0x2a3		github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autorelay/relay_finder.go:371
+#	0x71a2ed2d1f	github.com/libp2p/go-libp2p/p2p/host/autorelay.(*relayFinder).background.func1+0x4f	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autorelay/relay_finder.go:162
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2ed4eb4 0x71a2ed2c50 0x71a2123934
+#	0x71a2ed4eb3	github.com/libp2p/go-libp2p/p2p/host/autorelay.(*relayFinder).handleNewCandidates+0x83	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autorelay/relay_finder.go:521
+#	0x71a2ed2c4f	github.com/libp2p/go-libp2p/p2p/host/autorelay.(*relayFinder).background.func2+0x4f	github.com/libp2p/go-libp2p@v0.39.1/p2p/host/autorelay/relay_finder.go:168
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2fdb9f8 0x71a2123934
+#	0x71a2fdb9f7	github.com/waku-org/go-waku/waku/v2/protocol/relay.(*broadcaster).run+0x97	github.com/waku-org/go-waku@v0.10.3/waku/v2/protocol/relay/broadcast.go:180
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2feb63c 0x71a2123934
+#	0x71a2feb63b	github.com/waku-org/go-waku/waku/v2/peermanager.(*PeerConnectionStrategy).dialPeers+0xfb	github.com/waku-org/go-waku@v0.10.3/waku/v2/peermanager/peer_connector.go:260
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a2fee638 0x71a2123934
+#	0x71a2fee637	github.com/waku-org/go-waku/waku/v2/peermanager.(*PeerManager).peerStoreLoop+0xc7	github.com/waku-org/go-waku@v0.10.3/waku/v2/peermanager/peer_manager.go:277
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a300a2d8 0x71a2123934
+#	0x71a300a2d7	github.com/waku-org/go-waku/waku/v2/protocol/filter.(*WakuFilterLightNode).FilterHealthCheckLoop+0xe7	github.com/waku-org/go-waku@v0.10.3/waku/v2/protocol/filter/filter_health_check.go:51
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a30112e4 0x71a2123934
+#	0x71a30112e3	github.com/waku-org/go-waku/waku/v2/api/filter.(*Sub).subscriptionLoop+0xd3	github.com/waku-org/go-waku@v0.10.3/waku/v2/api/filter/filter.go:139
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3013940 0x71a2123934
+#	0x71a301393f	github.com/waku-org/go-waku/waku/v2/api/filter.(*FilterManager).startFilterSubLoop+0xaf	github.com/waku-org/go-waku@v0.10.3/waku/v2/api/filter/filter_manager.go:103
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3016cac 0x71a301535c 0x71a2123934
+#	0x71a3016cab	github.com/waku-org/go-waku/waku/v2/api/filter.(*FilterManager).runFilterSubscriptionLoop+0x7b	github.com/waku-org/go-waku@v0.10.3/waku/v2/api/filter/filter_manager.go:328
+#	0x71a301535b	github.com/waku-org/go-waku/waku/v2/api/filter.(*FilterManager).subscribeAndRunLoop+0x4ab	github.com/waku-org/go-waku@v0.10.3/waku/v2/api/filter/filter_manager.go:180
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a301c444 0x71a304be64 0x71a2123934
+#	0x71a301c443	github.com/waku-org/go-waku/waku/v2/api/publish.(*MessageQueue).Start+0x83	github.com/waku-org/go-waku@v0.10.3/waku/v2/api/publish/message_queue.go:134
+#	0x71a304be63	github.com/status-im/status-go/pkg/messaging/waku.(*Waku).Start.func2+0x43	github.com/status-im/status-go/pkg/messaging/waku/gowaku.go:968
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a301c7d8 0x71a2123934
+#	0x71a301c7d7	github.com/waku-org/go-waku/waku/v2/api/publish.(*MessageQueue).Pop.func1+0xc7	github.com/waku-org/go-waku@v0.10.3/waku/v2/api/publish/message_queue.go:189
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3036734 0x71a2123934
+#	0x71a3036733	github.com/waku-org/go-waku/waku/v2/node.(*WakuNode).connectednessListener+0xb3	github.com/waku-org/go-waku@v0.10.3/waku/v2/node/connectedness.go:109
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3039a0c 0x71a2123934
+#	0x71a3039a0b	github.com/waku-org/go-waku/waku/v2/node.(*WakuNode).watchTopicShards.func1+0x15b	github.com/waku-org/go-waku@v0.10.3/waku/v2/node/localnode.go:228
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a303c530 0x71a2123934
+#	0x71a303c52f	github.com/waku-org/go-waku/waku/v2/node.New.func1.1+0xff	github.com/waku-org/go-waku@v0.10.3/waku/v2/node/wakunode2.go:238
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a303d870 0x71a2123934
+#	0x71a303d86f	github.com/waku-org/go-waku/waku/v2/node.(*WakuNode).watchMultiaddressChanges+0x1df	github.com/waku-org/go-waku@v0.10.3/waku/v2/node/wakunode2.go:338
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a303fc30 0x71a2123934
+#	0x71a303fc2f	github.com/waku-org/go-waku/waku/v2/node.(*WakuNode).watchENRChanges+0xcf	github.com/waku-org/go-waku@v0.10.3/waku/v2/node/wakunode2.go:618
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3041b80 0x71a2123934
+#	0x71a3041b7f	github.com/waku-org/go-waku/waku/v2/node.(*WakuNode).findRelayNodes+0x14f	github.com/waku-org/go-waku@v0.10.3/waku/v2/node/wakunode2.go:963
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3044320 0x71a2123934
+#	0x71a304431f	github.com/status-im/status-go/internal/timesource.(*ntpTimeSource).runPeriodically.func1+0x19f	github.com/status-im/status-go/internal/timesource/ntp.go:245
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3049f00 0x71a2123934
+#	0x71a3049eff	github.com/status-im/status-go/pkg/messaging/waku.(*Waku).runPeerExchangeLoop+0x18f	github.com/status-im/status-go/pkg/messaging/waku/gowaku.go:643
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a304cab0 0x71a2123934
+#	0x71a304caaf	github.com/status-im/status-go/pkg/messaging/waku.(*Waku).runConnectionMonitoringLoop+0x2ef	github.com/status-im/status-go/pkg/messaging/waku/gowaku.go:1019
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3052174 0x71a2123934
+#	0x71a3052173	github.com/status-im/status-go/pkg/messaging/waku.(*Waku).broadcast+0xd3	github.com/status-im/status-go/pkg/messaging/waku/message_publishing.go:56
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a305719c 0x71a30459d4 0x71a2123934
+#	0x71a305719b	github.com/jellydator/ttlcache/v3.(*Cache[...]).Start+0xcb			github.com/jellydator/ttlcache/v3@v3.3.0/cache.go:621
+#	0x71a30459d3	github.com/status-im/status-go/pkg/messaging/waku.newTTLCache.func1+0x43	github.com/status-im/status-go/pkg/messaging/waku/gowaku.go:224
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a305f58c 0x71a305ec60 0x71a2123934
+#	0x71a305f58b	github.com/status-im/status-go/pkg/messaging/layers/transport.(*EnvelopesMonitor).handleEnvelopeEvents+0x11b	github.com/status-im/status-go/pkg/messaging/layers/transport/envelopes_monitor.go:204
+#	0x71a305ec5f	github.com/status-im/status-go/pkg/messaging/layers/transport.(*EnvelopesMonitor).Start.func1+0x5f		github.com/status-im/status-go/pkg/messaging/layers/transport/envelopes_monitor.go:147
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a306a988 0x71a2123934
+#	0x71a306a987	github.com/status-im/status-go/pkg/messaging/layers/transport.(*Transport).receiveLoop+0xf7	github.com/status-im/status-go/pkg/messaging/layers/transport/transport.go:175
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3079f70 0x71a2123934
+#	0x71a3079f6f	github.com/status-im/mvds/node.(*Node).Start.func3+0xaf	github.com/status-im/mvds@v0.0.27-0.20251219201002-7226facd5aaf/node/node.go:259
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a307a3f4 0x71a2123934
+#	0x71a307a3f3	github.com/status-im/mvds/node.(*Node).Start.func2+0xa3	github.com/status-im/mvds@v0.0.27-0.20251219201002-7226facd5aaf/node/node.go:242
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a30806e4 0x71a307a800 0x71a2123934
+#	0x71a30806e3	github.com/status-im/status-go/pkg/messaging/layers/reliability/datasync.(*NodeTransport).Watch+0x83	github.com/status-im/status-go/pkg/messaging/layers/reliability/datasync/transport.go:62
+#	0x71a307a7ff	github.com/status-im/mvds/node.(*Node).Start.func1+0x6f							github.com/status-im/mvds@v0.0.27-0.20251219201002-7226facd5aaf/node/node.go:225
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3125524 0x71a2123934
+#	0x71a3125523	github.com/status-im/status-go/pkg/messaging/controller.(*Controller).runSubscriptionsLoop.func1+0x163	github.com/status-im/status-go/pkg/messaging/controller/controller.go:147
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a31446ac 0x71a2123934
+#	0x71a31446ab	github.com/status-im/status-go/internal/protocol/common.(*MessageSender).Start.func1+0x10b	github.com/status-im/status-go/internal/protocol/common/message_sender.go:100
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a31858a0 0x71a2123934
+#	0x71a318589f	github.com/status-im/status-go/pkg/services/networks.(*Manager).startSettingsChangeSubscription.func1+0xaf	github.com/status-im/status-go/pkg/services/networks/network.go:108
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a319553c 0x71a3195250 0x71a2123934
+#	0x71a319553b	github.com/status-im/status-go/internal/rpc.(*Client).monitorHealth+0x7b	github.com/status-im/status-go/internal/rpc/client.go:176
+#	0x71a319524f	github.com/status-im/status-go/internal/rpc.(*Client).Start.func1+0x3f		github.com/status-im/status-go/internal/rpc/client.go:134
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a31969ec 0x71a2123934
+#	0x71a31969eb	github.com/status-im/status-go/internal/rpc.(*SignalsTransmitter).Start.func1+0x14b	github.com/status-im/status-go/internal/rpc/signals_transmitter.go:33
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a322b080 0x71a322ad80 0x71a2123934
+#	0x71a322b07f	github.com/status-im/status-go/internal/ipfs.(*Downloader).worker+0x9f	github.com/status-im/status-go/internal/ipfs/ipfs.go:117
+#	0x71a322ad7f	github.com/status-im/status-go/internal/ipfs.NewDownloader.func2+0x5f	github.com/status-im/status-go/internal/ipfs/ipfs.go:94
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a33a9e0c 0x71a2123934
+#	0x71a33a9e0b	github.com/status-im/status-go/internal/protocol/communities.(*Manager).runENSVerificationLoop.func1+0xfb	github.com/status-im/status-go/internal/protocol/communities/manager.go:470
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a33aa964 0x71a2123934
+#	0x71a33aa963	github.com/status-im/status-go/internal/protocol/communities.(*Manager).runOwnerVerificationLoop.func1+0xb3	github.com/status-im/status-go/internal/protocol/communities/manager.go:553
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3444f04 0x71a2123934
+#	0x71a3444f03	github.com/status-im/status-go/internal/protocol/pushnotificationclient.(*Client).subscribeForMessageEvents.func1+0x103	github.com/status-im/status-go/internal/protocol/pushnotificationclient/client.go:723
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a349c068 0x71a2123934
+#	0x71a349c067	github.com/status-im/status-go/pkg/services/wallet/walletevent.(*SignalsTransmitter).Start.func1+0x107	github.com/status-im/status-go/pkg/services/wallet/walletevent/transmitter.go:43
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34ba5e8 0x71a2123934
+#	0x71a34ba5e7	github.com/status-im/status-go/pkg/services/wallet/multistandardbalance.(*Controller).startAccountsWatcher.func1+0xa7	github.com/status-im/status-go/pkg/services/wallet/multistandardbalance/controller.go:235
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34ba7d0 0x71a2123934
+#	0x71a34ba7cf	github.com/status-im/status-go/pkg/services/wallet/multistandardbalance.(*Controller).startNetworksWatcher.func1+0x9f	github.com/status-im/status-go/pkg/services/wallet/multistandardbalance/controller.go:259
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34bb41c 0x71a2123934
+#	0x71a34bb41b	github.com/status-im/status-go/pkg/services/wallet/multistandardbalance.(*Controller).startFetcher.func1+0xab	github.com/status-im/status-go/pkg/services/wallet/multistandardbalance/controller.go:361
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34cb170 0x71a2123934
+#	0x71a34cb16f	github.com/status-im/status-go/pkg/services/wallet/transferdetector.(*Controller).startAccountsWatcher.func1+0xcf	github.com/status-im/status-go/pkg/services/wallet/transferdetector/controller.go:136
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34cb658 0x71a2123934
+#	0x71a34cb657	github.com/status-im/status-go/pkg/services/wallet/transferdetector.(*Controller).startNetworksWatcher.func1+0xa7	github.com/status-im/status-go/pkg/services/wallet/transferdetector/controller.go:165
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34cba7c 0x71a2123934
+#	0x71a34cba7b	github.com/status-im/status-go/pkg/services/wallet/transferdetector.(*Controller).startFetcher.func1+0xab	github.com/status-im/status-go/pkg/services/wallet/transferdetector/controller.go:184
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34d2b70 0x71a2123934
+#	0x71a34d2b6f	github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership.(*Controller).startAccountsWatcher.func1+0xcf	github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership/controller.go:250
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34d2de0 0x71a2123934
+#	0x71a34d2ddf	github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership.(*Controller).startNetworkEventsWatcher.func1+0x9f	github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership/controller.go:278
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34d2fe4 0x71a2123934
+#	0x71a34d2fe3	github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership.(*Controller).startBalanceChangeWatcher.func1+0xc3	github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership/controller.go:301
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34d32a8 0x71a2123934
+#	0x71a34d32a7	github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership.(*Controller).startTransferDetectionWatcher.func1+0xb7	github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership/controller.go:329
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a34fd184 0x71a2123934
+#	0x71a34fd183	github.com/status-im/status-go/pkg/services/wallet/collectibles.(*Service).startOwnershipLoadWatcher.func1+0x173	github.com/status-im/status-go/pkg/services/wallet/collectibles/service.go:493
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a352a148 0x71a2123934
+#	0x71a352a147	github.com/status-im/go-wallet-sdk/pkg/tokens/autofetcher.(*autofetcher).run+0x177	github.com/status-im/go-wallet-sdk@v0.0.0-20260831150359-0d553d87d783/pkg/tokens/autofetcher/fetcher.go:150
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a352c66c 0x71a2123934
+#	0x71a352c66b	github.com/status-im/go-wallet-sdk/pkg/tokens/manager.(*manager).manageRefresh.func1+0x9b	github.com/status-im/go-wallet-sdk@v0.0.0-20260831150359-0d553d87d783/pkg/tokens/manager/manager.go:251
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3534a8c 0x71a2123934
+#	0x71a3534a8b	github.com/status-im/status-go/pkg/services/wallet/token.(*Manager).startTokenListsNotifier.func1+0x8b	github.com/status-im/status-go/pkg/services/wallet/token/token.go:284
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3534ff0 0x71a2123934
+#	0x71a3534fef	github.com/status-im/status-go/pkg/services/wallet/token.(*Manager).startAccountsWatcher.func1+0xaf	github.com/status-im/status-go/pkg/services/wallet/token/token.go:323
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a35351f0 0x71a2123934
+#	0x71a35351ef	github.com/status-im/status-go/pkg/services/wallet/token.(*Manager).startNetworksWatcher.func1+0x9f	github.com/status-im/status-go/pkg/services/wallet/token/token.go:347
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a353ad10 0x71a2123934
+#	0x71a353ad0f	github.com/status-im/status-go/pkg/services/wallet/activityfetcher.(*Service).startNetworkWatcher.func1+0xaf	github.com/status-im/status-go/pkg/services/wallet/activityfetcher/service.go:104
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a353af28 0x71a2123934
+#	0x71a353af27	github.com/status-im/status-go/pkg/services/wallet/activityfetcher.(*Service).startTransactionWatcher.func1+0xc7	github.com/status-im/status-go/pkg/services/wallet/activityfetcher/service.go:126
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a353b4c8 0x71a2123934
+#	0x71a353b4c7	github.com/status-im/status-go/pkg/services/wallet/activityfetcher.(*Service).startAccountWatcher.func2+0xb7	github.com/status-im/status-go/pkg/services/wallet/activityfetcher/service.go:192
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a353b5f8 0x71a2123934
+#	0x71a353b5f7	github.com/status-im/status-go/pkg/services/wallet/activityfetcher.(*Service).startAccountWatcher.func1+0xb7	github.com/status-im/status-go/pkg/services/wallet/activityfetcher/service.go:175
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a353b7f4 0x71a2123934
+#	0x71a353b7f3	github.com/status-im/status-go/pkg/services/wallet/activityfetcher.(*Service).startBalanceChangeWatcher.func1+0xc3	github.com/status-im/status-go/pkg/services/wallet/activityfetcher/service.go:216
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a353bb80 0x71a2123934
+#	0x71a353bb7f	github.com/status-im/status-go/pkg/services/wallet/activityfetcher.(*Service).Start.func1+0xef	github.com/status-im/status-go/pkg/services/wallet/activityfetcher/service.go:256
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a35a1820 0x71a2123934
+#	0x71a35a181f	github.com/status-im/status-go/pkg/services/wallet/activity.(*Service).processEvents+0x11f	github.com/status-im/status-go/pkg/services/wallet/activity/session_service.go:292
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a35aa204 0x71a2123934
+#	0x71a35aa203	github.com/status-im/status-go/pkg/services/wallet/currency.(*Service).Start.func2+0xe3	github.com/status-im/status-go/pkg/services/wallet/currency/service.go:66
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a35aed30 0x71a35aec6c 0x71a2123934
+#	0x71a35aed2f	github.com/status-im/status-go/pkg/services/wallet/leaderboard.(*MarketDataService).watchCurrency+0x7f			github.com/status-im/status-go/pkg/services/wallet/leaderboard/service.go:164
+#	0x71a35aec6b	github.com/status-im/status-go/pkg/services/wallet/leaderboard.(*MarketDataService).startCurrencyWatch.func1+0x4b	github.com/status-im/status-go/pkg/services/wallet/leaderboard/service.go:157
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a35d3df4 0x71a2123934
+#	0x71a35d3df3	github.com/status-im/status-go/pkg/services/wallet.(*Reader).startBalanceChangeWatcher.func1+0xc3	github.com/status-im/status-go/pkg/services/wallet/reader.go:136
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a35d4118 0x71a2123934
+#	0x71a35d4117	github.com/status-im/status-go/pkg/services/wallet.(*Reader).startTransferDetectionWatcher.func1+0xb7	github.com/status-im/status-go/pkg/services/wallet/reader.go:169
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a36969ac 0x71a2123934
+#	0x71a36969ab	github.com/status-im/status-go/internal/protocol.(*Messenger).handleEncryptionLayerSubscriptions.func1+0xeb	github.com/status-im/status-go/internal/protocol/messenger.go:1261
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3697398 0x71a2123934
+#	0x71a3697397	github.com/status-im/status-go/internal/protocol.(*Messenger).handleENSVerificationSubscription.func1+0xb7	github.com/status-im/status-go/internal/protocol/messenger.go:1322
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3697a24 0x71a2123934
+#	0x71a3697a23	github.com/status-im/status-go/internal/protocol.(*Messenger).watchConnectionChange.func2+0x133	github.com/status-im/status-go/internal/protocol/messenger.go:1383
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3698194 0x71a2123934
+#	0x71a3698193	github.com/status-im/status-go/internal/protocol.(*Messenger).watchChatsToUnmute.func1+0x1a3	github.com/status-im/status-go/internal/protocol/messenger.go:1459
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3698698 0x71a2123934
+#	0x71a3698697	github.com/status-im/status-go/internal/protocol.(*Messenger).watchCommunitiesToUnmute.func2+0xe7	github.com/status-im/status-go/internal/protocol/messenger.go:1493
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3698b04 0x71a2123934
+#	0x71a3698b03	github.com/status-im/status-go/internal/protocol.(*Messenger).watchIdentityImageChanges.func1+0xb3	github.com/status-im/status-go/internal/protocol/messenger.go:1520
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a36990f4 0x71a2123934
+#	0x71a36990f3	github.com/status-im/status-go/internal/protocol.(*Messenger).watchPendingCommunityRequestToJoin.func1+0xb3	github.com/status-im/status-go/internal/protocol/messenger.go:1560
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3699560 0x71a2123934
+#	0x71a369955f	github.com/status-im/status-go/internal/protocol.(*Messenger).handlePushNotificationClientRegistrations.func1+0xaf	github.com/status-im/status-go/internal/protocol/messenger.go:1600
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a36a1720 0x71a2123934
+#	0x71a36a171f	github.com/status-im/status-go/internal/protocol.(*Messenger).StartRetrieveMessagesLoop.func1+0x13f	github.com/status-im/status-go/internal/protocol/messenger.go:2830
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a36b9a74 0x71a2123934
+#	0x71a36b9a73	github.com/status-im/status-go/internal/protocol.(*Messenger).handleCommunitiesHistoryArchivesSubscription.func1+0xb3	github.com/status-im/status-go/internal/protocol/messenger_communities.go:241
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a36ba0c4 0x71a2123934
+#	0x71a36ba0c3	github.com/status-im/status-go/internal/protocol.(*Messenger).handleCommunitiesSubscription.func2+0xe3	github.com/status-im/status-go/internal/protocol/messenger_communities.go:408
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a36bb794 0x71a2123934
+#	0x71a36bb793	github.com/status-im/status-go/internal/protocol.(*Messenger).updateCommunitiesActiveMembersPeriodically.func1+0xb3	github.com/status-im/status-go/internal/protocol/messenger_communities.go:539
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a36bdf84 0x71a2123934
+#	0x71a36bdf83	github.com/status-im/status-go/internal/protocol.(*Messenger).schedulePublishGrantsForControlledCommunities.func1+0xb3	github.com/status-im/status-go/internal/protocol/messenger_communities.go:914
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a36d7434 0x71a2123934
+#	0x71a36d7433	github.com/status-im/status-go/internal/protocol.(*Messenger).startCommunityRekeyLoop.func1+0xb3	github.com/status-im/status-go/internal/protocol/messenger_communities.go:4554
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a36db198 0x71a2123934
+#	0x71a36db197	github.com/status-im/status-go/internal/protocol.(*Messenger).startRequestMissingCommunityChannelsHRKeysLoop.func1+0x197	github.com/status-im/status-go/internal/protocol/messenger_communities.go:5038
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a36fd114 0x71a2123934
+#	0x71a36fd113	github.com/status-im/status-go/internal/protocol.(*Messenger).startCuratedCommunitiesUpdateLoop.func1+0x193	github.com/status-im/status-go/internal/protocol/messenger_curated_communities.go:45
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a372c4a8 0x71a2123934
+#	0x71a372c4a7	github.com/status-im/status-go/internal/protocol.(*Messenger).startHistoryReconciliationLoop.func1+0xe7	github.com/status-im/status-go/internal/protocol/messenger_mailserver_cycle.go:126
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a372c7e8 0x71a2123934
+#	0x71a372c7e7	github.com/status-im/status-go/internal/protocol.(*Messenger).startHistoryCursorMonitor.func1+0x107	github.com/status-im/status-go/internal/protocol/messenger_mailserver_cycle.go:161
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a372d6c0 0x71a2123934
+#	0x71a372d6bf	github.com/status-im/status-go/internal/protocol.(*Messenger).startHistoricSyncWorker.func1+0xdf	github.com/status-im/status-go/internal/protocol/messenger_mailserver_cycle.go:272
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3747020 0x71a2123934
+#	0x71a374701f	github.com/status-im/status-go/internal/protocol.(*Messenger).watchExpiredMessages.func1+0xaf	github.com/status-im/status-go/internal/protocol/messenger_raw_message_resend.go:28
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a3748918 0x71a2123934
+#	0x71a3748917	github.com/status-im/status-go/internal/protocol.(*Messenger).watchReliabilityDeliveryEvents.func1+0xe7	github.com/status-im/status-go/internal/protocol/messenger_reliability_delivery.go:23
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a37559ec 0x71a2123934
+#	0x71a37559eb	github.com/status-im/status-go/internal/protocol.(*Messenger).broadcastLatestUserStatus.func1+0x12b	github.com/status-im/status-go/internal/protocol/messenger_status_updates.go:222
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a37565a4 0x71a2123934
+#	0x71a37565a3	github.com/status-im/status-go/internal/protocol.(*Messenger).timeoutAutomaticStatusUpdates.func1+0xb3	github.com/status-im/status-go/internal/protocol/messenger_status_updates.go:335
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a375d094 0x71a2123934
+#	0x71a375d093	github.com/status-im/status-go/internal/protocol.(*Messenger).startSyncSettingsLoop.func1+0xc3	github.com/status-im/status-go/internal/protocol/messenger_sync_settings.go:91
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a375d7cc 0x71a2123934
+#	0x71a375d7cb	github.com/status-im/status-go/internal/protocol.(*Messenger).startSettingsChangesLoop.func1+0x8b	github.com/status-im/status-go/internal/protocol/messenger_sync_settings.go:130
+
+1 @ 0x71a211b54c 0x71a20f885c 0x71a38012c8 0x71a2123934
+#	0x71a38012c7	github.com/status-im/status-go/internal/newsfeed.(*NewsFeedManager).StartPolling.func1+0xb7	github.com/status-im/status-go/internal/newsfeed/news_feed_manager.go:155
+
+1 @ 0x71a211b54c 0x71a211fbd0 0x71a36d2998 0x71a2123934
+#	0x71a211fbcf	time.Sleep+0x14f												runtime/time.go:363
+#	0x71a36d2997	github.com/status-im/status-go/internal/protocol.(*Messenger).enableHistoryArchivesImportAfterDelay.func1+0x47	github.com/status-im/status-go/internal/protocol/messenger_communities.go:3818
+
