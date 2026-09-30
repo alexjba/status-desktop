@@ -123,7 +123,9 @@ Java allocations without frees and are not part of the native heap.
 Service process
 1. `Reader.balancesToTokensByAddress` calls `walletcommon.MandatoryTokens()` inside the
    address × token loop (`pkg/services/wallet/reader.go:244`): 1.17GB of garbage in 5 min. Build the
-   set once (package-level `sync.Once`) and look up.
+   set once (package-level `sync.Once`) and look up. **Done: status-im/status-go#7865** — GC cycles
+   82→33, mallocs 45M→5.9M, non-KDF allocations 3.74GB→0.95GB in a comparable 5-min window; PSS
+   unchanged (CPU/GC fix, as predicted). Ledger rows `hoist-*`/`hoist2-*`.
 2. Release the startup burst: call `debug.FreeOSMemory()` once after login/onboarding settles
    (or temporarily lower the memory limit during login). Cheap, mobile-only.
 3. Keystore envelope KEK scrypt at N=2^18 (~256MB per derivation, `keystore/envelope/scrypt_params.go`):
