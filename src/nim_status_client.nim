@@ -297,8 +297,12 @@ proc mainProc() =
 
   when defined(qmldebug):
     const qmlDebugPort {.intdefine: "qmlDebugPort".} = 49152
-    discard QQmlDebuggingEnabler.startTcpDebugServer(qmlDebugPort.cint,
-      QQmlDebuggingEnablerStartModeEnum.WaitForClient)
+    when defined(qmlDebugWait):
+      discard QQmlDebuggingEnabler.startTcpDebugServer(qmlDebugPort.cint,
+        QQmlDebuggingEnablerStartModeEnum.WaitForClient)
+    else:
+      discard QQmlDebuggingEnabler.startTcpDebugServer(qmlDebugPort.cint,
+        QQmlDebuggingEnablerStartModeEnum.DoNotWaitForClient)
 
   let singleInstance = newSingleInstance(($keccak256.digest(DATADIR))[0..31], openUri)
   let urlSchemeEvent = newUrlSchemeEvent()

@@ -1,0 +1,47 @@
+File: memfd:jit-zygote-cache
+Type: alloc_space
+Time: 2026-09-30 18:52:55 EEST
+Showing nodes accounting for 4403.57MB, 91.38% of 4819.04MB total
+Dropped 1141 nodes (cum <= 24.10MB)
+Showing top 40 nodes out of 281
+      flat  flat%   sum%        cum   cum%
+     768MB 15.94% 15.94%      768MB 15.94%  golang.org/x/crypto/argon2.initBlocks
+  572.02MB 11.87% 27.81%   572.02MB 11.87%  golang.org/x/crypto/scrypt.Key
+  325.80MB  6.76% 34.57%   325.80MB  6.76%  github.com/status-im/status-go/pkg/services/wallet/common.allMandatoryTokens
+  221.51MB  4.60% 39.16%   221.51MB  4.60%  fmt.Sprintf
+  207.01MB  4.30% 43.46%   525.52MB 10.91%  github.com/ethereum/go-ethereum/common.Address.Hex (inline)
+  184.01MB  3.82% 47.28%   184.01MB  3.82%  github.com/ethereum/go-ethereum/common.Address.hex (inline)
+  175.77MB  3.65% 50.93%  1170.09MB 24.28%  github.com/status-im/status-go/pkg/services/wallet/common.MandatoryTokens
+  161.01MB  3.34% 54.27%   161.01MB  3.34%  internal/bytealg.MakeNoZero
+  142.19MB  2.95% 57.22%   144.74MB  3.00%  io.ReadAll
+  134.50MB  2.79% 60.01%   134.50MB  2.79%  golang.org/x/crypto/sha3.(*state).Sum
+  133.77MB  2.78% 62.78%   133.77MB  2.78%  bytes.Clone
+  123.40MB  2.56% 65.34%   123.40MB  2.56%  github.com/mutecomm/go-sqlcipher/v4._Cfunc_GoBytes
+  117.15MB  2.43% 67.78%   117.15MB  2.43%  bytes.growSlice
+     117MB  2.43% 70.20%      117MB  2.43%  google.golang.org/protobuf/internal/impl.consumeBytesNoZero
+  103.23MB  2.14% 72.35%   103.23MB  2.14%  reflect.mapassign_faststr0
+      94MB  1.95% 74.30%   996.54MB 20.68%  github.com/status-im/go-wallet-sdk/pkg/tokens/types.TokenKey
+   93.86MB  1.95% 76.24%   473.78MB  9.83%  github.com/status-im/status-go/pkg/services/wallet/thirdparty/market/coingecko.(*Client).getCoingeckoTokensByTokenKey
+   87.48MB  1.82% 78.06%    87.48MB  1.82%  reflect.growslice
+   80.78MB  1.68% 79.74%   315.64MB  6.55%  encoding/json.Marshal
+   75.01MB  1.56% 81.29%    75.01MB  1.56%  reflect.unsafe_New
+   74.01MB  1.54% 82.83%    74.01MB  1.54%  math/big.nat.make (inline)
+   57.60MB  1.20% 84.02%    94.10MB  1.95%  github.com/ethereum/go-ethereum/accounts/abi.Type.pack
+   54.51MB  1.13% 85.15%    54.51MB  1.13%  google.golang.org/protobuf/internal/impl.consumeStringValueValidateUTF8
+   47.71MB  0.99% 86.14%    47.71MB  0.99%  bufio.NewReaderSize
+   37.50MB  0.78% 86.92%    60.56MB  1.26%  encoding/json.(*decodeState).literalStore
+   30.86MB  0.64% 87.56%    35.98MB  0.75%  encoding/json.(*Decoder).refill
+   25.82MB  0.54% 88.10%    25.82MB  0.54%  crypto/internal/fips140/aes/gcm.sliceForAppend
+   25.04MB  0.52% 88.62%    52.33MB  1.09%  github.com/libp2p/go-msgio/pbio.(*uvarintReader).ReadMsg
+   24.63MB  0.51% 89.13%    25.63MB  0.53%  github.com/libp2p/go-buffer-pool.(*BufferPool).Get
+   23.14MB  0.48% 89.61%   311.74MB  6.47%  google.golang.org/protobuf/internal/impl.(*MessageInfo).unmarshalPointerEager
+   18.13MB  0.38% 89.99%   112.23MB  2.33%  github.com/ethereum/go-ethereum/accounts/abi.Arguments.Pack
+   14.10MB  0.29% 90.28%    31.08MB  0.64%  github.com/status-im/status-go/pkg/backend/node/rpc.(*SingleRequestCodec).encode
+    9.50MB   0.2% 90.48%      106MB  2.20%  github.com/status-im/status-go/pkg/services/wallet/thirdparty/market/coingecko.(*GeckoToken).keys
+    8.92MB  0.19% 90.66%   121.15MB  2.51%  github.com/ethereum/go-ethereum/accounts/abi.ABI.Pack
+    7.82MB  0.16% 90.82%   173.26MB  3.60%  github.com/status-im/status-go/internal/signal.send
+    7.25MB  0.15% 90.97%   137.29MB  2.85%  github.com/status-im/status-go/pkg/services/wallet/thirdparty/activity/alchemy.(*Client).FetchTransfers
+       7MB  0.15% 91.12%       32MB  0.66%  github.com/status-im/status-go/internal/protocol/identity/emojihash.toEmojiHash
+    5.52MB  0.11% 91.23%    27.91MB  0.58%  github.com/status-im/go-wallet-sdk/pkg/tokens/parsers.(*StandardTokenListParser).Parse
+    3.50MB 0.073% 91.31%   113.01MB  2.35%  github.com/status-im/status-go/internal/accounts-management/common.GetPublicKeyData
+    3.50MB 0.073% 91.38%   170.70MB  3.54%  encoding/json.(*decodeState).object

@@ -61,8 +61,12 @@ if [[ "$OS" == "android" ]]; then
     patch -d "${OPENSSL}" -R -p0 <"${SCRIPT_DIR}/openssl-patch.diff"
   }
 
-  trap cleanup EXIT
-  patch -d "${OPENSSL}" -p0 <"${SCRIPT_DIR}/openssl-patch.diff"
+  # The vendored tree may already carry the patch; a second apply prompts and, on a
+  # non-interactive stdin, reverses it.
+  if ! grep -q 'shlib_variant => "_3"' "${OPENSSL}/Configurations/15-android.conf"; then
+    trap cleanup EXIT
+    patch -d "${OPENSSL}" -p0 <"${SCRIPT_DIR}/openssl-patch.diff"
+  fi
 fi
 
 echo "Building OpenSSL for $TARGET with platform config args ${PLATFORM_CONFIG_ARGS[*]}"

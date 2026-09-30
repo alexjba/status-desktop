@@ -89,7 +89,15 @@ if [ "$DEBUG" -eq 1 ]; then
     #TODO: filter nimqml logs and then set -d:debug instead of -d:release
     NIM_FLAGS+=(-d:release -d:nimTypeNames)
 elif [ "$PROFILE" -eq 1 ]; then
-    NIM_FLAGS+=(-d:release -d:nimTypeNames -d:qmldebug -d:qmlDebugPort:${QML_DEBUG_PORT:-49152} --passC:-DQT_QML_DEBUG)
+    NIM_FLAGS+=(-d:release -d:qmldebug -d:qmlDebugPort:${QML_DEBUG_PORT:-49152} --passC:-DQT_QML_DEBUG)
+    # NIM_TYPE_NAMES=1 adds runtime type names (typed heap dumps); it does not compile on every tree.
+    if [ "${NIM_TYPE_NAMES:-0}" -eq 1 ]; then
+        NIM_FLAGS+=(-d:nimTypeNames)
+    fi
+    # QML_DEBUG_WAIT=1 blocks engine creation until a QML profiler attaches (startup traces).
+    if [ "${QML_DEBUG_WAIT:-0}" -eq 1 ]; then
+        NIM_FLAGS+=(-d:qmlDebugWait)
+    fi
 else
     NIM_FLAGS+=(-d:release -d:production)
 fi

@@ -106,6 +106,11 @@ public final class StatusGoService extends Service {
      * cover the mvds outbound loop picking up the queued message after resume.
      */
     private static final long MESSAGING_REPAUSE_DELAY_MS = 60_000L;
+    // pprof on 127.0.0.1:6060 in the :statusgo process; never in release builds.
+    private static final boolean PPROF = !"release".equals(BuildConfig.BUILD_TYPE)
+            && !"fdroid".equals(BuildConfig.BUILD_TYPE);
+    private final java.util.concurrent.atomic.AtomicBoolean pprofStarted =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Runnable repauseMessagingRunnable = () -> {
         if (uiVisible) return; // app came to foreground; foregrounding already resumed messaging
@@ -391,6 +396,9 @@ public final class StatusGoService extends Service {
             try {
                 final String namesJson = fetchPausableServiceNames();
                 if (namesJson == null) return;
+                if (PPROF && pprofStarted.compareAndSet(false, true)) {
+                    nativeCall("StartPprof", "[\"127.0.0.1:6060\"]");
+                }
                 final String method = visible ? "ResumeServices" : "PauseServices";
                 final String argsJson = "[" + JSONObject.quote(namesJson) + "]";
                 final String response = nativeCall(method, argsJson);

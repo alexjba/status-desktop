@@ -1,0 +1,46 @@
+File: memfd:jit-zygote-cache
+Type: inuse_space
+Time: 2026-09-30 18:52:01 EEST
+Showing nodes accounting for 44844.14kB, 100% of 44844.14kB total
+Showing top 40 nodes out of 315
+      flat  flat%   sum%        cum   cum%
+ 4608.34kB 10.28% 10.28%  4608.34kB 10.28%  encoding/json.(*decodeState).literalStore
+ 4369.31kB  9.74% 20.02%  4369.31kB  9.74%  io.ReadAll
+ 4097.37kB  9.14% 29.16%  4097.37kB  9.14%  github.com/syndtr/goleveldb/leveldb/memdb.New
+ 3664.58kB  8.17% 37.33%  3664.58kB  8.17%  github.com/status-im/zxcvbn-go/matching.buildRankedDict
+ 3072.33kB  6.85% 44.18%  7168.66kB 15.99%  github.com/status-im/go-wallet-sdk/pkg/tokens/parsers.(*StandardTokenListParser).Parse
+ 2567.26kB  5.72% 49.90%  2567.26kB  5.72%  runtime.mallocgc
+ 1536.09kB  3.43% 53.33%  1536.09kB  3.43%  math/big.nat.make (inline)
+ 1184.27kB  2.64% 55.97%  1184.27kB  2.64%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.3
+ 1133.89kB  2.53% 58.50%  1133.89kB  2.53%  github.com/decred/dcrd/dcrec/secp256k1/v4.init.init.func2.func3
+ 1064.52kB  2.37% 60.87%  1064.52kB  2.37%  github.com/status-im/go-wallet-sdk/pkg/balance/multistandardfetcher.processERC20JobResult
+ 1060.10kB  2.36% 63.24%  1060.10kB  2.36%  bytes.growSlice
+ 1024.08kB  2.28% 65.52%  1024.08kB  2.28%  google.golang.org/protobuf/internal/impl.fieldInfoForMessage
+ 1024.05kB  2.28% 67.80%  1024.05kB  2.28%  fmt.Sprintf
+ 1024.03kB  2.28% 70.09%  2560.12kB  5.71%  github.com/status-im/go-wallet-sdk/pkg/multicall.ProcessERC20BalanceResult
+  869.29kB  1.94% 72.03%   869.29kB  1.94%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.7
+  809.97kB  1.81% 73.83%  1609.40kB  3.59%  net/http.(*http2clientStream).writeRequestBody
+  804.69kB  1.79% 75.63%   804.69kB  1.79%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.1
+  799.43kB  1.78% 77.41%   799.43kB  1.78%  net/http.(*http2Framer).startWriteDataPadded
+  641.34kB  1.43% 78.84%   641.34kB  1.43%  github.com/status-im/status-go/pkg/messaging/layers/encryption.(*Protocol).Start
+  618.49kB  1.38% 80.22%   618.49kB  1.38%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.0
+  574.34kB  1.28% 81.50%   574.34kB  1.28%  github.com/forPelevin/gomoji.map.init.0
+  553.04kB  1.23% 82.73%   553.04kB  1.23%  reflect.growslice
+  525.43kB  1.17% 83.90%   525.43kB  1.17%  github.com/russross/blackfriday/v2.map.init.0
+  525.43kB  1.17% 85.08%  1549.47kB  3.46%  github.com/status-im/go-wallet-sdk/pkg/tokens/builder.(*Builder).AddTokenList
+  525.43kB  1.17% 86.25%   525.43kB  1.17%  html.init.func1
+  521.05kB  1.16% 87.41%   521.05kB  1.16%  github.com/ethereum/go-ethereum/metrics.newExpDecaySampleHeap
+  520.04kB  1.16% 88.57%   520.04kB  1.16%  github.com/afex/hystrix-go/hystrix.newMetricExchange
+     514kB  1.15% 89.72%      514kB  1.15%  google.golang.org/protobuf/internal/filedesc.(*File).initDecls
+  513.56kB  1.15% 90.86%   513.56kB  1.15%  regexp.makeOnePass.func1
+  513.12kB  1.14% 92.01%   513.12kB  1.14%  vendor/golang.org/x/net/http2/hpack.newInternalNode
+  512.56kB  1.14% 93.15%   512.56kB  1.14%  github.com/status-im/status-go/internal/protocol/protobuf.init
+  512.56kB  1.14% 94.29%   512.56kB  1.14%  sync.(*Pool).pinSlow
+  512.05kB  1.14% 95.43%   512.05kB  1.14%  io.(*pipe).write
+  512.02kB  1.14% 96.57%   512.02kB  1.14%  crypto/internal/fips140/nistec.NewP384Point
+  512.02kB  1.14% 97.72%   512.02kB  1.14%  google.golang.org/protobuf/internal/filedesc.appendOptions
+  512.01kB  1.14% 98.86%   512.01kB  1.14%  github.com/status-im/status-go/params.DefaultPushNotificationServers
+  512.01kB  1.14%   100%   512.01kB  1.14%  github.com/waku-org/go-waku/waku/v2/dnsdisc.newMetrics
+         0     0%   100%   512.05kB  1.14%  bufio.(*Reader).WriteTo
+         0     0%   100%   512.05kB  1.14%  bufio.(*Reader).writeBuf
+         0     0%   100%  1060.10kB  2.36%  bytes.(*Buffer).Write
