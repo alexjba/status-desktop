@@ -182,3 +182,31 @@ See [service-process-top10.md](service-process-top10.md) — ten items with evid
 2. heapprofd on the UI process at login screen and at settle.
 3. Feature cut-off runs on the profile build (pinned community bootstrap, curated loop, token
    catalogue fetch, emoji/sticker/portal loaders) to size each contributor.
+
+## Task order (filed as sub-issues of #21528, 2026-10-01)
+
+Ordered by payoff per MB, CPU effect (speed-ups first; nothing that trades CPU for RSS), dependencies and the 2.40.0 cut. The three tracks can run in parallel.
+
+**Wave 1 — quick, measured, zero risk (2.40.0)**
+1. #22624 static costs (lazy zxcvbn, enode DB buffer, sqlcipher caps, dead metrics flag): ~−10MB live, less startup work.
+2. #22628 `StatusImage` `sourceSize` + `cache:false` audit: cheapest UI win, every screen.
+3. #22625 balance-fetch allocation cuts: ~−60% allocations per fetch, byte-identical calldata.
+
+**Wave 2 — the two big levers**
+4. #22619 balance sweep scoped to tokens of interest: ~17k → <100 RPC calls per tick.
+5. #22632 community wire shape (status-go) → 6. #22633 members as a Nim entity → 7. #22634 DTOs as refs. Largest scaling win (≈60MB per DTO copy for a 5k-member/30-channel community; 32MB even on a fresh profile). status-go first; it is the longest chain, so it starts early.
+
+**Wave 3 — pre-login floor and UI retention (2.40.0, independent)**
+8. #22629 fonts (~−8MB), 9. #22631 emoji (~−4MB), 10. #22630 runtime-compiled QML (~−4MB + CPU), 11. #22635 token catalogue placement (−10..30MB in the UI).
+
+**Wave 4 — scaling follow-ups after the member/DTO model**
+12. #22636 contacts cache, 13. #22638 message items, 14. #22637 Go retention of contacts/chats, 15. #22639 typed handoff, 16. #22640 HomePage/ActivityCenter adaptors.
+
+**Wave 5 — long tail**
+17. #22641 Android transport (the double-parse fix alone is cheap and can be pulled forward), 18. #22626 burst shaping, 19. #22627 dependency trim (one PR per dependency, anytime).
+
+**Tracks:** status-go = 1, 3, 4, 5, 14, 18, 19 · Nim = 6, 7, 11, 12, 13, 15 · QML/C++ = 2, 8, 9, 10, 16, 17.
+
+**On a shared cache across status-go / Nim / QML:** not as a universal store (Android runs status-go in its own process, Go memory can't be retained across cgo, and logic-heavy entities would keep their typed copies anyway). It fits large read-mostly data read by index: the token catalogue and large community member lists. Plan: implement #22635 and, after #22632, #22633 as "status-go publishes a flat, versioned snapshot; the client reads it zero-copy through C++ models", measure, and only generalise if those two prove it. Most of the duplication found is design (value DTOs, members embedded per channel, materialising proxies) and goes away with refs, windows and deltas.
+
+Already landed/open from the baseline work: status-go#7864 (MADV_DONTNEED on Android, −350MB reported), #7865 (mandatory-token set built once), #7866 (idle heap released after login/on pause, −45MB).
