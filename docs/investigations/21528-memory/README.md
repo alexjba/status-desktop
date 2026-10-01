@@ -159,6 +159,10 @@ Fixed floor (not fixable by the above)
   point)? If not, the login spike stays and only the release-after-burst lever applies.
 - May the app call `FreeOSMemory()` / lower the Go limit briefly after login (CPU/GC cost vs. RSS)?
 
+## The data copy chain
+
+See [data-copy-chain.md](data-copy-chain.md): per-entity owners across status-go → wire → Nim → models → QML, measured anchors, and the architectural remedies (members as their own entity, deltas in signals, catalogue stays in status-go, ref DTOs, evicting caches).
+
 ## Service process: bake-off
 
 See [bakeoff-service-process.md](bakeoff-service-process.md): one-shot `FreeOSMemory` after login −47MB CPU-neutral; lazy zxcvbn and a small enode DB buffer −6MB live each; GC knobs rejected on CPU.
