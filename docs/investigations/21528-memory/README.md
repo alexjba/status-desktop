@@ -159,6 +159,10 @@ Fixed floor (not fixable by the above)
   point)? If not, the login spike stays and only the release-after-burst lever applies.
 - May the app call `FreeOSMemory()` / lower the Go limit briefly after login (CPU/GC cost vs. RSS)?
 
+## Service process: bake-off
+
+See [bakeoff-service-process.md](bakeoff-service-process.md): one-shot `FreeOSMemory` after login −47MB CPU-neutral; lazy zxcvbn and a small enode DB buffer −6MB live each; GC knobs rejected on CPU.
+
 ## Service process: ranked offenders
 
 See [service-process-top10.md](service-process-top10.md) — ten items with evidence and remedies, plus the burst timeline and the idle 2.3MB/s allocation sawtooth.
