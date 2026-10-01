@@ -30,6 +30,10 @@ Projection: E5 + metrics off + sqlcipher caps + lazy zxcvbn + enode buffer ≈ 1
 CPU-costing change. The balance-sweep scope fix (balance-poll-churn.md, cut 1) then removes
 ~105MB of allocations and ~17k RPC calls per 2-minute tick.
 
+Shipped from this bake-off: status-im/status-go#7866 (post-login + on-pause `FreeOSMemory`, 213→169–172MB;
+a first implementation that also released on a pause *during* the burst measured 181–215MB because
+the mid-burst GC raised the heap goal, so a pause now waits for the scheduled release).
+
 Experiment branches live in the worktree submodule: `exp/free-os-memory`, `exp/combined-nogc`,
 `exp/zxcvbn-lazy` (go.mod replace → scratchpad fork), `exp/enode-smallbuf` (replace → patched
 go-ethereum), `exp/sqlite-pool`, `exp/static-tables`, `exp/coingecko-resolve`, `exp/gc-policy`,
