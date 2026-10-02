@@ -14,8 +14,9 @@ login duration; before/after rows in `ledger/`.
 | F05 | Go binary diet, level 2: sized feature-removal list | analysis → sign-off | up to ~10 more |
 | F06 | Fonts: used weights only, mapped not copied | implement | 8–11 |
 | F07 | R8 on the Android dex | implement | 4–6 |
-| F08 | Qt modules, styles and runtime shader compilation | implement | 4–8 |
+| F08 | Qt modules, styles, package exclusions and runtime shader compilation | implement | 8–10 (+~50MB APK) |
 | F09 | Translations: map the active `.qm`, keep the rest out of the binary | implement | ~1 (+APK) |
 | F10 | QML feature modules loaded by URL and trimmed on close (pilot: popups) | convention + pilot | 10–20 post-login |
 | F11 | Settings subpages and sections by URL | follow-up of F10 | part of F10's range |
 | F12 | Floor ledger tooling: pagemap residency, APK attribution, cold-cache rows | tooling | — |
+| F13 | Qt5Compat effects: layered items and GPU driver host memory | measure → implement | up to ~28 (Mali growth after login) |
