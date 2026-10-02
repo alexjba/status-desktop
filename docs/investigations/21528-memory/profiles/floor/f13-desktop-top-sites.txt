@@ -1,0 +1,52 @@
+Desktop (macOS, DPR 1, 1200x680 window) offscreen textures grouped by the QML item that owns the layer/effect.
+bytes = w*h*4 (*1.34 mipmap); Qt5Compat DropShadow = layer source + GaussianBlur layer + 2 blur passes; OpacityMask standalone = source proxy + mask proxy + output.
+
+== wallet-after-onboarding: total 2.95 MB, 14 textures
+    1.49 MB  textures=  3  host=CreateProfilePage                  effect=DropShadow   (last size 394x315)
+    0.53 MB  textures=  4  host=CreateProfilePage                  effect=OpacityMask  (last size 380x87)
+    0.47 MB  textures=  1  host=OnboardingFrame                    effect=layer/plain  (last size 394x301)
+    0.26 MB  textures=  2  host=OnboardingButtonFrame              effect=layer/plain  (last size 380x87)
+    0.16 MB  textures=  3  host=QQuickGridLayout                   effect=DropShadow   (last size 114x114)
+    0.04 MB  textures=  1  host=StatusImage                        effect=layer/plain  (last size 114x90)
+
+== chat: total 2.36 MB, 65 textures
+    1.13 MB  textures=  3  host=AccountHeaderGradient              effect=OpacityMask  (last size 818x115)
+    0.70 MB  textures=  6  host=BannerCard                         effect=DropShadow   (last size 345x78)
+    0.20 MB  textures=  2  host=BannerCard                         effect=layer/plain  (last size 353x70)
+    0.18 MB  textures=  4  host=SidebarListView                    effect=layer/plain  (last size 60x42)
+    0.06 MB  textures= 14  host=StatusSmartIdenticon               effect=OpacityMask  (last size 32x32)
+    0.04 MB  textures= 12  host=StatusRoundedImage                 effect=layer/plain  (last size 24x24)
+    0.02 MB  textures= 10  host=ComboBox                           effect=OpacityMask  (last size 24x24)
+    0.02 MB  textures=  8  host=StatusRoundedImage                 effect=OpacityMask  (last size 24x24)
+    0.01 MB  textures=  4  host=StatusImage                        effect=layer/plain  (last size 24x24)
+    0.00 MB  textures=  2  host=Control                            effect=QQuickMultiEffect (last size 0x0)
+
+== portal-before-fetch: total 9.43 MB, 55 textures
+    2.91 MB  textures= 15  host=LoadingSkeletonGroup               effect=OpacityMask  (last size 690x20)
+    2.03 MB  textures=  3  host=WalletAccountsSkeleton             effect=OpacityMask  (last size 274x617)
+    1.97 MB  textures=  3  host=WalletAssetListSkeleton            effect=OpacityMask  (last size 690x238)
+    1.13 MB  textures=  3  host=StatusChatInput                    effect=DropShadow   (last size 582x156)
+    0.33 MB  textures=  1  host=SuggestionBoxPanel                 effect=layer/plain  (last size 588x142)
+    0.25 MB  textures=  3  host=StatusChatImageExtensionValidator  effect=DropShadow   (last size 446x46)
+    0.18 MB  textures=  4  host=SidebarListView                    effect=layer/plain  (last size 60x42)
+    0.17 MB  textures=  3  host=StatusChatImageQtyValidator        effect=DropShadow   (last size 298x46)
+    0.15 MB  textures=  2  host=StatusChatInputToolBar             effect=layer/plain  (last size 516x36)
+    0.12 MB  textures=  3  host=StatusChatImageSizeValidator       effect=DropShadow   (last size 208x46)
+    0.06 MB  textures=  1  host=StatusChatImageExtensionValidator  effect=layer/plain  (last size 447x32)
+    0.04 MB  textures=  2  host=StatusSmartIdenticon               effect=OpacityMask  (last size 72x72)
+    0.04 MB  textures=  1  host=StatusChatImageQtyValidator        effect=layer/plain  (last size 299x32)
+    0.03 MB  textures=  1  host=StatusChatImageSizeValidator       effect=layer/plain  (last size 209x32)
+
+== home+portal-grid: total 37.28 MB, 115 textures
+   16.52 MB  textures= 10  host=StatusCommunityCard                effect=layer/plain  (last size 670x460)
+    8.10 MB  textures= 20  host=QQuickShaderEffect                 effect=DropShadow   (last size 375x270)
+    3.65 MB  textures= 10  host=QQuickFlickable                    effect=DropShadow   (last size 359x254)
+    2.65 MB  textures= 42  host=StatusCommunityCard                effect=OpacityMask  (last size 40x40)
+    2.08 MB  textures= 12  host=LoadingSkeletonGroup               effect=OpacityMask  (last size 690x20)
+    2.03 MB  textures=  3  host=WalletAccountsSkeleton             effect=OpacityMask  (last size 274x617)
+    1.97 MB  textures=  3  host=WalletAssetListSkeleton            effect=OpacityMask  (last size 690x238)
+    0.18 MB  textures=  4  host=SidebarListView                    effect=layer/plain  (last size 60x42)
+    0.06 MB  textures=  7  host=StatusRoundedImage                 effect=layer/plain  (last size 40x40)
+    0.04 MB  textures=  2  host=StatusSmartIdenticon               effect=OpacityMask  (last size 72x72)
+    0.00 MB  textures=  2  host=Control                            effect=QQuickMultiEffect (last size 0x0)
+

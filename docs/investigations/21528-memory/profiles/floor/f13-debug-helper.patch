@@ -1,0 +1,54 @@
+--- ui/main.qml	2026-10-01 11:57:38
++++ ui/main.qml	2026-10-02 12:31:03
+@@ -38,6 +38,51 @@
+ 
+     property bool appIsReady: false
+ 
++    // F13 temporary debug helper (uncommitted): periodic dump of every offscreen texture (ShaderEffectSource)
++    // reachable from the window's item tree. Logs only when the (count, bytes) signature changes.
++    Timer {
++        id: f13LayerDump
++        interval: 10000; running: true; repeat: true
++        property string last: ""
++        function typeName(o) { return String(o).split("(")[0] }
++        function chain(it) { var s = []; var p = it; var n = 0; while (p && n < 6) { s.push(typeName(p) + (p.objectName ? "#" + p.objectName : "")); p = p.parent; n++ } return s.join(" < ") }
++        function effVisible(it) { var p = it; while (p) { if (!p.visible || p.opacity === 0) return false; p = p.parent } return true }
++        onTriggered: {
++            var dpr = applicationWindow.screen ? applicationWindow.screen.devicePixelRatio : 1
++            var rows = []
++            var layered = 0, layeredVisible = 0, items = 0
++            function walk(it) {
++                if (!it) return
++                items++
++                var tn = typeName(it)
++                if (it.layer && it.layer.enabled) { layered++; if (effVisible(it)) layeredVisible++ }
++                if (tn.indexOf("ShaderEffectSource") === 0 || tn.indexOf("QQuickShaderEffectSource") === 0) {
++                    var src = it.sourceItem
++                    var w = 0, h = 0, explicit = false
++                    if (it.textureSize && it.textureSize.width > 0) { w = it.textureSize.width; h = it.textureSize.height; explicit = true }
++                    else if (it.sourceRect && it.sourceRect.width > 0) { w = it.sourceRect.width * dpr; h = it.sourceRect.height * dpr }
++                    else if (src) { w = src.width * dpr; h = src.height * dpr }
++                    w = Math.ceil(w); h = Math.ceil(h)
++                    var bpp = (it.format === ShaderEffectSource.RGBA16F) ? 8 : 4
++                    var bytes = Math.round(w * h * bpp * (it.mipmap ? 1.34 : 1))
++                    rows.push({bytes: bytes, w: w, h: h, samples: it.samples, live: it.live, vis: effVisible(it), explicit: explicit,
++                               srcVis: src ? effVisible(src) : false, src: src ? chain(src) : "-", owner: chain(it.parent), mipmap: it.mipmap})
++                }
++                var ch = it.children
++                for (var i = 0; i < ch.length; i++) walk(ch[i])
++            }
++            walk(applicationWindow.contentItem)
++            var total = 0, totalVis = 0, nVis = 0, srcVisBytes = 0, nSrcVis = 0
++            for (var i = 0; i < rows.length; i++) { total += rows[i].bytes; if (rows[i].vis) { totalVis += rows[i].bytes; nVis++ }; if (rows[i].srcVis) { srcVisBytes += rows[i].bytes; nSrcVis++ } }
++            var sig = rows.length + "/" + total + "/" + layered
++            if (sig === last) return
++            last = sig
++            rows.sort(function(a, b) { return b.bytes - a.bytes })
++            console.log("F13DUMP t=" + Date.now() + " items=" + items + " sources=" + rows.length + " visibleSources=" + nVis + " layeredItems=" + layered + " layeredVisible=" + layeredVisible + " bytes=" + total + " visibleBytes=" + totalVis + " srcVisibleSources=" + nSrcVis + " srcVisibleBytes=" + srcVisBytes + " dpr=" + dpr + " window=" + applicationWindow.width + "x" + applicationWindow.height)
++            for (var j = 0; j < rows.length; j++) { var r = rows[j]; console.log("F13ROW " + r.bytes + " " + r.w + "x" + r.h + (r.explicit ? "(textureSize)" : "") + " samples=" + r.samples + " live=" + r.live + " vis=" + r.vis + " srcVis=" + r.srcVis + " mip=" + r.mipmap + " src=" + r.src + " | owner=" + r.owner) }
++        }
++    }
++
+     readonly property AppStores.FeatureFlagsStore featureFlagsStore: AppStores.FeatureFlagsStore {
+         readonly property var featureFlags: typeof featureFlagsRootContextProperty !== undefined ? featureFlagsRootContextProperty : null
+ 

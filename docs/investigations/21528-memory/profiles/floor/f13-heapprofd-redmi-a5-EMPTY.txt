@@ -1,0 +1,16 @@
+F13 heapprofd attempt, Redmi A5 (25028RN03Y, Android 15, user build, ro.debuggable=0), 2026-10-02 12:14-12:23 EEST
+
+Config: android.heapprofd, process_cmdline app.status.mobile, sampling 8192, all_heaps, continuous dumps 20s/30s, 540s.
+Result: 881-byte trace, zero heap_profile_allocation rows; a 25s retry against the running pid 15449 gave 878 bytes.
+heapprofd producer log: only "Stopping data source" (no process match, no client connection).
+
+Cause: the installed app.status.mobile is the Sep 2 release APK (302,237,832 bytes, md5 89ff8b0f5080f23c175ea2e56f2e379b,
+no <profileable> element in its manifest); the profiling build mobile/bin/android/qt6/Status.apk (Oct 1, md5
+e9b4524586a333014b0cb012c4efe362, profileable android:shell=true) is not installed under that package name. heapprofd on a
+user build only attaches to debuggable or profileable processes. Both APKs carry the same debug signing cert, so
+`adb install -r` would swap the binary in place without losing the test profile; not done (not authorised in the brief).
+
+Fallback used instead: `dumpsys gpu` "Proc <pid> total" (gpu_mem_total tracepoint, GPU driver memory per process) +
+`dumpsys meminfo` rows per screen; see f13-device-redmi-a5.txt and ledger/f13-effects-redmi-a5.csv.
+Mali host-side heap per screen (libGLES_mali.so allocations) remains unmeasured; the only data points are the earlier
+login-screen (16.7MB) and post-login (~45MB) numbers in floor.md, taken on the debuggable build.

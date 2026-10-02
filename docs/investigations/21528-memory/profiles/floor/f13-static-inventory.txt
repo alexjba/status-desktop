@@ -1,0 +1,237 @@
+== totals ==
+  53  layer.enabled  true
+  33  layer.effect   DropShadow
+  15  layer.effect   OpacityMask
+   9  layer.effect   fastBlur
+   9  standalone     FastBlur
+   9  standalone     OpacityMask
+   6  layer.effect   MultiEffect
+   4  standalone     GaussianBlur
+   3  standalone     DropShadow
+   3  standalone     ShaderEffectSource
+   3  standalone     ColorOverlay
+   3  layer.enabled  root.dropShadowEnabled
+   2  layer.enabled  root.joinCommunity
+   2  layer.enabled  !!root.blurSource
+   2  layer.effect   FastBlur
+   2  layer.enabled  root.dropShadow
+   1  layer.enabled  root.visible && !root.messageToPin
+   1  layer.enabled  root.blurState
+   1  layer.enabled  toImageSmartIdenticon.visible
+   1  layer.enabled  !(d.accountsListView?.atYBeginning ?? true)
+   1  layer.enabled  (d.accountsListView?.footerOverlayed ?? false) && 
+   1  layer.enabled  !d.seedphraseRevealed
+   1  layer.effect   GaussianBlur
+   1  layer.enabled  root.circular
+   1  layer.enabled  applyMask
+   1  layer.enabled  visible
+   1  layer.enabled  root.visible
+   1  standalone     ConicalGradient
+   1  standalone     LinearGradient
+   1  layer.enabled  !Qt.colorEqual(root.imgColor, Theme.palette.baseCo
+   1  layer.effect   ColorOverlay
+   1  layer.effect   CalloutOpacityMask
+   1  layer.effect   root.clippingEffect
+   1  standalone     MultiEffect
+   1  layer.enabled  root.hovered || root.highlight
+   1  layer.enabled  badge.visible
+   1  layer.enabled  !d.expanded && d.canExpand
+   1  layer.enabled  !root.readOnly
+
+layer.enabled sites: 77  layer.effect sites: 69  standalone effect/source items: 34
+per-delegate sites: 7
+
+== by screen ==
+StatusQ shared     n= 33  layer.enabled:true=12, layer.effect:DropShadow=7, layer.effect:OpacityMask=4, standalone:OpacityMask=4, layer.enabled:visible=1, layer.effect:MultiEffect=1, layer.enabled:root.visible=1, standalone:ConicalGradient=1, standalone:DropShadow=1, standalone:LinearGradient=1
+activity center    n=  6  layer.effect:MultiEffect=2, layer.enabled:true=2, layer.enabled:root.circular=1, layer.enabled:applyMask=1
+chat               n= 13  layer.enabled:true=5, layer.effect:DropShadow=4, layer.effect:root.clippingEffect=1, standalone:MultiEffect=1, standalone:OpacityMask=1, layer.enabled:root.dropShadow=1
+communities        n= 28  layer.effect:fastBlur=8, layer.enabled:true=8, standalone:FastBlur=7, layer.enabled:root.joinCommunity=2, layer.effect:DropShadow=1, layer.effect:OpacityMask=1, standalone:OpacityMask=1
+home               n=  2  layer.enabled:true=1, layer.effect:DropShadow=1
+login/onboarding   n=  8  layer.enabled:true=2, layer.effect:DropShadow=2, layer.effect:OpacityMask=1, layer.enabled:root.dropShadow=1, layer.enabled:!d.seedphraseRevealed=1, layer.effect:GaussianBlur=1
+main shell         n=  3  layer.enabled:true=2, layer.effect:MultiEffect=1
+popups             n= 43  layer.effect:DropShadow=11, layer.enabled:true=10, layer.effect:OpacityMask=6, standalone:ShaderEffectSource=3, layer.enabled:root.dropShadowEnabled=3, layer.enabled:!!root.blurSource=2, layer.effect:FastBlur=2, layer.enabled:root.visible && !root.messageToPin=1, standalone:OpacityMask=1, standalone:GaussianBlur=1, layer.enabled:toImageSmartIdenticon.visible=1, layer.enabled:badge.visible=1, layer.enabled:!d.expanded && d.canExpand=1
+profile/settings   n=  5  standalone:DropShadow=2, layer.enabled:root.blurState=1, layer.effect:fastBlur=1, standalone:FastBlur=1
+shared             n= 26  layer.enabled:true=9, layer.effect:OpacityMask=3, layer.effect:DropShadow=3, standalone:ColorOverlay=2, layer.effect:MultiEffect=2, layer.enabled:!Qt.colorEqual(root.imgColor, Theme.palette.baseCo=1, layer.effect:ColorOverlay=1, standalone:GaussianBlur=1, layer.effect:CalloutOpacityMask=1, layer.enabled:root.hovered || root.highlight=1, standalone:FastBlur=1, layer.enabled:!root.readOnly=1
+wallet             n= 13  layer.effect:DropShadow=4, standalone:OpacityMask=2, layer.enabled:true=2, standalone:GaussianBlur=2, standalone:ColorOverlay=1, layer.enabled:!(d.accountsListView?.atYBeginning ?? true)=1, layer.enabled:(d.accountsListView?.footerOverlayed ?? false) && =1
+
+== sites (screen | file:line | kind | effect/value | host item (id) | per-delegate | notable props) ==
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/CountdownProgressIndicator.qml:40 | layer.enabled | true | Shape() | - | anchors.fill=parent layer.samples=4
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/LoadingComponent.qml:62 | standalone | OpacityMask | Item(content) | - | 
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/LoadingSkeletonGroup.qml:91 | standalone | OpacityMask | Item(root) | - | 
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusCard.qml:210 | standalone | DropShadow | Rectangle(root) | - | radius=8
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusColorSpace.qml:66 | standalone | ConicalGradient | Item(root) | - | 
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusColorSpace.qml:79 | layer.enabled | true | ConicalGradient(hueGauge) | - | anchors.fill=parent
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusColorSpace.qml:80 | layer.effect | OpacityMask | ConicalGradient(hueGauge) | - | anchors.fill=parent
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusCommunityCard.qml:213 | layer.enabled | true | Rectangle(root) | - | height=40 width=40 radius=root.hovered ? d.bannerRadiusHovered : d.bannerRadius layer.mipmap=true layer.textureSize=Qt.size(width * 2, height * 2) samples=25
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusCommunityCard.qml:216 | layer.effect | DropShadow | Rectangle(root) | - | height=40 width=40 radius=root.hovered ? d.bannerRadiusHovered : d.bannerRadius layer.mipmap=true layer.textureSize=Qt.size(width * 2, height * 2) samples=25
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusCommunityCard.qml:258 | standalone | OpacityMask | Item(banner) | - | width=parent.width height=d.bannerHeight
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusRoundedComponent.qml:68 | layer.enabled | root.visible | Rectangle(root) | - | radius=width / 2
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusRoundedComponent.qml:69 | layer.effect | OpacityMask | Rectangle(root) | - | radius=width / 2
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusTagSelector.qml:364 | layer.enabled | true | Rectangle(bgRect) | - | anchors.fill=parent radius=12 samples=25
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusTagSelector.qml:365 | layer.effect | DropShadow | Rectangle(bgRect) | - | anchors.fill=parent radius=12 samples=25
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusToastMessage.qml:238 | layer.enabled | true | Rectangle(background) | - | radius=8 samples=15
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/StatusToastMessage.qml:239 | layer.effect | DropShadow | Rectangle(background) | - | radius=8 samples=15
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/private/statusMessage/StatusImageMessage.qml:67 | layer.enabled | true | AnimatedImage(imageMessage) | - | width=Math.min(sourceSize.width, imageWidth) height=imageContainer.isFillCropMode
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/private/statusMessage/StatusImageMessage.qml:68 | layer.effect | OpacityMask | AnimatedImage(imageMessage) | - | width=Math.min(sourceSize.width, imageWidth) height=imageContainer.isFillCropMode
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/private/statusMessage/StatusPinMessageDetails.qml:33 | layer.enabled | true | Rectangle() | - | radius=12
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/private/statusMessage/StatusTextMessage.qml:113 | standalone | LinearGradient | Loader(showMoreMaskGradient) | - | anchors.fill=chatTextView
+StatusQ shared     | ui/StatusQ/src/StatusQ/Components/private/statusMessage/StatusTextMessage.qml:128 | standalone | OpacityMask | Loader(showMoreOpacityMask) | - | anchors.fill=chatTextView
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusComboBox.qml:210 | layer.enabled | true | Rectangle() | - | radius=12 samples=25
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusComboBox.qml:211 | layer.effect | DropShadow | Rectangle() | - | radius=12 samples=25
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusRipple.qml:136 | layer.enabled | visible | Item(root) | - | 
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusRipple.qml:137 | layer.effect | OpacityMask | Item(root) | - | 
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusSelect.qml:95 | layer.enabled | true | Rectangle() | - | width=selectMenu.width height=selectMenu.height radius=8 samples=15
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusSelect.qml:96 | layer.effect | DropShadow | Rectangle() | - | width=selectMenu.width height=selectMenu.height radius=8 samples=15
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusSlider.qml:60 | layer.enabled | true | Rectangle() | - | radius=root.handleSize / 2
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusSlider.qml:61 | layer.effect | MultiEffect | Rectangle() | - | radius=root.handleSize / 2
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusSwitch.qml:50 | layer.enabled | true | Rectangle(circle) | - | width=circle.width height=circle.height radius=10
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusSwitch.qml:51 | layer.effect | DropShadow | Rectangle(circle) | - | width=circle.width height=circle.height radius=10
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusSwitchTabButton.qml:38 | layer.enabled | true | Rectangle() | - | radius=10 samples=25
+StatusQ shared     | ui/StatusQ/src/StatusQ/Controls/StatusSwitchTabButton.qml:39 | layer.effect | DropShadow | Rectangle() | - | radius=10 samples=25
+activity center    | ui/app/AppLayouts/ActivityCenter/controls/NotificationAvatar.qml:191 | layer.enabled | root.circular | Image(avatarImg) | - | width=d.avatarSize height=width
+activity center    | ui/app/AppLayouts/ActivityCenter/controls/NotificationAvatar.qml:192 | layer.effect | MultiEffect | Image(avatarImg) | - | width=d.avatarSize height=width
+activity center    | ui/app/AppLayouts/ActivityCenter/controls/NotificationAvatar.qml:211 | layer.enabled | true | Rectangle(circleMask) | - | anchors.fill=avatarImg radius=width / 2
+activity center    | ui/app/AppLayouts/ActivityCenter/controls/NotificationContentBlock.qml:137 | layer.enabled | applyMask | Image(preImage) | - | 
+activity center    | ui/app/AppLayouts/ActivityCenter/controls/NotificationContentBlock.qml:138 | layer.effect | MultiEffect | Image(preImage) | - | 
+activity center    | ui/app/AppLayouts/ActivityCenter/controls/NotificationContentBlock.qml:157 | layer.enabled | true | Rectangle(mask) | - | anchors.fill=preImage radius=root.preImageRadius
+chat               | ui/app/AppLayouts/Chat/panels/ChatAnchorButtonsPanel.qml:42 | layer.enabled | true | Item(root) | - | samples=16
+chat               | ui/app/AppLayouts/Chat/panels/ChatAnchorButtonsPanel.qml:43 | layer.effect | DropShadow | Item(root) | - | samples=16
+chat               | ui/app/AppLayouts/Chat/panels/InlineSelectorPanel.qml:124 | layer.enabled | true | StatusDialogBackground(bg) | - | radius=12 samples=25
+chat               | ui/app/AppLayouts/Chat/panels/InlineSelectorPanel.qml:125 | layer.effect | DropShadow | StatusDialogBackground(bg) | - | radius=12 samples=25
+chat               | ui/app/AppLayouts/Chat/panels/SuggestionBoxPanel.qml:38 | layer.enabled | true | Control(root) | - | width=root.width height=root.height radius=10 samples=15
+chat               | ui/app/AppLayouts/Chat/panels/SuggestionBoxPanel.qml:39 | layer.effect | DropShadow | Control(root) | - | width=root.width height=root.height radius=10 samples=15
+chat               | ui/imports/shared/controls/chat/CalloutCard.qml:37 | layer.enabled | root.dropShadow | ShapeRectangle() | - | radius=8 samples=15
+chat               | ui/imports/shared/controls/chat/CalloutCard.qml:38 | layer.effect | DropShadow | ShapeRectangle() | - | radius=8 samples=15
+chat               | ui/imports/shared/controls/chat/CalloutOpacityMask.qml:6 | standalone | MultiEffect | ?() | - | 
+chat               | ui/imports/shared/controls/chat/CalloutOpacityMask.qml:23 | layer.enabled | true | Rectangle() | - | width=root.width height=root.height
+chat               | ui/imports/shared/controls/chat/ChatInputLinksPreviewArea.qml:177 | standalone | OpacityMask | Control(root) | - | 
+chat               | ui/imports/shared/controls/chat/LinkPreviewCard.qml:56 | layer.enabled | true | StatusImage(bannerImage) | - | 
+chat               | ui/imports/shared/controls/chat/LinkPreviewCard.qml:57 | layer.effect | root.clippingEffect | StatusImage(bannerImage) | - | 
+communities        | ui/app/AppLayouts/Communities/panels/CommunityBannedMemberCenterPanel.qml:33 | layer.enabled | true | ColumnLayout(centralPanelData) | - | width=parent.width
+communities        | ui/app/AppLayouts/Communities/panels/CommunityBannedMemberCenterPanel.qml:34 | layer.effect | fastBlur | ColumnLayout(centralPanelData) | - | width=parent.width
+communities        | ui/app/AppLayouts/Communities/panels/CommunityBannedMemberCenterPanel.qml:143 | standalone | FastBlur | Component(fastBlur) | - | 
+communities        | ui/app/AppLayouts/Communities/panels/ControlNodeOfflineCenterPanel.qml:31 | layer.enabled | true | ColumnLayout(centralPanelData) | - | width=parent.width
+communities        | ui/app/AppLayouts/Communities/panels/ControlNodeOfflineCenterPanel.qml:32 | layer.effect | fastBlur | ColumnLayout(centralPanelData) | - | width=parent.width
+communities        | ui/app/AppLayouts/Communities/panels/ControlNodeOfflineCenterPanel.qml:133 | standalone | FastBlur | Component(fastBlur) | - | 
+communities        | ui/app/AppLayouts/Communities/panels/JoinCommunityCenterPanel.qml:56 | layer.enabled | true | ColumnLayout(centralPanelData) | - | width=parent.width
+communities        | ui/app/AppLayouts/Communities/panels/JoinCommunityCenterPanel.qml:57 | layer.effect | fastBlur | ColumnLayout(centralPanelData) | - | width=parent.width
+communities        | ui/app/AppLayouts/Communities/panels/JoinCommunityCenterPanel.qml:177 | standalone | FastBlur | Component(fastBlur) | - | 
+communities        | ui/app/AppLayouts/Communities/panels/JoinCommunityHeaderPanel.qml:35 | layer.enabled | root.joinCommunity | StatusChatInfoButton(headerInfoButton) | - | 
+communities        | ui/app/AppLayouts/Communities/panels/JoinCommunityHeaderPanel.qml:36 | layer.effect | fastBlur | StatusChatInfoButton(headerInfoButton) | - | 
+communities        | ui/app/AppLayouts/Communities/panels/JoinCommunityHeaderPanel.qml:42 | layer.enabled | true | RowLayout() | - | 
+communities        | ui/app/AppLayouts/Communities/panels/JoinCommunityHeaderPanel.qml:43 | layer.effect | fastBlur | RowLayout() | - | 
+communities        | ui/app/AppLayouts/Communities/panels/JoinCommunityHeaderPanel.qml:68 | standalone | FastBlur | Component(fastBlur) | - | 
+communities        | ui/app/AppLayouts/Communities/panels/PrivilegedTokenArtworkPanel.qml:91 | layer.enabled | true | Image(image) | - | width=d.imageSize height=width
+communities        | ui/app/AppLayouts/Communities/panels/PrivilegedTokenArtworkPanel.qml:92 | layer.effect | OpacityMask | Image(image) | - | width=d.imageSize height=width
+communities        | ui/app/AppLayouts/Communities/panels/SharedAddressesPanel.qml:273 | layer.enabled | true | Rectangle() | - | radius=14 samples=29
+communities        | ui/app/AppLayouts/Communities/panels/SharedAddressesPanel.qml:274 | layer.effect | DropShadow | Rectangle() | - | radius=14 samples=29
+communities        | ui/app/AppLayouts/Communities/panels/TokenInfoPanel.qml:75 | standalone | OpacityMask | Rectangle() | - | radius=root.isAssetPanel ? Layout.preferredWidth / 2 : 8
+communities        | ui/app/AppLayouts/Communities/views/BannedMemberCommunityView.qml:67 | layer.enabled | true | ColumnLayout() | - | 
+communities        | ui/app/AppLayouts/Communities/views/BannedMemberCommunityView.qml:68 | layer.effect | fastBlur | ColumnLayout() | - | 
+communities        | ui/app/AppLayouts/Communities/views/BannedMemberCommunityView.qml:104 | standalone | FastBlur | Component(fastBlur) | - | 
+communities        | ui/app/AppLayouts/Communities/views/ControlNodeOfflineCommunityView.qml:67 | layer.enabled | true | ColumnLayout() | - | 
+communities        | ui/app/AppLayouts/Communities/views/ControlNodeOfflineCommunityView.qml:68 | layer.effect | fastBlur | ColumnLayout() | - | 
+communities        | ui/app/AppLayouts/Communities/views/ControlNodeOfflineCommunityView.qml:107 | standalone | FastBlur | Component(fastBlur) | - | 
+communities        | ui/app/AppLayouts/Communities/views/JoinCommunityView.qml:91 | layer.enabled | root.joinCommunity | ColumnLayout() | - | 
+communities        | ui/app/AppLayouts/Communities/views/JoinCommunityView.qml:92 | layer.effect | fastBlur | ColumnLayout() | - | 
+communities        | ui/app/AppLayouts/Communities/views/JoinCommunityView.qml:152 | standalone | FastBlur | Component(fastBlur) | - | 
+home               | ui/app/AppLayouts/HomePage/HomePageDock.qml:70 | layer.enabled | true | Control(root) | - | radius=12 samples=25
+home               | ui/app/AppLayouts/HomePage/HomePageDock.qml:71 | layer.effect | DropShadow | Control(root) | - | radius=12 samples=25
+login/onboarding   | ui/app/AppLayouts/Onboarding/controls/OnboardingButtonFrame.qml:22 | layer.enabled | true | Frame(root) | - | 
+login/onboarding   | ui/app/AppLayouts/Onboarding/controls/OnboardingButtonFrame.qml:23 | layer.effect | OpacityMask | Frame(root) | - | 
+login/onboarding   | ui/app/AppLayouts/Onboarding/controls/OnboardingFrame.qml:24 | layer.enabled | root.dropShadow | Frame(root) | - | radius=7 samples=15
+login/onboarding   | ui/app/AppLayouts/Onboarding/controls/OnboardingFrame.qml:25 | layer.effect | DropShadow | Frame(root) | - | radius=7 samples=15
+login/onboarding   | ui/app/AppLayouts/Onboarding/pages/BackupSeedphraseReveal.qml:121 | layer.enabled | !d.seedphraseRevealed | GridLayout(seedGrid) | - | width=parent.width radius=samples/2 - 1 samples=64
+login/onboarding   | ui/app/AppLayouts/Onboarding/pages/BackupSeedphraseReveal.qml:122 | layer.effect | GaussianBlur | GridLayout(seedGrid) | - | width=parent.width radius=samples/2 - 1 samples=64
+login/onboarding   | ui/app/AppLayouts/Onboarding/pages/WelcomePage.qml:110 | layer.enabled | true | StatusImage() | - | radius=12 samples=25
+login/onboarding   | ui/app/AppLayouts/Onboarding/pages/WelcomePage.qml:111 | layer.effect | DropShadow | StatusImage() | - | radius=12 samples=25
+main shell         | ui/app/mainui/panels/PrimaryNavSidebar.qml:472 | layer.enabled | true | Control(sidebarLV) | - | 
+main shell         | ui/app/mainui/panels/PrimaryNavSidebar.qml:473 | layer.effect | MultiEffect | Control(sidebarLV) | - | 
+main shell         | ui/app/mainui/panels/PrimaryNavSidebar.qml:486 | layer.enabled | true | Rectangle(gradientMask) | - | anchors.fill=sidebarLV
+popups             | ui/StatusQ/src/StatusQ/Popups/Dialog/StatusDialogFooter.qml:31 | layer.enabled | root.dropShadowEnabled | Rectangle() | - | samples=37
+popups             | ui/StatusQ/src/StatusQ/Popups/Dialog/StatusDialogFooter.qml:32 | layer.effect | DropShadow | Rectangle() | - | samples=37
+popups             | ui/StatusQ/src/StatusQ/Popups/Dialog/StatusDialogHeader.qml:114 | layer.enabled | root.dropShadowEnabled | ToolBar(root) | - | samples=37
+popups             | ui/StatusQ/src/StatusQ/Popups/Dialog/StatusDialogHeader.qml:115 | layer.effect | DropShadow | ToolBar(root) | - | samples=37
+popups             | ui/StatusQ/src/StatusQ/Popups/StatusMenu.qml:133 | layer.enabled | true | Rectangle(backgroundContent) | - | radius=12 width=backgroundContent.width height=backgroundContent.height samples=25
+popups             | ui/StatusQ/src/StatusQ/Popups/StatusMenu.qml:134 | layer.effect | DropShadow | Rectangle(backgroundContent) | - | radius=12 width=backgroundContent.width height=backgroundContent.height samples=25
+popups             | ui/app/AppLayouts/Browser/popups/BrowserWalletMenu.qml:48 | layer.enabled | true | Rectangle(bgPopup) | - | radius=10 width=bgPopup.width height=bgPopup.height samples=15
+popups             | ui/app/AppLayouts/Browser/popups/BrowserWalletMenu.qml:49 | layer.effect | DropShadow | Rectangle(bgPopup) | - | radius=10 width=bgPopup.width height=bgPopup.height samples=15
+popups             | ui/app/AppLayouts/Chat/popups/PinnedMessagesPopup.qml:271 | layer.enabled | root.visible && !root.messageToPin | ColumnLayout(column) | - | 
+popups             | ui/app/AppLayouts/Chat/popups/PinnedMessagesPopup.qml:272 | layer.effect | OpacityMask | ColumnLayout(column) | - | 
+popups             | ui/app/AppLayouts/Communities/popups/BurnTokensPopup.qml:239 | standalone | OpacityMask | Rectangle() | - | height=40 width=height radius=root.isAsset ? height/2 : 8
+popups             | ui/app/AppLayouts/Profile/popups/ConfirmChangePasswordModal.qml:82 | standalone | GaussianBlur | Item(blurredBackground) | - | anchors.fill=parent
+popups             | ui/app/AppLayouts/Profile/popups/ConfirmChangePasswordModal.qml:98 | standalone | ShaderEffectSource | Item(blurredBackground) | - | anchors.fill=parent
+popups             | ui/app/AppLayouts/Wallet/panels/StickySendModalHeader.qml:117 | layer.enabled | !!root.blurSource | Rectangle() | - | anchors.fill=parent radius=36
+popups             | ui/app/AppLayouts/Wallet/panels/StickySendModalHeader.qml:118 | layer.effect | FastBlur | Rectangle() | - | anchors.fill=parent radius=36
+popups             | ui/app/AppLayouts/Wallet/panels/StickySendModalHeader.qml:122 | standalone | ShaderEffectSource | Rectangle() | - | anchors.fill=parent radius=36
+popups             | ui/app/AppLayouts/Wallet/panels/StickySendModalHeader.qml:193 | layer.enabled | true | Item() | - | anchors.fill=parent samples=24
+popups             | ui/app/AppLayouts/Wallet/panels/StickySendModalHeader.qml:194 | layer.effect | DropShadow | Item() | - | anchors.fill=parent samples=24
+popups             | ui/app/AppLayouts/Wallet/popups/ReceiveModal.qml:165 | layer.enabled | true | Item(qrCode) | - | height=320 width=320
+popups             | ui/app/AppLayouts/Wallet/popups/ReceiveModal.qml:166 | layer.effect | OpacityMask | Item(qrCode) | - | height=320 width=320
+popups             | ui/app/AppLayouts/Wallet/popups/SignTransactionModalBase.qml:190 | layer.enabled | toImageSmartIdenticon.visible | StatusSmartIdenticon(fromImageSmartIdenticon) | - | width=40 height=40
+popups             | ui/app/AppLayouts/Wallet/popups/SignTransactionModalBase.qml:191 | layer.effect | OpacityMask | StatusSmartIdenticon(fromImageSmartIdenticon) | - | width=40 height=40
+popups             | ui/app/AppLayouts/Wallet/popups/SignTransactionModalBase.qml:242 | layer.enabled | true | Item() | - | height=120 width=120 samples=37
+popups             | ui/app/AppLayouts/Wallet/popups/SignTransactionModalBase.qml:243 | layer.effect | DropShadow | Item() | - | height=120 width=120 samples=37
+popups             | ui/app/AppLayouts/Wallet/views/SendModalFooter.qml:53 | layer.enabled | !!root.blurSource | Rectangle() | - | anchors.fill=parent radius=36
+popups             | ui/app/AppLayouts/Wallet/views/SendModalFooter.qml:54 | layer.effect | FastBlur | Rectangle() | - | anchors.fill=parent radius=36
+popups             | ui/app/AppLayouts/Wallet/views/SendModalFooter.qml:58 | standalone | ShaderEffectSource | Rectangle() | - | anchors.fill=parent radius=36
+popups             | ui/app/AppLayouts/Wallet/views/SendModalFooter.qml:123 | layer.enabled | root.dropShadowEnabled | Item() | - | anchors.fill=parent samples=24
+popups             | ui/app/AppLayouts/Wallet/views/SendModalFooter.qml:124 | layer.effect | DropShadow | Item() | - | anchors.fill=parent samples=24
+popups             | ui/imports/shared/popups/SettingsDirtyToastMessage.qml:118 | layer.enabled | true | Rectangle(backgroundRect) | - | radius=Theme.radius samples=15
+popups             | ui/imports/shared/popups/SettingsDirtyToastMessage.qml:119 | layer.effect | DropShadow | Rectangle(backgroundRect) | - | radius=Theme.radius samples=15
+popups             | ui/imports/shared/popups/walletconnect/RoundImageWithBadge.qml:54 | layer.enabled | badge.visible | Item(imageContainer) | - | width=parent.width height=width
+popups             | ui/imports/shared/popups/walletconnect/RoundImageWithBadge.qml:55 | layer.effect | OpacityMask | Item(imageContainer) | - | width=parent.width height=width
+popups             | ui/imports/shared/popups/walletconnect/panels/ContentPanel.qml:42 | layer.enabled | !d.expanded && d.canExpand | StatusBaseText(contentText) | - | anchors.fill=parent
+popups             | ui/imports/shared/popups/walletconnect/panels/ContentPanel.qml:43 | layer.effect | OpacityMask | StatusBaseText(contentText) | - | anchors.fill=parent
+popups             | ui/imports/shared/status/StatusGifPopup/ConfirmationPopup.qml:33 | layer.enabled | true | Rectangle() | - | radius=8 samples=15
+popups             | ui/imports/shared/status/StatusGifPopup/ConfirmationPopup.qml:34 | layer.effect | DropShadow | Rectangle() | - | radius=8 samples=15
+popups             | ui/imports/shared/status/StatusGifPopup/StatusGifColumn.qml:92 | layer.enabled | true | AnimatedImage(animation) | DELEGATE | width=root.gifWidth
+popups             | ui/imports/shared/status/StatusGifPopup/StatusGifColumn.qml:93 | layer.effect | OpacityMask | AnimatedImage(animation) | DELEGATE | width=root.gifWidth
+popups             | ui/imports/shared/status/StatusInputListPopup.qml:63 | layer.enabled | true | Rectangle(bgRectangle) | - | radius=10 width=bgRectangle.width height=bgRectangle.height samples=15
+popups             | ui/imports/shared/status/StatusInputListPopup.qml:64 | layer.effect | DropShadow | Rectangle(bgRectangle) | - | radius=10 width=bgRectangle.width height=bgRectangle.height samples=15
+popups             | ui/imports/shared/status/StatusStickersPopup.qml:73 | layer.enabled | true | Rectangle() | - | radius=8 samples=15
+popups             | ui/imports/shared/status/StatusStickersPopup.qml:74 | layer.effect | DropShadow | Rectangle() | - | radius=8 samples=15
+profile/settings   | ui/app/AppLayouts/Profile/controls/ShowcaseDelegate.qml:46 | layer.enabled | root.blurState | StatusDraggableListItem(menuItem) | DELEGATE | height=ProfileUtils.defaultDelegateHeight
+profile/settings   | ui/app/AppLayouts/Profile/controls/ShowcaseDelegate.qml:47 | layer.effect | fastBlur | StatusDraggableListItem(menuItem) | DELEGATE | height=ProfileUtils.defaultDelegateHeight
+profile/settings   | ui/app/AppLayouts/Profile/controls/ShowcaseDelegate.qml:135 | standalone | FastBlur | Component(fastBlur) | DELEGATE | 
+profile/settings   | ui/app/AppLayouts/Profile/panels/StatusNotificationWithDropShadowPanel.qml:23 | standalone | DropShadow | Item() | - | height=statusNotification.height
+profile/settings   | ui/app/AppLayouts/Profile/views/profile/MyProfilePreview.qml:67 | standalone | DropShadow | Item() | - | 
+shared             | ui/imports/shared/controls/AccountSelector.qml:57 | layer.enabled | true | StatusComboBox(root) | - | radius=8 samples=15
+shared             | ui/imports/shared/controls/AccountSelector.qml:58 | layer.effect | DropShadow | StatusComboBox(root) | - | radius=8 samples=15
+shared             | ui/imports/shared/controls/delegates/InfoCard.qml:45 | layer.enabled | root.hovered || root.highlight | Rectangle() | DELEGATE | anchors.fill=parent radius=16 samples=25
+shared             | ui/imports/shared/controls/delegates/InfoCard.qml:46 | layer.effect | DropShadow | Rectangle() | DELEGATE | anchors.fill=parent radius=16 samples=25
+shared             | ui/imports/shared/panels/ImageLoader.qml:99 | standalone | ColorOverlay | SVGImage() | - | width=15.5 height=19.5
+shared             | ui/imports/shared/panels/NoImageUploadedPanel.qml:89 | layer.enabled | !Qt.colorEqual(root.imgColor, Theme.palette.baseCo | Image(imageImg) | - | width=20 height=18
+shared             | ui/imports/shared/panels/NoImageUploadedPanel.qml:90 | layer.effect | ColorOverlay | Image(imageImg) | - | width=20 height=18
+shared             | ui/imports/shared/panels/RoundedIcon.qml:41 | standalone | ColorOverlay | Item(iconContainer) | - | width=roundedIconImage.width height=roundedIconImage.height
+shared             | ui/imports/shared/panels/RoundedImage.qml:24 | layer.enabled | true | Rectangle(root) | - | radius=width / 2 width=24 height=24
+shared             | ui/imports/shared/panels/RoundedImage.qml:25 | layer.effect | OpacityMask | Rectangle(root) | - | radius=width / 2 width=24 height=24
+shared             | ui/imports/shared/panels/SeedPhrase.qml:51 | standalone | GaussianBlur | Control(root) | - | 
+shared             | ui/imports/shared/status/StatusChatImageLoader.qml:77 | layer.enabled | true | AnimatedImage(imageMessage) | - | width=sourceSize.width > imageWidth ? imageWidth : sourceSize.widt
+shared             | ui/imports/shared/status/StatusChatImageLoader.qml:78 | layer.effect | OpacityMask | AnimatedImage(imageMessage) | - | width=sourceSize.width > imageWidth ? imageWidth : sourceSize.widt
+shared             | ui/imports/shared/status/StatusChatImageValidator.qml:28 | layer.enabled | true | Rectangle() | - | anchors.fill=parent radius=8 samples=15
+shared             | ui/imports/shared/status/StatusChatImageValidator.qml:29 | layer.effect | DropShadow | Rectangle() | - | anchors.fill=parent radius=8 samples=15
+shared             | ui/imports/shared/status/StatusChatInputImageArea.qml:43 | layer.enabled | true | Image(chatImage) | - | width=parent.width height=parent.height
+shared             | ui/imports/shared/status/StatusChatInputImageArea.qml:44 | layer.effect | CalloutOpacityMask | Image(chatImage) | - | width=parent.width height=parent.height
+shared             | ui/imports/shared/status/StatusChatInputReplyPanel.qml:86 | layer.enabled | true | Image(avatarImg) | - | anchors.fill=parent
+shared             | ui/imports/shared/status/StatusChatInputReplyPanel.qml:90 | layer.effect | MultiEffect | Image(avatarImg) | - | anchors.fill=parent
+shared             | ui/imports/shared/status/StatusChatInputReplyPanel.qml:105 | layer.enabled | true | Rectangle(circleMask) | - | anchors.fill=parent radius=width / 2
+shared             | ui/imports/shared/status/StatusChatInputToolBar.qml:95 | layer.enabled | true | Rectangle(gradientMask) | - | width=flickable.width + gradient.fadePixelSize * 2 height=flickable.height
+shared             | ui/imports/shared/status/StatusChatInputToolBar.qml:126 | layer.enabled | true | Item(flickableWrapper) | - | 
+shared             | ui/imports/shared/status/StatusChatInputToolBar.qml:127 | layer.effect | MultiEffect | Item(flickableWrapper) | - | 
+shared             | ui/imports/shared/views/ProfileDialogView.qml:533 | layer.enabled | !root.readOnly | Pane(root) | - | 
+shared             | ui/imports/shared/views/ProfileDialogView.qml:534 | layer.effect | OpacityMask | Pane(root) | - | 
+shared             | ui/imports/shared/views/SyncingDisplayCode.qml:82 | standalone | FastBlur | Item() | - | 
+wallet             | ui/app/AppLayouts/Wallet/controls/AccountHeaderGradient.qml:65 | standalone | OpacityMask | Item() | - | 
+wallet             | ui/app/AppLayouts/Wallet/controls/BannerCard.qml:66 | layer.enabled | true | Rectangle(background) | - | radius=8
+wallet             | ui/app/AppLayouts/Wallet/controls/BannerCard.qml:67 | layer.effect | DropShadow | Rectangle(background) | - | radius=8
+wallet             | ui/app/AppLayouts/Wallet/controls/CollectiblesHeader.qml:96 | standalone | ColorOverlay | Item(element1) | - | width=childrenRect.width height=numberCollectibleText.height
+wallet             | ui/app/AppLayouts/Wallet/controls/FilterComboBox.qml:226 | layer.enabled | true | Rectangle() | - | radius=12 samples=25
+wallet             | ui/app/AppLayouts/Wallet/controls/FilterComboBox.qml:227 | layer.effect | DropShadow | Rectangle() | - | radius=12 samples=25
+wallet             | ui/app/AppLayouts/Wallet/views/LeftTabView.qml:238 | layer.enabled | !(d.accountsListView?.atYBeginning ?? true) | Rectangle() | - | radius=20 samples=41
+wallet             | ui/app/AppLayouts/Wallet/views/LeftTabView.qml:239 | layer.effect | DropShadow | Rectangle() | - | radius=20 samples=41
+wallet             | ui/app/AppLayouts/Wallet/views/LeftTabView.qml:468 | layer.enabled | (d.accountsListView?.footerOverlayed ?? false) &&  | Rectangle(footerBackground) | - | radius=20 samples=41
+wallet             | ui/app/AppLayouts/Wallet/views/LeftTabView.qml:469 | layer.effect | DropShadow | Rectangle(footerBackground) | - | radius=20 samples=41
+wallet             | ui/app/AppLayouts/Wallet/views/LoadingGraphView.qml:35 | standalone | OpacityMask | Item() | - | 
+wallet             | ui/app/AppLayouts/Wallet/views/TransactionSettings.qml:277 | standalone | GaussianBlur | StatusFeeOption(optionFast) | - | 
+wallet             | ui/app/AppLayouts/Wallet/views/TransactionSettings.qml:301 | standalone | GaussianBlur | StatusFeeOption(optionUrgent) | - | 

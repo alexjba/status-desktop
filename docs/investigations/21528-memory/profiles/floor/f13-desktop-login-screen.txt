@@ -1,0 +1,1 @@
+F13DUMP t=1790933479529 items=178 sources=0 visibleSources=0 layeredItems=0 layeredVisible=0 bytes=0 visibleBytes=0 srcVisibleSources=0 srcVisibleBytes=0 dpr=1 window=1200x680
