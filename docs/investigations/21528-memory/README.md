@@ -171,6 +171,10 @@ See [bakeoff-service-process.md](bakeoff-service-process.md): one-shot `FreeOSMe
 
 See [service-process-top10.md](service-process-top10.md) — ten items with evidence and remedies, plus the burst timeline and the idle 2.3MB/s allocation sawtooth.
 
+## iOS leg
+Same three steps on an iPad Air (4th gen) and on the simulator: [ios.md](ios.md) — contract, tooling (in-process
+VM summary, container heap dumps, malloc hook with stacks, WebDriverAgent), ledgers and the iOS top-10.
+
 ## Code maps
 
 - [ui-process-holders.md](ui-process-holders.md) — what holds memory in the Qt/QML/Nim process.

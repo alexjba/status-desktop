@@ -93,3 +93,51 @@ hold on to their login-burst peak (native malloc 190 dirty of 219 live; Go 167 d
 of IOSurface at tablet resolution. Native-heap attribution (which code owns the 219MB live / 560MB peak) is the
 next step: in-process live-block enumeration with MallocStackLogging stacks (`src/app/global/malloc_blocks.c`,
 `mobile/scripts/profiling/malloc-dump.sh` + `mallocsym.py`).
+
+### Warm login (existing fresh profile), wallet settle — build 14, 2026-10-02
+| point | footprint MB | resident | Go HeapSys / live-after-GC |
+|---|---|---|---|
+| login screen | 210 | 313 | 22 / 15 |
+| +20 s after Log In | 512 | 969 | 467 (burst) |
+| settle 30 / 60 / 90 / 120 s | 518 / 522 / 531 / 531 | 940 → 920 | 468 / 37 |
+15 s series: 210 → 402 → 512 → 511 … 531. Idle churn 95 MB per 30 s (multicall `abi.Pack` balance sweep 36%,
+`encoding/json` 23%, `io.ReadAll`); CPU 5% of one core at idle, half of it in cgo/sqlcipher.
+Allocations in the 2.5 min after launch: 2.8 GB — `allMandatoryTokens` 284 MB (+ `TokenKey`/`Address.Hex` 617 MB,
+status-go#7865), argon2 272 MB, scrypt 260 MB, `fmt.Sprintf` 235 MB.
+
+### Native heap by owner (malloc hook, live blocks at the warm settle point, build 21)
+184 MB attributed in 1.08 M blocks (live heap 193 MB; the hook's own tables add ~100 MB to that run's footprint).
+| MB | blocks | owner | Android counterpart |
+|---|---|---|---|
+| 31.1 | 264 k | **community/chat DTO deep copies** (`=dup` of `CommunityDto`/members into every `ChatDto`, `setLen` chat.nim) | 32 MB, #22632/#22633/#22634 |
+| 29 | 60 k | **QML engine metadata**: `QQmlPropertyCache::copy` 13.1, `QQmlTypeCompiler::compile` 4.0, type-resolution caches 2.4, `resolveTypes` 2.0, QV4 compilation units 3.3, `QQmlType::create` 1.9, CBOR 2.3 | "4 MB QML compiled at runtime", #22630 |
+| 14.2 | 514 | **`QImageData::create`** — raster decodes at native resolution (token logos, avatars) | #22628 |
+| 13 | 160 k | **token catalogue** `TokenItem` graph (`createTokenItem` 7.6, `createTokenKey` 1.1, apply builder 2.3, `resolveUri` 1.8) | 13 MB, #22635 |
+| 10 | 60 k | QML object graph: bindings 2.8, property captures 3.2, signal vectors 1.4, `QQmlData` 1.1, … | #22640 |
+| 9.9 | 85 k | unknown (system-only stacks: libdispatch/CoreFoundation) | |
+| 8.5 | 7 k | Qt RHI/Metal: `QRhiBufferData` 4.0, shader resource bindings 2.4, `QMetalBuffer` 1.3, shaders 0.7 | Mali driver |
+| 7.5 | 17 k | **sqlcipher page cache** (`pcache1Alloc`) | 16–18 MB native, #22624 |
+| 6.8 | 22 | **`QIODevice::readAll`** — font files read whole (FontLoader) | 31 MB "Core incl. FontLoader readAll", #22629 |
+| 1.7 | 66 | harfbuzz font tables | #22629 |
+
+### iOS top-10 at the settle point (iPad, ~460–530 MB footprint, one process)
+1. **Go heap pages kept after the login burst** — ~167 MB dirty for 60–90 MB in use; HeapSys 470–530 MB because of
+   scrypt/argon2 (530 MB) and the `MandatoryTokens` churn (fixed by #7865). The device does honour
+   `MADV_FREE_REUSABLE` (resident 920 vs footprint 520), but ~80 MB stay dirty until memory pressure → the post-login
+   `FreeOSMemory` of status-go#7866 applies to iOS as well (in-process, same code path), plus #22626 burst shaping.
+2. **Native heap retention** — 190 MB dirty for 220 MB live; libmalloc allocated 560 MB at the login peak and keeps the
+   freed pages mapped. Cutting the peak is the lever: the DTO copies, the token graphs and the JSON/typed-handoff
+   copies (#22632–#22635, #22639).
+3. **Community/chat DTO copies** 31 MB — same bug as Android, now with iOS stacks (`eqdup` chain in chat.nim:357).
+4. **QML engine metadata** 29 MB — property caches copied per component, types compiled at runtime; #22630.
+5. **IOSurface** 45 MB — three full-screen render buffers at 2360×1640; tablet-resolution cost (≈22 MB on an iPhone).
+   Worth checking whether Qt keeps a third layer alive (QQuickWindow + Metal layer drawables).
+6. **Compressed pages** 44 MB — the compressor already holds part of the idle heaps; counts in the footprint.
+7. **Image decodes** 14 MB at native resolution — #22628 (`sourceSize` on raster `StatusImage`).
+8. **Token catalogue** 13 MB — #22635.
+9. **GPU / RHI** 11 MB (IOAccelerator) + 8.5 MB RHI buffers/shaders; **JavaScriptCore** 10 MB (QML JS heap).
+10. **sqlcipher cache** 7.5 MB and **fonts** 8.5 MB (`readAll` + harfbuzz) — #22624, #22629.
+
+The Go side is identical to Android (same ranked list, same burst); the UI side is identical in kind (DTO copies,
+token graphs, native-res images, fonts) with Qt RHI/Metal and IOSurface replacing the Mali driver. No iOS-only
+offender was found; every child issue filed for Android applies, and the two status-go PRs (#7865, #7866) transfer.

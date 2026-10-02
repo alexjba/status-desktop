@@ -1,0 +1,64 @@
+# blocks=1080784 bytes=192814254 nostack_blocks=0 nostack_bytes=0 dropped=0 dropped_stacks=1207 slide=0x548000 stacklogging=hook
+total attributed 183.9MB in 1080784 blocks (stack or object tag)
+== by component ==
+    79.6MB  43.3%  qt/statusq
+    37.6MB  20.5%  nim
+    29.8MB  16.2%  qml/quick
+     9.5MB   5.2%  sys only
+     7.8MB   4.2%  other:newSeqPayloadUninit 
+     7.7MB   4.2%  sqlcipher
+     5.4MB   2.9%  other:<deduplicated_symbol> 
+     1.7MB   0.9%  other:_hb_qt_reference_table
+     1.1MB   0.6%  other:rawNewString 
+     0.9MB   0.5%  other:std::__1::pair<std::__1::__tree_iterator
+     0.5MB   0.3%  other:getFontDescription
+     0.4MB   0.2%  other:addQQmlMetaTypeInterfaces
+
+== by owner frame ==
+    32.2MB  17.5%   391506  nimAsgnStrV2 (in Status) + 96
+    14.1MB   7.7%      254  QImageData::create(QSize const&, QImage::Format) (in Status) + 548
+     7.5MB   4.1%    16790  sqlite3MemMalloc (in Status) + 36
+     6.8MB   3.7%       22  QIODevice::readAll() (in Status) + 396
+     6.5MB   3.5%     6876  QQmlPropertyCache::copy(QQmlMetaObjectPointer const&, int) const (in Status) + 372
+     6.0MB   3.2%     6949  QStringHashData::rehashToBits(short) (in Status) + 100
+     5.0MB   2.7%       65  setLen__app95serviceZserviceZchatZdtoZchat_u455 (in Status) + 140
+     4.8MB   2.6%    20331  createTokenItem__app95serviceZserviceZtokenZitemsZtoken_u81 (in Status) + 224
+     4.3MB   2.3%    33819  sys:0x192a4aa60
+     4.1MB   2.3%    50086  sys:0x192a4ae8c
+     4.0MB   2.2%     2292  QQmlTypeCompiler::compile() (in Status) + 1632
+     3.2MB   1.7%     4748  <deduplicated_symbol> (in Status) + 64
+     2.6MB   1.4%     9673  <deduplicated_symbol> (in Status) + 168
+     2.5MB   1.4%       46  QQmlPropertyCapture::captureNonBindableProperty(QObject*, int, int, bool) (in Status) + 1172
+     2.4MB   1.3%      258  QRhiMetal::createShaderResourceBindings() (in Status) + 24
+     2.3MB   1.3%     2309  QRhiBufferData::assign(char const*, unsigned int) (in Status) + 188
+     2.3MB   1.2%     8689  QCborContainerPrivate::replaceAt_complex(QtCbor::Element&, QCborValue const&, QCborContainerPrivate::ContainerDispositio
+     2.0MB   1.1%    17545  <deduplicated_symbol> (in Status) + 192
+     1.8MB   1.0%     5497  <deduplicated_symbol> (in Status) + 204
+     1.7MB   0.9%       66  _hb_qt_reference_table(hb_face_t*, unsigned int, void*) (in Status) + 76
+     1.7MB   0.9%    26474  <deduplicated_symbol> (in Status) + 116
+     1.7MB   0.9%      313  QV4::ExecutableCompilationUnit::populate() (in Status) + 636
+     1.6MB   0.9%      364  QRhiBufferData::assign(char const*, unsigned int) (in Status) + 380
+     1.3MB   0.7%     6208  QQmlType::create(void**, unsigned long) const (in Status) + 88
+     1.3MB   0.7%        1  setLen__app95serviceZserviceZtokenZtoken95apply95builder_u4745 (in Status) + 140
+     1.1MB   0.6%    10706  QV4::Function::create(QV4::ExecutionEngine*, QV4::ExecutableCompilationUnit*, QV4::CompiledData::Function const*, QQmlPr
+     1.1MB   0.6%     3438  QQmlPropertyCache::copy(QQmlMetaObjectPointer const&, int) const (in Status) + 52
+     1.1MB   0.6%    20331  createTokenKey__app95serviceZcommonZutils_u1677 (in Status) + 120
+     1.0MB   0.6%     1228  sys:0x192a656f0
+     1.0MB   0.5%    11848  QQmlSignalNames::propertyNameToChangedSignalName(QStringView) (in Status) + 68
+
+== by stack (top 6 frames) ==
+    24.4MB  sys:0x192a4aa60 <- nimAsgnStrV2 (in Status) + 96 <- eqdup___system_u2754 (in Status) + 32 <- eqdup___app95serviceZserviceZchatZdtoZchat_u440 (in Status)  <- eqdup___app95serviceZserviceZcommunityZdtoZcommunity_u7814 ( <- eqdup___app95serviceZserviceZcommunityZdtoZcommunity_u7785 (
+    10.4MB  sys:0x192a4aa60 <- QImageData::create(QSize const&, QImage::Format) (in Status) <- QImage::QImage(QSize const&, QImage::Format) (in Status) + 5 <- QImageIOHandler::allocateImage(QSize, QImage::Format, QImage <- QSvgIOHandler::read(QImage*) (in Status) + 752 <- QImageReader::read(QImage*) (in Status)
+     6.8MB  sys:0x192a4aa60 <- QArrayData::allocate1(QArrayData**, long long, QArrayData::A <- QByteArray::reallocData(long long, QArrayData::AllocationOpt <- QByteArray::resize(long long) (in Status) + 88 <- QIODevice::readAll() (in Status) + 396 <- QFontDatabase::addApplicationFont(QString const&) (in Status
+     5.6MB  sys:0x192a4aa60 <- sys:0x192a4b154 <- sys:0x183fd9724 <- QLinkedStringHash<std::__1::pair<int, QQmlPropertyData*>>::l <- QQmlPropertyCache::copy(QQmlMetaObjectPointer const&, int) c <- QQmlPropertyCache::copyAndReserve(int, int, int, int) const 
+     5.4MB  sys:0x192a4aa60 <- sys:0x192a4b154 <- sys:0x183fd9724 <- QStringHashData::rehashToBits(short) (in Status) + 100 <- QLinkedStringHash<std::__1::pair<int, QQmlPropertyData*>>::l <- QQmlPropertyCache::copy(QQmlMetaObjectPointer const&, int) c
+     4.8MB  sys:0x192a4aa60 <- nimNewObjUninit (in Status) + 72 <- createTokenItem__app95serviceZserviceZtokenZitemsZtoken_u81  <- buildRefreshTokensApply__app95serviceZserviceZtokenZtoken95a <- assembleRefreshResult__app95serviceZserviceZtokenZtoken95app <- asyncRefreshTokensTask__app95serviceZserviceZtokenZse
+     4.7MB  sys:0x192a4aa60 <- newSeqPayloadUninit (in Status) + 136 <- setLen__app95serviceZserviceZchatZdtoZchat_u455 (in Status)  <- eqdup___app95serviceZserviceZchatZdtoZchat_u440 (in Status)  <- eqdup___app95serviceZserviceZcommunityZdtoZcommunity_u7814 ( <- eqdup___app95serviceZserviceZcommunityZdtoZcommu
+     4.1MB  sys:0x192a4aa60 <- sqlite3MemMalloc (in Status) + 36 <- sqlcipher_mem_malloc (in Status) + 32 <- sqlite3Malloc (in Status) + 308 <- pcache1Alloc (in Status) + 216 <- pcache1FetchStage2 (in Status) + 472
+     3.8MB  sys:0x192a4ae8c <- QmlIR::QmlUnitGenerator::generate(QmlIR::Document&, std::__1 <- QQmlTypeCompiler::compile() (in Status) + 1632 <- QQmlTypeData::compile(QQmlRefPointer<QQmlTypeNameCache> cons <- QQmlTypeData::done() (in Status) + 1028 <- QQmlDataBlob::tryDone() (in Status) + 168
+     2.6MB  sys:0x192a4aa60 <- sys:0x192a4b154 <- sys:0x183fd9724 <- <deduplicated_symbol> (in Status) + 64 <- <deduplicated_symbol> (in Status) + 312 <- <deduplicated_symbol> (in Status) + 260
+     2.3MB  sys:0x192a4aa60 <- sys:0x192a4b154 <- sys:0x183fd9724 <- QRhiMetal::createShaderResourceBindings() (in Status) + 24 <- QSGBatchRenderer::Renderer::updateMaterialDynamicData(QSGBat <- QSGBatchRenderer::Renderer::prepareRenderMergedBatch(QSGBatc
+     2.2MB  sys:0x192a3b040 <- sys:0x192a3acec <- QArrayData::reallocateUnaligned(QArrayData*, void*, long lon <- QByteArray::reallocData(long long, QArrayData::AllocationOpt <- QByteArray::resize(long long) (in Status) + 88 <- QCborContainerPrivate::replaceAt_complex(QtCbor::Element&, Q
+     2.0MB  sys:0x192a4aa60 <- QImageData::create(QSize const&, QImage::Format) (in Status) <- QImage::convertToFormat_helper(QImage::Format, QFlags<Qt::Im <- QQuickDefaultTextureFactory::QQuickDefaultTextureFactory(QIm <- QQuickPixmapReader::networkRequestDone(QNetworkReply*) (in S <- ReaderThreadExecutionEnfo
+     1.8MB  sys:0x192a3b040 <- sys:0x192a3acec <- QArrayData::reallocateUnaligned(QArrayData*, void*, long lon <- QArrayDataPointer<QtCbor::Element>::reallocateAndGrow(QArray <- <deduplicated_symbol> (in Status) + 168 <- QJsonObject::iterator QJsonObject::insertAt<QStringView>(lon
+     1.8MB  sys:0x192a4aa60 <- nimAsgnStrV2 (in Status) + 96 <- eqdup___system_u2754 (in Status) + 32 <- createTokenItem__app95serviceZserviceZtokenZitemsZtoken_u81  <- buildRefreshTokensApply__app95serviceZserviceZtokenZtoken95a <- assembleRefreshResult__app95serviceZserviceZtokenZtoken95app

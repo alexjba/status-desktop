@@ -1,0 +1,46 @@
+total 183.9MB
+   26.1MB  14.2%   264244  nim eqdup @ app_service/service/community/dto/community
+   14.2MB   7.7%      514  c++ QImageData::create
+   13.1MB   7.1%    13752  c++ QQmlPropertyCache::copy
+    9.9MB   5.4%    85299  unknown
+    7.6MB   4.1%   102430  nim createTokenItem @ app_service/service/token/items/token
+    7.5MB   4.1%    16790  c++ sqlite3MemMalloc
+    6.8MB   3.7%       22  c++ QIODevice::readAll
+    5.0MB   2.7%       65  nim setLen @ app_service/service/chat/dto/chat
+    4.0MB   2.2%     2673  c++ QRhiBufferData::assign
+    4.0MB   2.2%     2292  c++ QQmlTypeCompiler::compile
+    2.8MB   1.5%    21600  c++ QQmlBinding::newBinding
+    2.5MB   1.4%       46  c++ QQmlPropertyCapture::captureNonBindableProperty
+    2.4MB   1.3%      258  c++ QRhiMetal::createShaderResourceBindings
+    2.4MB   1.3%    27752  c++ QQmlTypeData::buildTypeResolutionCaches
+    2.3MB   1.2%     8689  c++ QCborContainerPrivate::replaceAt_complex
+    2.2MB   1.2%     1750  c++ QV4::ExecutableCompilationUnit::populate
+    2.1MB   1.1%     7546  c++ QJsonObject::iterator QJsonObject::insertAt<QStringView>
+    2.0MB   1.1%    13151  c++ QQmlTypeData::resolveTypes
+    1.9MB   1.0%     8568  c++ QQmlType::create
+    1.8MB   1.0%    20170  nim resolveUri @ app_service/common/utils
+    1.7MB   0.9%       66  c++ _hb_qt_reference_table
+    1.4MB   0.8%     5006  c++ QObjectPrivate::ConnectionData::resizeSignalVector
+    1.4MB   0.8%     6707  c++ QQmlPropertyCache::copyAndReserve
+    1.3MB   0.7%     3151  c++ QMetalBuffer::create
+    1.3MB   0.7%        1  nim setLen @ app_service/service/token/token_apply_builder
+    1.1MB   0.6%    10706  c++ QV4::Function::create
+    1.1MB   0.6%     6500  c++ QQmlData::createQQmlData
+    1.1MB   0.6%     6969  c++ QQmlObjectCreator::setPropertyBinding
+    1.1MB   0.6%    20331  nim createTokenKey @ app_service/common/utils
+    1.0MB   0.6%    19462  c++ QQmlPropertyValidator::validateObject
+    1.0MB   0.6%      893  c++ QMetaObjectBuilder::toMetaObject
+    1.0MB   0.6%    19976  nim rawInsert @ app_service/service/token/token_apply_builder
+    1.0MB   0.5%    10974  c++ QQmlTypeData::continueLoadFromIR
+    1.0MB   0.5%    11848  c++ QQmlSignalNames::propertyNameToChangedSignalName
+    1.0MB   0.5%     3986  c++ QV4::QQmlTypeWrapper::virtualGet
+    1.0MB   0.5%    16127  c++ QQmlSignalNames::signalNameToHandlerName
+    0.9MB   0.5%     8316  c++ QQmlTypeData::resolveType
+    0.9MB   0.5%     4486  c++ QQmlEnginePrivate::createInternalContext
+    0.7MB   0.4%     9834  c++ QJsonArray::insert
+    0.7MB   0.4%     4049  c++ QUrl::detach
+    0.7MB   0.4%     1202  c++ QQmlPropertyValidator::QQmlPropertyValidator
+    0.7MB   0.4%       95  c++ QSGBatchRenderer::Allocator<QSGBatchRenderer::Node, 256>::Allocator
+    0.7MB   0.4%     1417  c++ QShader::fromSerialized
+    0.7MB   0.4%       12  c++ QQmlPropertyCapture::captureProperty
+    0.6MB   0.4%      109  c++ QBezier::addToPolygon

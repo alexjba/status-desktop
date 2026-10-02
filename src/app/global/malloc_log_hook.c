@@ -3,8 +3,8 @@
  * mmap'd tables (never malloc inside the hook). status_malloc_hook_dump() writes "bytes count frame..." lines
  * aggregated by stack, the same format as malloc_blocks.c, for mallocsym.py + the dSYM. */
 #include <dlfcn.h>
-#include <execinfo.h>
-#include <os/lock.h>
+#include <pthread.h>
+#include <stdatomic.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,13 +22,34 @@ enum { LOG_ALLOC = 2, LOG_DEALLOC = 4, LOG_FLAG_ZONE = 8, LOG_VM = 16 | 32 };
 typedef struct { uintptr_t ptr; uint32_t stack; uint32_t size; } ptr_ent;
 typedef struct { uint64_t hash; uint32_t depth; uint32_t used; uintptr_t frames[STK_DEPTH]; } stk_ent;
 static ptr_ent *ptrs; static stk_ent *stks;
-static os_unfair_lock lk = OS_UNFAIR_LOCK_INIT;
-static _Thread_local int in_hook;
+static atomic_flag lk = ATOMIC_FLAG_INIT;   /* plain spinlock: no library code, no misuse traps */
+static pthread_key_t guard_key;             /* per-thread re-entrancy guard without TLS first-touch allocation */
+static inline void lock(void) { while (atomic_flag_test_and_set_explicit(&lk, memory_order_acquire)) {} }
+static inline void unlock(void) { atomic_flag_clear_explicit(&lk, memory_order_release); }
+static inline int guard_enter(void) { if (pthread_getspecific(guard_key)) return 0; pthread_setspecific(guard_key, (void *)1); return 1; }
+static inline void guard_leave(void) { pthread_setspecific(guard_key, NULL); }
+
+/* arm64 frame-pointer walk: async-safe and allocation-free, which the libc unwinder is not inside a malloc hook */
+static int walk(void **buf, int max) {
+  uintptr_t fp = (uintptr_t)__builtin_frame_address(0);
+  uintptr_t hi = (uintptr_t)pthread_get_stackaddr_np(pthread_self());
+  uintptr_t lo = hi - pthread_get_stacksize_np(pthread_self());
+  int n = 0;
+  while (n < max && fp >= lo && fp + 16 <= hi && (fp & 0xf) == 0) {
+    uintptr_t lr = ((uintptr_t *)fp)[1], next = ((uintptr_t *)fp)[0];
+    if (!lr) break;
+    buf[n++] = (void *)(lr & 0x0000007fffffffffULL); /* strip PAC bits */
+    if (next <= fp) break;
+    fp = next;
+  }
+  return n;
+}
 static uint64_t n_live, dropped_ptrs, dropped_stks, hook_active;
+static uint64_t calls_by_type[256], guard_rejected;
 
 static uint32_t stack_id(uint32_t skip) {
-  void *buf[STK_DEPTH + 8]; int n = backtrace(buf, STK_DEPTH + 8);
-  int start = 2 + (int)skip; if (start >= n) start = n > 0 ? n - 1 : 0;
+  void *buf[STK_DEPTH + 8]; int n = walk(buf, STK_DEPTH + 8);
+  int start = 1 + (int)skip; if (start >= n) start = n > 0 ? n - 1 : 0;
   uint32_t depth = (uint32_t)(n - start); if (depth > STK_DEPTH) depth = STK_DEPTH;
   uint64_t h = 1469598103934665603ULL;
   for (uint32_t k = 0; k < depth; k++) { h ^= (uintptr_t)buf[start + k]; h *= 1099511628211ULL; }
@@ -60,15 +81,16 @@ static void forget(uintptr_t p) {
 }
 static void hook(uint32_t type, uintptr_t a1, uintptr_t a2, uintptr_t a3, uintptr_t result, uint32_t skip) {
   (void)a1;
-  if (in_hook || (type & LOG_VM)) return;
-  in_hook = 1;
-  uint32_t t = type & ~(uint32_t)LOG_FLAG_ZONE;
-  os_unfair_lock_lock(&lk);
-  if (t == (LOG_ALLOC | LOG_DEALLOC)) { forget(a2); if (result) record(result, a3, skip); } /* realloc: old, size */
-  else if (t == LOG_ALLOC) { if (result) record(result, a2, skip); }                            /* size */
-  else if (t == LOG_DEALLOC) forget(a2);                                                        /* ptr */
-  os_unfair_lock_unlock(&lk);
-  in_hook = 0;
+  calls_by_type[type & 0xff]++;
+  if (!(type & LOG_FLAG_ZONE)) return;      /* only malloc-zone events; VM events have no zone flag */
+  if (!guard_enter()) { guard_rejected++; return; }
+  int al = (type & LOG_ALLOC) != 0, de = (type & LOG_DEALLOC) != 0;
+  lock();
+  if (al && de) { forget(a2); if (result) record(result, a3, skip); } /* realloc: zone, old, size -> new */
+  else if (al) { if (result) record(result, a2, skip); }              /* malloc/calloc/memalign: zone, size -> ptr */
+  else if (de) forget(a2);                                            /* free: zone, ptr */
+  unlock();
+  guard_leave();
 }
 
 int status_malloc_hook_start(void) {
@@ -79,6 +101,7 @@ int status_malloc_hook_start(void) {
   ptrs = mmap(NULL, (size_t)PTR_SLOTS * sizeof(ptr_ent), PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
   stks = mmap(NULL, (size_t)STK_SLOTS * sizeof(stk_ent), PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
   if (ptrs == MAP_FAILED || stks == MAP_FAILED) return -3;
+  if (pthread_key_create(&guard_key, NULL) != 0) return -4;
   *slot = hook; hook_active = 1;
   return 0;
 }
@@ -92,18 +115,20 @@ void status_malloc_hook_dump(const char *path) {
   size_t asz = (size_t)STK_SLOTS * 2 * sizeof(uint64_t);
   uint64_t *acc = mmap(NULL, asz, PROT_READ | PROT_WRITE, MAP_ANON | MAP_PRIVATE, -1, 0);
   if (acc == MAP_FAILED) return;
-  in_hook = 1; os_unfair_lock_lock(&lk);
+  guard_enter(); lock();
   uint64_t live = 0, bytes = 0;
   for (uint64_t i = 0; i < PTR_SLOTS; i++) {
     ptr_ent *e = &ptrs[i];
     if (e->ptr > 1 && e->stack) { acc[(e->stack - 1) * 2] += e->size; acc[(e->stack - 1) * 2 + 1]++; live++; bytes += e->size; }
   }
-  os_unfair_lock_unlock(&lk); in_hook = 0;
+  unlock(); guard_leave();
   FILE *f = fopen(path, "w");
   if (f) {
-    fprintf(f, "# blocks=%llu bytes=%llu nostack_blocks=0 nostack_bytes=0 dropped=%llu dropped_stacks=%llu slide=0x%lx stacklogging=hook\n",
+    fprintf(f, "# blocks=%llu bytes=%llu nostack_blocks=0 nostack_bytes=0 dropped=%llu dropped_stacks=%llu slide=0x%lx stacklogging=hook guard_rejected=%llu types=",
             (unsigned long long)live, (unsigned long long)bytes, (unsigned long long)dropped_ptrs, (unsigned long long)dropped_stks,
-            (unsigned long)_dyld_get_image_vmaddr_slide(0));
+            (unsigned long)_dyld_get_image_vmaddr_slide(0), (unsigned long long)guard_rejected);
+    for (unsigned t = 0; t < 256; t++) if (calls_by_type[t]) fprintf(f, "%u:%llu,", t, (unsigned long long)calls_by_type[t]);
+    fputc('\n', f);
     for (uint64_t i = 0; i < STK_SLOTS; i++) if (acc[i * 2 + 1]) {
       fprintf(f, "%llu %llu", (unsigned long long)acc[i * 2], (unsigned long long)acc[i * 2 + 1]);
       for (uint32_t k = 0; k < stks[i].depth; k++) fprintf(f, " %llx", (unsigned long long)stks[i].frames[k]);

@@ -20,3 +20,5 @@ ts,label,footprint,go_memstats
 20261002-100708,native-b17-login-screen,phys_mb=197 resident_mb=287,HeapAlloc=82 HeapIdle=377 HeapInuse=94 HeapReleased=351 HeapSys=471 NumGC=67 Sys=485
 20261002-100924,native-b17-settle-120s,phys_mb=435 resident_mb=928,HeapAlloc=98 HeapIdle=364 HeapInuse=103 HeapReleased=358 HeapSys=467 NumGC=61 Sys=481
 20261002-101033,native-b18-login-screen,,HeapAlloc=61 HeapIdle=392 HeapInuse=76 HeapReleased=359 HeapSys=468 NumGC=66 Sys=481
+20261002-101509,native-b21-login-screen,phys_mb=290 resident_mb=381,HeapAlloc=43 HeapIdle=406 HeapInuse=61 HeapReleased=357 HeapSys=468 NumGC=70 Sys=481
+20261002-101725,native-b21-settle-120s,phys_mb=521 resident_mb=941,HeapAlloc=45 HeapIdle=417 HeapInuse=58 HeapReleased=395 HeapSys=476 NumGC=79 Sys=489
