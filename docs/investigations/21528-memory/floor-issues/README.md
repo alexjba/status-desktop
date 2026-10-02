@@ -1,4 +1,23 @@
-# Pre-login floor — issue drafts (local, not yet on GitHub)
+# Pre-login floor — issue drafts (filed on GitHub 2026-10-02)
+
+Tree under status-im/status-app#21528: epics #22659 (post-login data and services), #22657 (base memory / pre-login floor), #22658 (QML modularity).
+
+| draft | GitHub |
+|---|---|
+| F01 | #22624 (zxcvbn), #22663 (token lists), #22664 (validator), #22665 (gofakeit/testify), #22666 (metrics flag) |
+| F02 | #22676 (+ #22630 corrected) |
+| F03 | #22662 |
+| F04 | #22667 (under #22627) |
+| F05 | #22668 measured rows, #22669 product list (under #22627) |
+| F06 | #22629 |
+| F07 | #22675 |
+| F08 | #22670 styles, #22671 unlink/exclude, #22672 multimedia, #22673 shaders |
+| F09 | #22674 |
+| F10 | #22677 |
+| F11 | #22678 |
+| F12 | #22661 (+ #22660 profiling build) |
+| F13 | #22679 portal card, #22680 invisible textures, #22681 rounded masks, #22682 shadow sites |
+
 
 All are children of status-im/status-app#21528 once agreed. Numbers: Redmi A5, `floor.md`. Every issue carries the
 same measurement contract: PSS of both processes at the login screen (warm and cold page cache) and at the wallet
