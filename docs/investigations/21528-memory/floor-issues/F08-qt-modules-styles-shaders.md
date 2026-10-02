@@ -27,7 +27,7 @@ Qt5Compat GraphicalEffects itself costs 1.1MB of file pages; its memory cost is 
   from the process map.
 - Multimedia: remove the plugins from `load_local_libs` so they load on first `MediaPlayer`/`Camera`; evaluate
   shipping only the Android media backend (ffmpeg backend is 16MB of APK).
-- Dialogs: use native pickers on mobile or load the dialog module on first use.
+- Dialogs: mobile already shows the native pickers through `QtQuick.Dialogs`; the QML fallback implementation (`QuickDialogs2QuickImpl`, 1.1MB resident, 3.2MB APK) is loaded by the import without ever being shown. Keep the native path, import the module only where the three StatusQ dialogs live, and exclude the QuickImpl plugin from the mobile package. No UX change.
 - Unlink VirtualKeyboard, StateMachine, Labs, Lottie/VectorImage, Quick3DUtils; exclude qmltooling and spare
   platform plugins and the unused image formats from release packages.
 
