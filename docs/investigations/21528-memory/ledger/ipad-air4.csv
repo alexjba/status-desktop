@@ -1,0 +1,3 @@
+ts,label,footprint,go_memstats
+20261002-081351,login-screen,phys_mb=189 resident_mb=283,Sys=33 HeapAlloc=15 HeapSys=26 HeapIdle=7 HeapInuse=19 HeapReleased=7 NumGC=6 
+20261002-090205,login-screen-b8,phys_mb=197 resident_mb=289,Sys=29 HeapAlloc=15 HeapSys=22 HeapIdle=4 HeapInuse=18 HeapReleased=3 NumGC=6 

@@ -1,0 +1,2 @@
+#!/bin/bash
+cd "/private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/ios/appium/node_modules/appium-xcuitest-driver/node_modules/appium-webdriveragent" && xcodebuild -project WebDriverAgent.xcodeproj -scheme WebDriverAgentRunner -destination 'id=00008101-000474143446001E' -allowProvisioningUpdates DEVELOPMENT_TEAM=8B5X2M6H2Y PRODUCT_BUNDLE_IDENTIFIER=app.status.wda.runner CODE_SIGN_IDENTITY="Apple Development" test 2>&1

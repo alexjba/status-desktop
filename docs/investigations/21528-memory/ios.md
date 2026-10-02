@@ -45,4 +45,25 @@ whether `MADV_FREE_REUSABLE` drops the footprint on a real device is the first t
 Native malloc zones total ~720MB at settle, 351MB of it in the nano zone (≤256-byte objects) — not yet attributed.
 
 ## Device (iPad Air 4th gen, 4GB, iOS 26.5.2, Wi-Fi paired)
-_pending_
+What works: install/launch with console capture (`devicectl … --console`), the 15s `memfootprint` log line, and two
+files the profiling build writes to `Library/Application Support/Status/logs/` every minute and that `devicectl device
+copy from` pulls: `go-heap-latest.txt` (Go heap profile, legacy text + MemStats, via `WriteHeapProfile`) and
+`vm-summary-latest.txt` (in-process vmmap: footprint fields from `TASK_VM_INFO`, regions aggregated by VM user tag,
+malloc zone statistics — `src/app/global/vm_summary.c`).
+What does not: pprof over Wi-Fi (bound on 0.0.0.0:6060, connection refused — local-network privacy or similar; the
+iPad is not on USB so there is no usbmuxd tunnel); `xctrace` Allocations export (the instrument's tables are not
+exportable, local or device); WebDriverAgent (`Timed out while enabling automation mode`, needs Settings → Developer
+→ UI Automation); host `vmmap`/`heap`/Instruments attach.
+
+### Login screen, fresh launch (build 8, 2026-10-02)
+| | MB |
+|---|---|
+| phys footprint | 197 (internal 107, external 165, compressed 0) |
+| malloc heap `MALLOC_SMALL` (Qt + Nim + sqlcipher), 370k blocks in DefaultMallocZone | 75 |
+| IOSurface (window render buffers, 3 × 2360×1640×4) | 45 |
+| Go runtime (`untagged`/VM_ALLOCATE; Sys 29, HeapAlloc 15) | 30 |
+| JavaScriptCore (QML JS heap) | 4.5 |
+| GPU (IOAccelerator), stacks, CG | ~6 |
+| mapped file resident (binary + frameworks, shared) | 810 (dirty 5) |
+Android pre-login floor was ~330MB over two processes; iOS pays one process and no Dalvik/Binder, but the 45MB of
+IOSurface is a tablet-resolution cost an iPhone would halve.

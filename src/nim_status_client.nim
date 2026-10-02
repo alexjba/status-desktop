@@ -217,13 +217,22 @@ static long long status_phys_footprint(long long *resident) {
 }
 """.}
   proc physFootprint(resident: var int64): int64 {.importc: "status_phys_footprint", nodecl.}
+  {.compile: "app/global/vm_summary.c".}
+  proc vmSummary(path: cstring) {.importc: "status_vm_summary".}
   var footprintThread: Thread[void]
   proc footprintLoop() {.thread.} =
+    var tick = 0
     while true:
       sleep(15000)
+      inc tick
       var r: int64
       let f = physFootprint(r)
       echo "memfootprint phys_mb=", f div 1048576, " resident_mb=", r div 1048576
+      if tick mod 4 == 0:
+        # once a minute: Go heap profile into the log dir, for devices whose pprof port is unreachable
+        {.cast(gcsafe).}:
+          discard status_go.writeHeapProfile(LOGDIR / "go-heap-latest.txt")
+          vmSummary(cstring(LOGDIR / "vm-summary-latest.txt"))
 
 proc mainProc() =
 
