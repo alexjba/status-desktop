@@ -1,0 +1,51 @@
+There are 42 section headers, starting at offset 0x9498ea0:
+
+Section Headers:
+  [Nr] Name              Type            Address          Off    Size   ES Flg Lk Inf Al
+  [ 0]                   NULL            0000000000000000 000000 000000 00      0   0  0
+  [ 1] .note.android.ident NOTE          0000000000000270 000270 000098 00   A  0   0  4
+  [ 2] .note.go.buildid  NOTE            0000000000000308 000308 000064 00   A  0   0  4
+  [ 3] .dynsym           DYNSYM          0000000000000370 000370 009b70 18   A  7   1  8
+  [ 4] .gnu.version      VERSYM          0000000000009ee0 009ee0 000cf4 02   A  3   0  2
+  [ 5] .gnu.version_r    VERNEED         000000000000abd4 00abd4 000040 00   A  7   2  4
+  [ 6] .gnu.hash         GNU_HASH        000000000000ac18 00ac18 002dd8 00   A  3   0  8
+  [ 7] .dynstr           STRTAB          000000000000d9f0 00d9f0 00a0e2 00   A  0   0  1
+  [ 8] .rela.dyn         RELA            0000000000017ad8 017ad8 88df58 18   A  3   0  8
+  [ 9] .rela.plt         RELA            00000000008a5a30 8a5a30 000a80 18  AI  3  21  8
+  [10] .rodata           PROGBITS        00000000008a64c0 8a64c0 eca3fc 00 AMS  0   0 32
+  [11] .gopclntab        PROGBITS        00000000017708c0 17708c0 16f8665 00   A  0   0 16
+  [12] .eh_frame_hdr     PROGBITS        0000000002e68f28 2e68f28 00aca4 00   A  0   0  4
+  [13] .eh_frame         PROGBITS        0000000002e73bd0 2e73bd0 03233c 00   A  0   0  8
+  [14] .text             PROGBITS        0000000002ea6f10 2ea5f10 1abd01c 00  AX  0   0 16
+  [15] .plt              PROGBITS        0000000004963f30 4962f30 000720 00  AX  0   0 16
+  [16] .data.rel.ro      PROGBITS        0000000004965660 4963660 929d28 00  WA  0   0 32
+  [17] .fini_array       FINI_ARRAY      000000000528f388 528d388 000010 00  WA  0   0  8
+  [18] .init_array       INIT_ARRAY      000000000528f398 528d398 000008 00  WA  0   0  8
+  [19] .dynamic          DYNAMIC         000000000528f3a0 528d3a0 0001b0 10  WA  7   0  8
+  [20] .got              PROGBITS        000000000528f550 528d550 0004c0 00  WA  0   0  8
+  [21] .got.plt          PROGBITS        000000000528fa10 528da10 000398 00  WA  0   0  8
+  [22] .relro_padding    NOBITS          000000000528fda8 528dda8 000258 00  WA  0   0  1
+  [23] .go.buildinfo     PROGBITS        0000000005290db0 528ddb0 005ab0 00  WA  0   0 16
+  [24] .go.fipsinfo      PROGBITS        0000000005296860 5293860 000078 00  WA  0   0 32
+  [25] .go.module        PROGBITS        00000000052968e0 52938e0 000250 00  WA  0   0 32
+  [26] .noptrdata        PROGBITS        0000000005296b40 5293b40 24e381 00  WA  0   0 32
+  [27] .data             PROGBITS        00000000054e4ee0 54e1ee0 08c5c0 00  WA  0   0 32
+  [28] .bss              NOBITS          00000000055714a0 556e4a0 04a338 00  WA  0   0 32
+  [29] .noptrbss         NOBITS          00000000055bb7e0 556e4a0 20305a0 00  WA  0   0 32
+  [30] .comment          PROGBITS        0000000000000000 556e4a0 000184 01  MS  0   0  1
+  [31] .debug_abbrev     PROGBITS        0000000000000000 556e624 000266 00      0   0  1
+  [32] .debug_line       PROGBITS        0000000000000000 556e88a b671e5 00      0   0  1
+  [33] .debug_frame      PROGBITS        0000000000000000 60d5a6f 41f20c 00      0   0  1
+  [34] .debug_gdb_scripts PROGBITS       0000000000000000 64f4c7b 00006b 00      0   0  1
+  [35] .debug_info       PROGBITS        0000000000000000 64f4ce6 1874008 00      0   0  1
+  [36] .debug_loclists   PROGBITS        0000000000000000 7d68cee acc5fa 00      0   0  1
+  [37] .debug_rnglists   PROGBITS        0000000000000000 88352e8 265e2e 00      0   0  1
+  [38] .debug_addr       PROGBITS        0000000000000000 8a9b116 09ca88 00      0   0  1
+  [39] .symtab           SYMTAB          0000000000000000 8b37ba0 297e28 18     41 111646  8
+  [40] .shstrtab         STRTAB          0000000000000000 8dcf9c8 0001cc 00      0   0  1
+  [41] .strtab           STRTAB          0000000000000000 8dcfb94 6c9305 00      0   0  1
+Key to Flags:
+  W (write), A (alloc), X (execute), M (merge), S (strings), I (info),
+  L (link order), O (extra OS processing required), G (group), T (TLS),
+  C (compressed), x (unknown), o (OS specific), E (exclude),
+  R (retain), p (processor specific)

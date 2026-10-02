@@ -1,0 +1,12 @@
+# text delta total 0.342 MB (base 27.994 -> variant 27.652)
+  +0.189  github.com/json-iterator/go
+  +0.036  github.com/modern-go/reflect2
+  +0.027  github.com/mmcdole/gofeed
+  +0.018  github.com/mmcdole/gofeed/rss
+  +0.018  github.com/mmcdole/gofeed/atom
+  +0.012  <go-runtime-misc>
+  +0.010  github.com/mmcdole/gofeed/extensions
+  +0.009  github.com/mmcdole/gofeed/internal/shared
+  +0.007  github.com/PuerkitoBio/goquery
+  +0.006  github.com/mmcdole/goxpp
+  +0.005  golang.org/x/net/html

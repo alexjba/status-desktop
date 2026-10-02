@@ -1,0 +1,703 @@
+# total text 28.04 MB over 1327 packages
+
+## go runtime/std: 5.635 MB (255 pkgs)
+      0.507  runtime
+            chain: runtime <- sg/mobile
+      0.505  <go-runtime-misc>
+            chain: (not reachable in graph)
+      0.457  net/http
+            chain: net/http <- sg/internal/images <- sg/mobile
+      0.308  crypto/tls
+            chain: crypto/tls <- sg/pkg/services/media <- sg/mobile
+      0.219  net
+            chain: net <- sg/pkg/services/media <- sg/mobile
+      0.200  slices
+            chain: slices <- encoding/hex <- sg/mobile
+      0.167  reflect
+            chain: reflect <- encoding/json <- sg/mobile
+      0.132  math/big
+            chain: math/big <- ethereum/go-ethereum/signer/core/apitypes <- sg/mobile
+
+## zstd (C): 2.482 MB (1 pkgs)
+      2.482  <C>
+            chain: (not reachable in graph)
+
+## status-go (rest): 1.904 MB (148 pkgs)
+      0.108  github.com/status-im/status-go/internal/db/appdatabase/migrations
+            chain: sg/internal/db/appdatabase/migrations <- sg/internal/db/appdatabase <- sg/pkg/backend <- sg/mobile
+      0.093  github.com/status-im/status-go/pkg/backend
+            chain: sg/pkg/backend <- sg/mobile
+      0.086  github.com/status-im/status-go/pkg/pubsub
+            chain: sg/pkg/pubsub <- sg/internal/protocol <- sg/mobile
+      0.086  github.com/status-im/status-go/pkg/messaging/layers/encryption
+            chain: sg/pkg/messaging/layers/encryption <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.072  github.com/status-im/status-go/pkg/services/media
+            chain: sg/pkg/services/media <- sg/mobile
+      0.072  github.com/status-im/status-go/pkg/messaging/waku
+            chain: sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.072  github.com/status-im/status-go/pkg/messaging/layers/transport
+            chain: sg/pkg/messaging/layers/transport <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.057  github.com/status-im/status-go/pkg/services/wakuv2ext
+            chain: sg/pkg/services/wakuv2ext <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+
+## OTHER: 1.743 MB (131 pkgs)
+      0.164  gopkg.in/yaml%2ev3
+            chain: (not reachable in graph)
+      0.107  github.com/lib/pq
+            chain: lib/pq <- sg/internal/protocol <- sg/mobile
+      0.099  gopkg.in/go-playground/validator%2ev9
+            chain: (not reachable in graph)
+      0.086  github.com/klauspost/compress/zstd
+            chain: klauspost/compress/zstd <- libp2p/go-libp2p/p2p/transport/quicreuse <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.083  olympos.io/encoding/edn
+            chain: olympos.io/encoding/edn <- sg/pkg/services/stickers <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+      0.080  github.com/Masterminds/squirrel
+            chain: Masterminds/squirrel <- sg/pkg/services/wallet/pendingtxtracker <- sg/pkg/services/ens <- sg/internal/protocol <- sg/mobile
+      0.074  github.com/mutecomm/go-sqlcipher/v4
+            chain: mutecomm/go-sqlcipher/v4 <- sg/internal/db/sqlite <- sg/internal/db/multiaccounts <- sg/mobile
+      0.072  github.com/klauspost/reedsolomon
+            chain: klauspost/reedsolomon <- sg/pkg/messaging/layers/segmentation <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## protocol core (status-go): 1.586 MB (22 pkgs)
+      1.170  github.com/status-im/status-go/internal/protocol
+            chain: sg/internal/protocol <- sg/mobile
+      0.190  github.com/status-im/status-go/internal/protocol/protobuf
+            chain: sg/internal/protocol/protobuf <- sg/internal/db/multiaccounts <- sg/mobile
+      0.096  github.com/status-im/status-go/internal/protocol/migrations
+            chain: sg/internal/protocol/migrations <- sg/internal/protocol/sqlite <- sg/pkg/services/ext <- sg/pkg/backend <- sg/mobile
+      0.049  github.com/status-im/status-go/internal/protocol/common
+            chain: sg/internal/protocol/common <- sg/internal/db/multiaccounts/settings <- sg/mobile
+      0.014  github.com/status-im/status-go/internal/protocol/v1
+            chain: sg/internal/protocol/v1 <- sg/internal/protocol <- sg/mobile
+      0.012  github.com/status-im/status-go/internal/protocol/requests
+            chain: sg/internal/protocol/requests <- sg/mobile
+      0.012  github.com/status-im/status-go/internal/protocol/ens
+            chain: sg/internal/protocol/ens <- sg/internal/protocol <- sg/mobile
+      0.008  github.com/status-im/status-go/internal/protocol/contacts
+            chain: sg/internal/protocol/contacts <- sg/internal/protocol <- sg/mobile
+
+## go-ethereum: node/db (pebble/leveldb/rawdb): 1.541 MB (74 pkgs)
+      0.538  github.com/cockroachdb/pebble
+            chain: cockroachdb/pebble <- ethereum/go-ethereum/ethdb/pebble <- ethereum/go-ethereum/node <- sg/pkg/services/personal <- sg/mobile
+      0.170  github.com/cockroachdb/pebble/sstable
+            chain: cockroachdb/pebble/sstable <- cockroachdb/pebble <- ethereum/go-ethereum/ethdb/pebble <- ethereum/go-ethereum/node <- sg/pkg/services/personal <- sg/mobile
+      0.160  github.com/syndtr/goleveldb/leveldb
+            chain: syndtr/goleveldb/leveldb <- ethereum/go-ethereum/p2p/enode <- sg/pkg/messaging/types <- sg/internal/protocol <- sg/mobile
+      0.116  github.com/cockroachdb/pebble/internal/manifest
+            chain: cockroachdb/pebble/internal/manifest <- cockroachdb/pebble <- ethereum/go-ethereum/ethdb/pebble <- ethereum/go-ethereum/node <- sg/pkg/services/personal <- sg/mobile
+      0.063  github.com/cockroachdb/pebble/internal/keyspan
+            chain: cockroachdb/pebble/internal/keyspan <- cockroachdb/pebble <- ethereum/go-ethereum/ethdb/pebble <- ethereum/go-ethereum/node <- sg/pkg/services/personal <- sg/mobile
+      0.055  github.com/cockroachdb/errors/errorspb
+            chain: cockroachdb/errors/errorspb <- cockroachdb/errors/contexttags <- cockroachdb/errors <- sg/pkg/messaging/layers/segmentation <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.043  github.com/syndtr/goleveldb/leveldb/storage
+            chain: syndtr/goleveldb/leveldb/storage <- ethereum/go-ethereum/p2p/enode <- sg/pkg/messaging/types <- sg/internal/protocol <- sg/mobile
+      0.040  github.com/cockroachdb/redact/internal/rfmt
+            chain: cockroachdb/redact/internal/rfmt <- cockroachdb/redact <- cockroachdb/errors <- sg/pkg/messaging/layers/segmentation <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## libp2p transport: webrtc (pion): 1.279 MB (79 pkgs)
+      0.271  github.com/pion/webrtc/v4
+            chain: pion/webrtc/v4 <- libp2p/go-libp2p/p2p/transport/webrtc <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.141  github.com/pion/ice/v4
+            chain: pion/ice/v4 <- pion/webrtc/v4 <- libp2p/go-libp2p/p2p/transport/webrtc <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.133  github.com/pion/sctp
+            chain: pion/sctp <- libp2p/go-libp2p/p2p/transport/webrtc <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.100  github.com/pion/dtls/v3
+            chain: pion/dtls/v3 <- pion/webrtc/v4 <- libp2p/go-libp2p/p2p/transport/webrtc <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.059  github.com/pion/rtcp
+            chain: pion/rtcp <- pion/webrtc/v4 <- libp2p/go-libp2p/p2p/transport/webrtc <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.058  github.com/pion/sdp/v3
+            chain: pion/sdp/v3 <- pion/webrtc/v4 <- libp2p/go-libp2p/p2p/transport/webrtc <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.048  github.com/libp2p/go-libp2p/p2p/transport/webrtc
+            chain: libp2p/go-libp2p/p2p/transport/webrtc <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.045  github.com/pion/srtp/v3
+            chain: pion/srtp/v3 <- pion/webrtc/v4 <- libp2p/go-libp2p/p2p/transport/webrtc <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## libp2p core (rest): 1.012 MB (69 pkgs)
+      0.177  github.com/libp2p/go-libp2p-pubsub
+            chain: libp2p/go-libp2p-pubsub <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.172  github.com/libp2p/go-libp2p-pubsub/pb
+            chain: libp2p/go-libp2p-pubsub/pb <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.100  github.com/libp2p/go-libp2p/p2p/net/swarm
+            chain: libp2p/go-libp2p/p2p/net/swarm <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.053  github.com/libp2p/go-libp2p/p2p/protocol/identify
+            chain: libp2p/go-libp2p/p2p/protocol/identify <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.039  github.com/multiformats/go-multiaddr
+            chain: multiformats/go-multiaddr <- sg/pkg/messaging/types <- sg/internal/protocol <- sg/mobile
+      0.037  github.com/libp2p/go-yamux/v4
+            chain: libp2p/go-yamux/v4 <- libp2p/go-libp2p/p2p/muxer/yamux <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.037  github.com/multiformats/go-multicodec
+            chain: multiformats/go-multicodec <- libp2p/go-libp2p/core/peer <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.034  github.com/libp2p/go-libp2p/config
+            chain: libp2p/go-libp2p/config <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## libp2p transport: quic: 0.899 MB (25 pkgs)
+      0.228  github.com/quic-go/quic-go
+            chain: quic-go/quic-go <- libp2p/go-libp2p/config <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.225  github.com/francoispqt/gojay
+            chain: francoispqt/gojay <- quic-go/quic-go/qlog <- libp2p/go-libp2p/p2p/transport/quicreuse <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.078  github.com/quic-go/quic-go/http3
+            chain: quic-go/quic-go/http3 <- libp2p/go-libp2p/p2p/transport/webtransport <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.055  github.com/quic-go/quic-go/internal/wire
+            chain: quic-go/quic-go/internal/wire <- quic-go/quic-go <- libp2p/go-libp2p/config <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.052  github.com/quic-go/quic-go/qlog
+            chain: quic-go/quic-go/qlog <- libp2p/go-libp2p/p2p/transport/quicreuse <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.040  github.com/libp2p/go-libp2p/p2p/transport/webtransport
+            chain: libp2p/go-libp2p/p2p/transport/webtransport <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.033  github.com/quic-go/webtransport-go
+            chain: quic-go/webtransport-go <- libp2p/go-libp2p/p2p/transport/webtransport <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.033  github.com/quic-go/quic-go/internal/handshake
+            chain: quic-go/quic-go/internal/handshake <- quic-go/quic-go <- libp2p/go-libp2p/config <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## go-ethereum (rest): 0.851 MB (50 pkgs)
+      0.162  github.com/ethereum/go-ethereum/core/vm
+            chain: ethereum/go-ethereum/core/vm <- sg/internal/rpc/chain <- sg/internal/rpc <- sg/internal/protocol <- sg/mobile
+      0.091  github.com/ethereum/go-ethereum/core/types
+            chain: ethereum/go-ethereum/core/types <- ethereum/go-ethereum/signer/core/apitypes <- sg/mobile
+      0.078  github.com/ethereum/go-ethereum/rpc
+            chain: ethereum/go-ethereum/rpc <- sg/pkg/services/personal <- sg/mobile
+      0.067  github.com/ethereum/go-ethereum/rlp
+            chain: ethereum/go-ethereum/rlp <- ethereum/go-ethereum/core/types <- ethereum/go-ethereum/signer/core/apitypes <- sg/mobile
+      0.064  github.com/ethereum/go-ethereum/accounts/abi
+            chain: ethereum/go-ethereum/accounts/abi <- sg/pkg/services/typeddata <- sg/mobile
+      0.042  github.com/ethereum/go-ethereum/accounts/keystore
+            chain: ethereum/go-ethereum/accounts/keystore <- sg/internal/accounts-management/keystore <- sg/mobile
+      0.036  github.com/ethereum/go-ethereum/p2p/enode
+            chain: ethereum/go-ethereum/p2p/enode <- sg/pkg/messaging/types <- sg/internal/protocol <- sg/mobile
+      0.030  github.com/holiman/uint256
+            chain: holiman/uint256 <- ethereum/go-ethereum/signer/core/apitypes <- sg/mobile
+
+## protobuf: google: 0.846 MB (31 pkgs)
+      0.356  google.golang.org/protobuf/internal/impl
+            chain: google.golang.org/protobuf/internal/impl <- google.golang.org/protobuf/runtime/protoimpl <- sg/internal/protocol/protobuf <- sg/internal/db/multiaccounts <- sg/mobile
+      0.098  google.golang.org/protobuf/internal/filedesc
+            chain: google.golang.org/protobuf/internal/filedesc <- google.golang.org/protobuf/runtime/protoimpl <- sg/internal/protocol/protobuf <- sg/internal/db/multiaccounts <- sg/mobile
+      0.060  google.golang.org/protobuf/reflect/protoreflect
+            chain: google.golang.org/protobuf/reflect/protoreflect <- sg/internal/protocol/protobuf <- sg/internal/db/multiaccounts <- sg/mobile
+      0.060  google.golang.org/protobuf/types/descriptorpb
+            chain: google.golang.org/protobuf/types/descriptorpb <- google.golang.org/protobuf/reflect/protodesc <- golang/protobuf/proto <- sg/internal/db/multiaccounts/settings <- sg/mobile
+      0.056  google.golang.org/protobuf/encoding/protojson
+            chain: google.golang.org/protobuf/encoding/protojson <- waku-org/go-waku/waku/v2/protocol/pb <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.039  google.golang.org/protobuf/proto
+            chain: google.golang.org/protobuf/proto <- golang/protobuf/proto <- sg/internal/db/multiaccounts/settings <- sg/mobile
+      0.026  google.golang.org/protobuf/reflect/protoregistry
+            chain: google.golang.org/protobuf/reflect/protoregistry <- golang/protobuf/proto <- sg/internal/db/multiaccounts/settings <- sg/mobile
+      0.023  google.golang.org/protobuf/internal/encoding/json
+            chain: google.golang.org/protobuf/internal/encoding/json <- google.golang.org/protobuf/encoding/protojson <- waku-org/go-waku/waku/v2/protocol/pb <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## opentelemetry/grpc: 0.836 MB (85 pkgs)
+      0.154  google.golang.org/grpc
+            chain: google.golang.org/grpc <- go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc <- sg/internal/instrumentation/trace <- sg/internal/protocol <- sg/mobile
+      0.146  google.golang.org/grpc/internal/transport
+            chain: google.golang.org/grpc/internal/transport <- google.golang.org/grpc <- go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc <- sg/internal/instrumentation/trace <- sg/internal/protocol <- sg/mobile
+      0.059  go.opentelemetry.io/otel/sdk/trace
+            chain: go.opentelemetry.io/otel/sdk/trace <- sg/internal/instrumentation/trace <- sg/internal/protocol <- sg/mobile
+      0.034  go.opentelemetry.io/otel/trace
+            chain: go.opentelemetry.io/otel/trace <- sg/internal/protocol <- sg/mobile
+      0.032  go.opentelemetry.io/otel/internal/global
+            chain: go.opentelemetry.io/otel/internal/global <- go.opentelemetry.io/otel <- sg/internal/instrumentation/trace <- sg/internal/protocol <- sg/mobile
+      0.026  go.opentelemetry.io/otel/trace/internal/telemetry
+            chain: go.opentelemetry.io/otel/trace/internal/telemetry <- go.opentelemetry.io/otel/trace <- sg/internal/protocol <- sg/mobile
+      0.026  go.opentelemetry.io/auto/sdk/internal/telemetry
+            chain: go.opentelemetry.io/auto/sdk/internal/telemetry <- go.opentelemetry.io/auto/sdk <- go.opentelemetry.io/otel/internal/global <- go.opentelemetry.io/otel <- sg/internal/instrumentation/trace <- sg/internal/protocol <- sg/mobile
+      0.022  google.golang.org/grpc/balancer/pickfirst/pickfirstleaf
+            chain: google.golang.org/grpc/balancer/pickfirst/pickfirstleaf <- google.golang.org/grpc/balancer/pickfirst <- google.golang.org/grpc <- go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc <- sg/internal/instrumentation/trace <- sg/internal/protocol <- sg/mobile
+
+## protobuf: gogo: 0.574 MB (13 pkgs)
+      0.263  github.com/gogo/protobuf/proto
+            chain: gogo/protobuf/proto <- libp2p/go-libp2p-pubsub <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.217  github.com/gogo/protobuf/types
+            chain: gogo/protobuf/types <- cockroachdb/errors/errbase <- cockroachdb/errors <- sg/pkg/messaging/layers/segmentation <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.091  github.com/gogo/protobuf/protoc-gen-gogo/descriptor
+            chain: gogo/protobuf/protoc-gen-gogo/descriptor <- gogo/protobuf/gogoproto <- cockroachdb/errors/errorspb <- cockroachdb/errors/contexttags <- cockroachdb/errors <- sg/pkg/messaging/layers/segmentation <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.001  github.com/gogo/protobuf/gogoproto
+            chain: gogo/protobuf/gogoproto <- cockroachdb/errors/errorspb <- cockroachdb/errors/contexttags <- cockroachdb/errors <- sg/pkg/messaging/layers/segmentation <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.000  github.com/gogo/protobuf/protoc-gen-gogo/descriptor.(*ServiceOptions).github.com/gogo/protobuf/proto
+            chain: (not reachable in graph)
+      0.000  github.com/gogo/protobuf/protoc-gen-gogo/descriptor.(*OneofOptions).github.com/gogo/protobuf/proto
+            chain: (not reachable in graph)
+      0.000  github.com/gogo/protobuf/protoc-gen-gogo/descriptor.(*MethodOptions).github.com/gogo/protobuf/proto
+            chain: (not reachable in graph)
+      0.000  github.com/gogo/protobuf/protoc-gen-gogo/descriptor.(*MessageOptions).github.com/gogo/protobuf/proto
+            chain: (not reachable in graph)
+
+## golang.org/x (rest): 0.566 MB (60 pkgs)
+      0.083  golang.org/x/net/html
+            chain: golang.org/x/net/html <- mmcdole/gofeed <- sg/internal/protocol <- sg/mobile
+      0.041  golang.org/x/net/http2
+            chain: golang.org/x/net/http2 <- google.golang.org/grpc/internal/transport <- google.golang.org/grpc <- go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc <- sg/internal/instrumentation/trace <- sg/internal/protocol <- sg/mobile
+      0.040  golang.org/x/text/internal/language
+            chain: golang.org/x/text/internal/language <- golang.org/x/text/language <- sg/pkg/services/wallet/thirdparty/collectibles/alchemy <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.034  golang.org/x/net/trace
+            chain: golang.org/x/net/trace <- google.golang.org/grpc <- go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc <- sg/internal/instrumentation/trace <- sg/internal/protocol <- sg/mobile
+      0.025  golang.org/x/net/ipv6
+            chain: golang.org/x/net/ipv6 <- schollz/peerdiscovery <- sg/pkg/services/pairing/peers <- sg/pkg/services/pairing <- sg/mobile
+      0.025  golang.org/x/text/unicode/norm
+            chain: golang.org/x/text/unicode/norm <- status-im/extkeys <- sg/mobile
+      0.024  golang.org/x/net/ipv4
+            chain: golang.org/x/net/ipv4 <- beevik/ntp <- sg/internal/timesource <- sg/internal/protocol <- sg/mobile
+      0.021  golang.org/x/text/language
+            chain: golang.org/x/text/language <- sg/pkg/services/wallet/thirdparty/collectibles/alchemy <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+
+## wallet (rest): 0.547 MB (45 pkgs)
+      0.063  github.com/status-im/status-go/pkg/services/wallet
+            chain: sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.042  github.com/status-im/status-go/pkg/services/wallet/multistandardbalance
+            chain: sg/pkg/services/wallet/multistandardbalance <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.035  github.com/status-im/status-go/pkg/services/wallet/bigint
+            chain: sg/pkg/services/wallet/bigint <- sg/internal/protocol <- sg/mobile
+      0.032  github.com/status-im/status-go/pkg/services/wallet/thirdparty/collectibles/rarible
+            chain: sg/pkg/services/wallet/thirdparty/collectibles/rarible <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.032  github.com/status-im/go-wallet-sdk/pkg/contracts/multicall3
+            chain: status-im/go-wallet-sdk/pkg/contracts/multicall3 <- status-im/go-wallet-sdk/pkg/balance/multistandardfetcher <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.031  github.com/status-im/go-wallet-sdk/pkg/ethclient
+            chain: status-im/go-wallet-sdk/pkg/ethclient <- sg/internal/protocol/ens <- sg/internal/protocol <- sg/mobile
+      0.028  github.com/status-im/status-go/pkg/services/wallet/common
+            chain: sg/pkg/services/wallet/common <- sg/internal/protocol <- sg/mobile
+      0.027  github.com/status-im/status-go/pkg/services/wallet/pendingtxtracker
+            chain: sg/pkg/services/wallet/pendingtxtracker <- sg/pkg/services/ens <- sg/internal/protocol <- sg/mobile
+
+## contracts bindings: 0.471 MB (30 pkgs)
+      0.128  github.com/status-im/status-go/internal/contracts/stickers
+            chain: sg/internal/contracts/stickers <- sg/internal/contracts <- sg/internal/protocol <- sg/mobile
+      0.049  github.com/status-im/status-go/internal/contracts/namewrapper
+            chain: sg/internal/contracts/namewrapper <- sg/internal/contracts <- sg/internal/protocol <- sg/mobile
+      0.039  github.com/status-im/status-go/internal/contracts/community-tokens/deployer
+            chain: sg/internal/contracts/community-tokens/deployer <- sg/pkg/services/networks <- sg/pkg/backend <- sg/mobile
+      0.029  github.com/status-im/status-go/internal/contracts/community-tokens/ownertoken
+            chain: sg/internal/contracts/community-tokens/ownertoken <- sg/pkg/services/wallet/router/pathprocessor <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.029  github.com/status-im/status-go/internal/contracts/community-tokens/collectibles
+            chain: sg/internal/contracts/community-tokens/collectibles <- sg/pkg/services/wallet/collectibles <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.028  github.com/status-im/status-go/internal/contracts/community-tokens/mastertoken
+            chain: sg/internal/contracts/community-tokens/mastertoken <- sg/internal/contracts/community-tokens <- sg/pkg/services/wallet/router/pathprocessor <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.028  github.com/status-im/status-go/internal/contracts/registrar
+            chain: sg/internal/contracts/registrar <- sg/internal/contracts <- sg/internal/protocol <- sg/mobile
+      0.028  github.com/status-im/status-go/internal/contracts/snt
+            chain: sg/internal/contracts/snt <- sg/internal/contracts <- sg/internal/protocol <- sg/mobile
+
+## extkeys: 0.436 MB (1 pkgs)
+      0.436  github.com/status-im/extkeys
+            chain: status-im/extkeys <- sg/mobile
+
+## communities (status-go): 0.371 MB (3 pkgs)
+      0.370  github.com/status-im/status-go/internal/protocol/communities
+            chain: sg/internal/protocol/communities <- sg/internal/protocol <- sg/mobile
+      0.001  github.com/status-im/status-go/internal/protocol/communities/archive/types
+            chain: sg/internal/protocol/communities/archive/types <- sg/internal/protocol <- sg/mobile
+      0.001  github.com/status-im/status-go/internal/protocol/communities/archive
+            chain: sg/internal/protocol/communities/archive <- sg/internal/protocol <- sg/mobile
+
+## RSS/news (gofeed): 0.371 MB (12 pkgs)
+      0.189  github.com/json-iterator/go
+            chain: json-iterator/go <- mmcdole/gofeed <- sg/internal/protocol <- sg/mobile
+      0.046  github.com/andybalholm/cascadia
+            chain: andybalholm/cascadia <- PuerkitoBio/goquery <- mat/besticon/besticon <- sg/internal/protocol <- sg/mobile
+      0.036  github.com/modern-go/reflect2
+            chain: modern-go/reflect2 <- json-iterator/go <- mmcdole/gofeed <- sg/internal/protocol <- sg/mobile
+      0.027  github.com/mmcdole/gofeed
+            chain: mmcdole/gofeed <- sg/internal/protocol <- sg/mobile
+      0.018  github.com/mmcdole/gofeed/atom
+            chain: mmcdole/gofeed/atom <- mmcdole/gofeed <- sg/internal/protocol <- sg/mobile
+      0.018  github.com/mmcdole/gofeed/rss
+            chain: mmcdole/gofeed/rss <- mmcdole/gofeed <- sg/internal/protocol <- sg/mobile
+      0.010  github.com/PuerkitoBio/goquery
+            chain: PuerkitoBio/goquery <- mat/besticon/besticon <- sg/internal/protocol <- sg/mobile
+      0.010  github.com/mmcdole/gofeed/extensions
+            chain: mmcdole/gofeed/extensions <- mmcdole/gofeed <- sg/internal/protocol <- sg/mobile
+
+## libp2p service: resource mgr/metrics/rcmgr: 0.364 MB (15 pkgs)
+      0.140  github.com/libp2p/go-libp2p/p2p/host/resource-manager
+            chain: libp2p/go-libp2p/p2p/host/resource-manager <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.096  github.com/prometheus/client_golang/prometheus
+            chain: prometheus/client_golang/prometheus <- sg/internal/metrics <- sg/pkg/backend <- sg/mobile
+      0.033  github.com/libp2p/go-libp2p/p2p/host/basic
+            chain: libp2p/go-libp2p/p2p/host/basic <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.026  github.com/prometheus/common/expfmt
+            chain: prometheus/common/expfmt <- prometheus/client_golang/prometheus <- sg/internal/metrics <- sg/pkg/backend <- sg/mobile
+      0.023  github.com/prometheus/procfs
+            chain: prometheus/procfs <- prometheus/client_golang/prometheus <- sg/internal/metrics <- sg/pkg/backend <- sg/mobile
+      0.016  github.com/prometheus/client_golang/prometheus/promhttp
+            chain: prometheus/client_golang/prometheus/promhttp <- sg/internal/metrics <- sg/pkg/backend <- sg/mobile
+      0.011  github.com/prometheus/client_model/go
+            chain: prometheus/client_model/go <- prometheus/client_golang/prometheus <- sg/internal/metrics <- sg/pkg/backend <- sg/mobile
+      0.008  github.com/prometheus/common/model
+            chain: prometheus/common/model <- prometheus/client_golang/prometheus <- sg/internal/metrics <- sg/pkg/backend <- sg/mobile
+
+## go-ethereum: kzg/gnark: 0.316 MB (28 pkgs)
+      0.098  github.com/consensys/gnark-crypto/ecc/bls12-381
+            chain: consensys/gnark-crypto/ecc/bls12-381 <- crate-crypto/go-eth-kzg <- ethereum/go-ethereum/crypto/kzg4844 <- ethereum/go-ethereum/signer/core/apitypes <- sg/mobile
+      0.031  github.com/consensys/gnark-crypto/ecc/bls12-381/fp
+            chain: consensys/gnark-crypto/ecc/bls12-381/fp <- consensys/gnark-crypto/ecc/bls12-381 <- crate-crypto/go-eth-kzg <- ethereum/go-ethereum/crypto/kzg4844 <- ethereum/go-ethereum/signer/core/apitypes <- sg/mobile
+      0.027  github.com/consensys/gnark-crypto/ecc/bls12-381.processChunkG1BatchAffinegithub.com/consensys/gnark-crypto/ecc/bls12-381.g1JacExtended,go.shape.github.com/consensys/gnark-crypto/ecc/bls12-381.G1Affine,go.shape.bool,go.shape.github.com/consensys/gnark-crypto/ecc/bls12-381.G1Affine,go.shape.*github.com/consensys/gnark-crypto/ecc/bls12-381.G1Affine,go.shape.github.com/consensys/gnark-crypto/ecc/bls12-381.batchOpG1Affine,go.shape.github.com/consensys/gnark-crypto/ecc/bls12-381/fp
+            chain: (not reachable in graph)
+      0.024  github.com/consensys/gnark-crypto/ecc/bls12-381/internal/fptower
+            chain: consensys/gnark-crypto/ecc/bls12-381/internal/fptower <- consensys/gnark-crypto/ecc/bls12-381 <- crate-crypto/go-eth-kzg <- ethereum/go-ethereum/crypto/kzg4844 <- ethereum/go-ethereum/signer/core/apitypes <- sg/mobile
+      0.024  github.com/consensys/gnark-crypto/ecc/bls12-381.processChunkG2BatchAffinegithub.com/consensys/gnark-crypto/ecc/bls12-381.g2JacExtended,go.shape.github.com/consensys/gnark-crypto/ecc/bls12-381.G2Affine,go.shape.bool,go.shape.github.com/consensys/gnark-crypto/ecc/bls12-381.G2Affine,go.shape.*github.com/consensys/gnark-crypto/ecc/bls12-381.G2Affine,go.shape.github.com/consensys/gnark-crypto/ecc/bls12-381.batchOpG2Affine,go.shape.github.com/consensys/gnark-crypto/ecc/bls12-381/internal/fptower
+            chain: (not reachable in graph)
+      0.023  github.com/consensys/gnark-crypto/ecc/bls12-381/fr
+            chain: consensys/gnark-crypto/ecc/bls12-381/fr <- crate-crypto/go-eth-kzg <- ethereum/go-ethereum/crypto/kzg4844 <- ethereum/go-ethereum/signer/core/apitypes <- sg/mobile
+      0.011  github.com/consensys/gnark-crypto/ecc/bls12-381.batchAddG1Affinegithub.com/consensys/gnark-crypto/ecc/bls12-381.G1Affine,go.shape.*github.com/consensys/gnark-crypto/ecc/bls12-381.G1Affine,go.shape.github.com/consensys/gnark-crypto/ecc/bls12-381/fp
+            chain: (not reachable in graph)
+      0.010  github.com/consensys/gnark-crypto/ecc/bls12-381.processChunkG2Jacobiangithub.com/consensys/gnark-crypto/ecc/bls12-381
+            chain: (not reachable in graph)
+
+## test deps linked (testify/gofakeit/yaml): 0.305 MB (6 pkgs)
+      0.259  github.com/brianvoe/gofakeit/v7
+            chain: brianvoe/gofakeit/v7 <- sg/internal/protocol/communities <- sg/internal/protocol <- sg/mobile
+      0.044  github.com/brianvoe/gofakeit/v7/data
+            chain: brianvoe/gofakeit/v7/data <- brianvoe/gofakeit/v7 <- sg/internal/protocol/communities <- sg/internal/protocol <- sg/mobile
+      0.001  github.com/davecgh/go-spew/spew
+            chain: davecgh/go-spew/spew <- stretchr/testify/assert <- stretchr/testify/suite <- sg/internal/protocol <- sg/mobile
+      0.001  github.com/stretchr/testify/assert
+            chain: stretchr/testify/assert <- stretchr/testify/suite <- sg/internal/protocol <- sg/mobile
+      0.000  github.com/brianvoe/gofakeit/v7/source
+            chain: brianvoe/gofakeit/v7/source <- brianvoe/gofakeit/v7 <- sg/internal/protocol/communities <- sg/internal/protocol <- sg/mobile
+      0.000  github.com/stretchr/testify/suite
+            chain: stretchr/testify/suite <- sg/internal/protocol <- sg/mobile
+
+## go-waku (rest): 0.286 MB (21 pkgs)
+      0.070  github.com/waku-org/go-waku/waku/v2/peermanager
+            chain: waku-org/go-waku/waku/v2/peermanager <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.063  github.com/waku-org/go-waku/waku/v2/node
+            chain: waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.026  github.com/waku-org/go-waku/waku/v2/api/filter
+            chain: waku-org/go-waku/waku/v2/api/filter <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.018  github.com/waku-org/go-libp2p-rendezvous
+            chain: waku-org/go-libp2p-rendezvous <- waku-org/go-waku/waku/v2/rendezvous <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.016  github.com/waku-org/go-waku/waku/v2/protocol
+            chain: waku-org/go-waku/waku/v2/protocol <- sg/pkg/messaging/types <- sg/internal/protocol <- sg/mobile
+      0.015  github.com/waku-org/go-waku/waku/v2/rendezvous
+            chain: waku-org/go-waku/waku/v2/rendezvous <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.014  github.com/waku-org/sds-go-bindings/sds
+            chain: waku-org/sds-go-bindings/sds <- sg/pkg/messaging/layers/reliability <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.012  github.com/waku-org/go-waku/waku/v2/protocol/metadata
+            chain: waku-org/go-waku/waku/v2/protocol/metadata <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## wallet: token lists: 0.286 MB (5 pkgs)
+      0.121  github.com/xeipuuv/gojsonschema
+            chain: xeipuuv/gojsonschema <- status-im/go-wallet-sdk/pkg/tokens/fetcher <- sg/pkg/services/wallet/token <- sg/pkg/backend <- sg/mobile
+      0.121  github.com/go-playground/validator/v10
+            chain: go-playground/validator/v10 <- status-im/go-wallet-sdk/pkg/tokens/types <- sg/params <- sg/mobile
+      0.039  github.com/status-im/status-go/pkg/services/wallet/token
+            chain: sg/pkg/services/wallet/token <- sg/pkg/backend <- sg/mobile
+      0.004  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists
+            chain: sg/pkg/services/wallet/token/local-token-lists/default-lists <- sg/pkg/services/wallet/token <- sg/pkg/backend <- sg/mobile
+      0.001  github.com/status-im/status-go/pkg/services/wallet/token/types
+            chain: sg/pkg/services/wallet/token/types <- sg/internal/protocol/requests <- sg/mobile
+
+## libp2p service: mdns/dns discovery: 0.277 MB (2 pkgs)
+      0.273  github.com/miekg/dns
+            chain: miekg/dns <- multiformats/go-multiaddr-dns <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.004  github.com/multiformats/go-multiaddr-dns
+            chain: multiformats/go-multiaddr-dns <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## shared urls (brotli): 0.246 MB (2 pkgs)
+      0.228  github.com/andybalholm/brotli
+            chain: andybalholm/brotli <- sg/pkg/services/sharedurls <- sg/internal/protocol <- sg/mobile
+      0.018  github.com/status-im/status-go/pkg/services/sharedurls
+            chain: sg/pkg/services/sharedurls <- sg/internal/protocol <- sg/mobile
+
+## wallet: router/swap/bridge: 0.234 MB (10 pkgs)
+      0.116  github.com/status-im/status-go/pkg/services/wallet/router
+            chain: sg/pkg/services/wallet/router <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.069  github.com/status-im/status-go/pkg/services/wallet/router/pathprocessor
+            chain: sg/pkg/services/wallet/router/pathprocessor <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.014  github.com/status-im/status-go/pkg/services/wallet/router/routes
+            chain: sg/pkg/services/wallet/router/routes <- sg/pkg/services/wallet/wallettypes <- sg/mobile
+      0.010  github.com/status-im/status-go/pkg/services/wallet/thirdparty/paraswap
+            chain: sg/pkg/services/wallet/thirdparty/paraswap <- sg/pkg/services/wallet/router <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.009  github.com/status-im/status-go/pkg/services/wallet/requests
+            chain: sg/pkg/services/wallet/requests <- sg/pkg/services/wallet/wallettypes <- sg/mobile
+      0.007  github.com/status-im/status-go/pkg/services/wallet/router/fees
+            chain: sg/pkg/services/wallet/router/fees <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.004  github.com/status-im/status-go/pkg/services/wallet/thirdparty/lifi
+            chain: sg/pkg/services/wallet/thirdparty/lifi <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.003  github.com/status-im/status-go/pkg/services/wallet/router/sendtype
+            chain: sg/pkg/services/wallet/router/sendtype <- sg/pkg/services/wallet/requests <- sg/pkg/services/wallet/wallettypes <- sg/mobile
+
+## images (x/image): 0.220 MB (13 pkgs)
+      0.070  golang.org/x/image/draw
+            chain: golang.org/x/image/draw <- sg/internal/images <- sg/mobile
+      0.059  golang.org/x/image/font/sfnt
+            chain: golang.org/x/image/font/sfnt <- golang.org/x/image/font/opentype <- sg/internal/images <- sg/mobile
+      0.027  golang.org/x/image/vp8
+            chain: golang.org/x/image/vp8 <- golang.org/x/image/webp <- sg/internal/images <- sg/mobile
+      0.021  github.com/status-im/status-go/internal/images
+            chain: sg/internal/images <- sg/mobile
+      0.018  golang.org/x/image/vp8l
+            chain: golang.org/x/image/vp8l <- golang.org/x/image/webp <- sg/internal/images <- sg/mobile
+      0.008  golang.org/x/image/vector
+            chain: golang.org/x/image/vector <- golang.org/x/image/font/opentype <- sg/internal/images <- sg/mobile
+      0.004  golang.org/x/image/webp
+            chain: golang.org/x/image/webp <- sg/internal/images <- sg/mobile
+      0.004  golang.org/x/image/bmp
+            chain: golang.org/x/image/bmp <- mat/besticon/ico <- mat/besticon/besticon <- sg/internal/protocol <- sg/mobile
+
+## wallet: collectibles: 0.128 MB (2 pkgs)
+      0.083  github.com/status-im/status-go/pkg/services/wallet/collectibles
+            chain: sg/pkg/services/wallet/collectibles <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.045  github.com/status-im/status-go/pkg/services/wallet/collectibles/ownership
+            chain: sg/pkg/services/wallet/collectibles/ownership <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+
+## ENS / namewrapper: 0.127 MB (7 pkgs)
+      0.103  github.com/wealdtech/go-multicodec
+            chain: wealdtech/go-multicodec <- sg/pkg/services/ens <- sg/internal/protocol <- sg/mobile
+      0.006  github.com/status-im/status-go/pkg/services/ens
+            chain: sg/pkg/services/ens <- sg/internal/protocol <- sg/mobile
+      0.006  github.com/status-im/status-go/pkg/services/ens/ensresolver
+            chain: sg/pkg/services/ens/ensresolver <- sg/pkg/services/ens <- sg/internal/protocol <- sg/mobile
+      0.006  github.com/wealdtech/go-ens/v3
+            chain: wealdtech/go-ens/v3 <- sg/internal/protocol/ens <- sg/internal/protocol <- sg/mobile
+      0.002  github.com/wealdtech/go-ens/v3/contracts/resolver
+            chain: wealdtech/go-ens/v3/contracts/resolver <- wealdtech/go-ens/v3 <- sg/internal/protocol/ens <- sg/internal/protocol <- sg/mobile
+      0.002  github.com/wealdtech/go-ens/v3/contracts/registry
+            chain: wealdtech/go-ens/v3/contracts/registry <- wealdtech/go-ens/v3 <- sg/internal/protocol/ens <- sg/internal/protocol <- sg/mobile
+      0.002  github.com/wealdtech/go-ens/v3/contracts/reverseresolver
+            chain: wealdtech/go-ens/v3/contracts/reverseresolver <- wealdtech/go-ens/v3 <- sg/internal/protocol/ens <- sg/internal/protocol <- sg/mobile
+
+## sentry: 0.119 MB (5 pkgs)
+      0.103  github.com/getsentry/sentry-go
+            chain: getsentry/sentry-go <- sg/pkg/sentry <- sg/internal/logutils/callog <- sg/mobile
+      0.008  github.com/getsentry/sentry-go/internal/otel/baggage
+            chain: getsentry/sentry-go/internal/otel/baggage <- getsentry/sentry-go <- sg/pkg/sentry <- sg/internal/logutils/callog <- sg/mobile
+      0.004  github.com/getsentry/sentry-go/internal/ratelimit
+            chain: getsentry/sentry-go/internal/ratelimit <- getsentry/sentry-go <- sg/pkg/sentry <- sg/internal/logutils/callog <- sg/mobile
+      0.002  github.com/getsentry/sentry-go/internal/traceparser
+            chain: getsentry/sentry-go/internal/traceparser <- getsentry/sentry-go <- sg/pkg/sentry <- sg/internal/logutils/callog <- sg/mobile
+      0.002  github.com/getsentry/sentry-go/internal/debug
+            chain: getsentry/sentry-go/internal/debug <- getsentry/sentry-go <- sg/pkg/sentry <- sg/internal/logutils/callog <- sg/mobile
+
+## connector (dapp bridge): 0.109 MB (5 pkgs)
+      0.059  github.com/status-im/status-go/pkg/services/connector/walletconnect
+            chain: sg/pkg/services/connector/walletconnect <- sg/pkg/services/connector <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+      0.025  github.com/status-im/status-go/pkg/services/connector/commands
+            chain: sg/pkg/services/connector/commands <- sg/pkg/services/connector <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+      0.018  github.com/status-im/status-go/pkg/services/connector
+            chain: sg/pkg/services/connector <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+      0.007  github.com/status-im/status-go/pkg/services/connector/database
+            chain: sg/pkg/services/connector/database <- sg/pkg/services/connector <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+      0.000  github.com/status-im/status-go/pkg/services/connector/chainutils
+            chain: sg/pkg/services/connector/chainutils <- sg/pkg/services/connector <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+
+## libp2p service: relay/circuitv2: 0.108 MB (6 pkgs)
+      0.040  github.com/libp2p/go-libp2p/p2p/host/autorelay
+            chain: libp2p/go-libp2p/p2p/host/autorelay <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.032  github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay
+            chain: libp2p/go-libp2p/p2p/protocol/circuitv2/relay <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.022  github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/client
+            chain: libp2p/go-libp2p/p2p/protocol/circuitv2/client <- libp2p/go-libp2p/config <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.011  github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/pb
+            chain: libp2p/go-libp2p/p2p/protocol/circuitv2/pb <- libp2p/go-libp2p/p2p/host/autorelay <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.002  github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/util
+            chain: libp2p/go-libp2p/p2p/protocol/circuitv2/util <- libp2p/go-libp2p/p2p/protocol/circuitv2/relay <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.001  github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/proto
+            chain: libp2p/go-libp2p/p2p/protocol/circuitv2/proto <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## go-waku: discv5/enr: 0.104 MB (6 pkgs)
+      0.052  github.com/waku-org/go-discover/discover
+            chain: waku-org/go-discover/discover <- waku-org/go-waku/waku/v2/discv5 <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.023  github.com/waku-org/go-discover/discover/v5wire
+            chain: waku-org/go-discover/discover/v5wire <- waku-org/go-discover/discover <- waku-org/go-waku/waku/v2/discv5 <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.015  github.com/waku-org/go-waku/waku/v2/discv5
+            chain: waku-org/go-waku/waku/v2/discv5 <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.010  github.com/waku-org/go-waku/waku/v2/protocol/enr
+            chain: waku-org/go-waku/waku/v2/protocol/enr <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.003  github.com/waku-org/go-waku/waku/v2/dnsdisc
+            chain: waku-org/go-waku/waku/v2/dnsdisc <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.000  github.com/waku-org/go-discover/discover/v4wire
+            chain: waku-org/go-discover/discover/v4wire <- waku-org/go-discover/discover <- waku-org/go-waku/waku/v2/discv5 <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## libp2p service: nat (upnp/pmp): 0.101 MB (13 pkgs)
+      0.027  github.com/huin/goupnp/dcps/internetgateway2
+            chain: huin/goupnp/dcps/internetgateway2 <- ethereum/go-ethereum/p2p/nat <- ethereum/go-ethereum/node <- sg/pkg/services/personal <- sg/mobile
+      0.017  github.com/huin/goupnp/dcps/internetgateway1
+            chain: huin/goupnp/dcps/internetgateway1 <- ethereum/go-ethereum/p2p/nat <- ethereum/go-ethereum/node <- sg/pkg/services/personal <- sg/mobile
+      0.013  github.com/libp2p/go-nat
+            chain: libp2p/go-nat <- libp2p/go-libp2p/p2p/net/nat <- libp2p/go-libp2p/p2p/host/basic <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.008  github.com/huin/goupnp
+            chain: huin/goupnp <- ethereum/go-ethereum/p2p/nat <- ethereum/go-ethereum/node <- sg/pkg/services/personal <- sg/mobile
+      0.006  github.com/libp2p/go-libp2p/p2p/net/nat
+            chain: libp2p/go-libp2p/p2p/net/nat <- libp2p/go-libp2p/p2p/host/basic <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.006  github.com/huin/goupnp/soap
+            chain: huin/goupnp/soap <- huin/goupnp <- ethereum/go-ethereum/p2p/nat <- ethereum/go-ethereum/node <- sg/pkg/services/personal <- sg/mobile
+      0.006  github.com/huin/goupnp/httpu
+            chain: huin/goupnp/httpu <- huin/goupnp <- ethereum/go-ethereum/p2p/nat <- ethereum/go-ethereum/node <- sg/pkg/services/personal <- sg/mobile
+      0.005  github.com/koron/go-ssdp/internal/multicast
+            chain: koron/go-ssdp/internal/multicast <- koron/go-ssdp <- libp2p/go-nat <- libp2p/go-libp2p/p2p/net/nat <- libp2p/go-libp2p/p2p/host/basic <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## pairing (local): 0.087 MB (3 pkgs)
+      0.084  github.com/status-im/status-go/pkg/services/pairing
+            chain: sg/pkg/services/pairing <- sg/mobile
+      0.003  github.com/status-im/status-go/pkg/services/pairing/statecontrol
+            chain: sg/pkg/services/pairing/statecontrol <- sg/pkg/backend <- sg/mobile
+      0.000  github.com/status-im/status-go/pkg/services/pairing/peers
+            chain: sg/pkg/services/pairing/peers <- sg/pkg/services/pairing <- sg/mobile
+
+## go-waku: filter: 0.077 MB (3 pkgs)
+      0.058  github.com/waku-org/go-waku/waku/v2/protocol/filter
+            chain: waku-org/go-waku/waku/v2/protocol/filter <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.014  github.com/waku-org/go-waku/waku/v2/protocol/subscription
+            chain: waku-org/go-waku/waku/v2/protocol/subscription <- waku-org/go-waku/waku/v2/api/filter <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.005  github.com/waku-org/go-waku/waku/v2/protocol/filter/pb
+            chain: waku-org/go-waku/waku/v2/protocol/filter/pb <- waku-org/go-waku/waku/v2/protocol/filter <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## libp2p service: autonat: 0.076 MB (4 pkgs)
+      0.034  github.com/libp2p/go-libp2p/p2p/protocol/autonatv2
+            chain: libp2p/go-libp2p/p2p/protocol/autonatv2 <- libp2p/go-libp2p/p2p/host/basic <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.025  github.com/libp2p/go-libp2p/p2p/host/autonat
+            chain: libp2p/go-libp2p/p2p/host/autonat <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.010  github.com/libp2p/go-libp2p/p2p/protocol/autonatv2/pb
+            chain: libp2p/go-libp2p/p2p/protocol/autonatv2/pb <- libp2p/go-libp2p/p2p/protocol/autonatv2 <- libp2p/go-libp2p/p2p/host/basic <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.007  github.com/libp2p/go-libp2p/p2p/host/autonat/pb
+            chain: libp2p/go-libp2p/p2p/host/autonat/pb <- libp2p/go-libp2p/p2p/host/autonat <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## libp2p transport: websocket: 0.070 MB (2 pkgs)
+      0.046  github.com/gorilla/websocket
+            chain: gorilla/websocket <- ethereum/go-ethereum/rpc <- sg/pkg/services/personal <- sg/mobile
+      0.025  github.com/libp2p/go-libp2p/p2p/transport/websocket
+            chain: libp2p/go-libp2p/p2p/transport/websocket <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## push notifications client: 0.069 MB (3 pkgs)
+      0.057  github.com/status-im/status-go/internal/protocol/pushnotificationclient
+            chain: sg/internal/protocol/pushnotificationclient <- sg/internal/protocol <- sg/mobile
+      0.007  github.com/status-im/status-go/internal/protocol/pushnotificationclient/migrations
+            chain: sg/internal/protocol/pushnotificationclient/migrations <- sg/internal/protocol/sqlite <- sg/pkg/services/ext <- sg/pkg/backend <- sg/mobile
+      0.005  github.com/status-im/status-go/internal/protocol/pushnotificationserver/migrations
+            chain: sg/internal/protocol/pushnotificationserver/migrations <- sg/internal/protocol/sqlite <- sg/pkg/services/ext <- sg/pkg/backend <- sg/mobile
+
+## wallet: activity: 0.050 MB (2 pkgs)
+      0.049  github.com/status-im/status-go/pkg/services/wallet/activity
+            chain: sg/pkg/services/wallet/activity <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.001  github.com/status-im/status-go/pkg/services/wallet/activity/common
+            chain: sg/pkg/services/wallet/activity/common <- sg/pkg/services/wallet/thirdparty <- sg/internal/protocol <- sg/mobile
+
+## go-waku: store: 0.046 MB (5 pkgs)
+      0.020  github.com/waku-org/go-waku/waku/v2/protocol/legacy_store
+            chain: waku-org/go-waku/waku/v2/protocol/legacy_store <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.012  github.com/waku-org/go-waku/waku/v2/protocol/store
+            chain: waku-org/go-waku/waku/v2/protocol/store <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.008  github.com/waku-org/go-waku/waku/v2/protocol/legacy_store/pb
+            chain: waku-org/go-waku/waku/v2/protocol/legacy_store/pb <- waku-org/go-waku/waku/v2/protocol <- sg/pkg/messaging/types <- sg/internal/protocol <- sg/mobile
+      0.005  github.com/waku-org/go-waku/waku/v2/protocol/store/pb
+            chain: waku-org/go-waku/waku/v2/protocol/store/pb <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.001  github.com/waku-org/go-waku/waku/persistence
+            chain: waku-org/go-waku/waku/persistence <- waku-org/go-waku/waku/v2/protocol/legacy_store <- waku-org/go-waku/waku/v2/node <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## go-waku: relay/pubsub: 0.040 MB (1 pkgs)
+      0.040  github.com/waku-org/go-waku/waku/v2/protocol/relay
+            chain: waku-org/go-waku/waku/v2/protocol/relay <- waku-org/go-waku/waku/v2/api/publish <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## wallet: leaderboard: 0.035 MB (1 pkgs)
+      0.035  github.com/status-im/status-go/pkg/services/wallet/leaderboard
+            chain: sg/pkg/services/wallet/leaderboard <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+
+## wallet: community tokens: 0.034 MB (3 pkgs)
+      0.027  github.com/status-im/status-go/pkg/services/communitytokens
+            chain: sg/pkg/services/communitytokens <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+      0.005  github.com/status-im/status-go/pkg/services/wallet/community
+            chain: sg/pkg/services/wallet/community <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.002  github.com/status-im/status-go/pkg/services/communitytokens/communitytokensdatabase
+            chain: sg/pkg/services/communitytokens/communitytokensdatabase <- sg/pkg/services/wallet/token <- sg/pkg/backend <- sg/mobile
+
+## libp2p service: holepunch: 0.031 MB (2 pkgs)
+      0.027  github.com/libp2p/go-libp2p/p2p/protocol/holepunch
+            chain: libp2p/go-libp2p/p2p/protocol/holepunch <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.004  github.com/libp2p/go-libp2p/p2p/protocol/holepunch/pb
+            chain: libp2p/go-libp2p/p2p/protocol/holepunch/pb <- libp2p/go-libp2p/p2p/protocol/holepunch <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## libp2p transport: tcp: 0.025 MB (3 pkgs)
+      0.016  github.com/libp2p/go-libp2p/p2p/transport/tcp
+            chain: libp2p/go-libp2p/p2p/transport/tcp <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.009  github.com/marten-seemann/tcp
+            chain: marten-seemann/tcp <- libp2p/go-libp2p/p2p/transport/tcp <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.000  github.com/libp2p/go-reuseport
+            chain: libp2p/go-reuseport <- libp2p/go-libp2p/p2p/transport/tcpreuse <- libp2p/go-libp2p/config <- libp2p/go-libp2p <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## go-waku: peer-exchange: 0.024 MB (2 pkgs)
+      0.021  github.com/waku-org/go-waku/waku/v2/protocol/peer_exchange
+            chain: waku-org/go-waku/waku/v2/protocol/peer_exchange <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.003  github.com/waku-org/go-waku/waku/v2/protocol/peer_exchange/pb
+            chain: waku-org/go-waku/waku/v2/protocol/peer_exchange/pb <- waku-org/go-waku/waku/v2/protocol/peer_exchange <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## go-ethereum: metrics: 0.022 MB (1 pkgs)
+      0.022  github.com/ethereum/go-ethereum/metrics
+            chain: ethereum/go-ethereum/metrics <- ethereum/go-ethereum/rpc <- sg/pkg/services/personal <- sg/mobile
+
+## stickers: 0.020 MB (1 pkgs)
+      0.020  github.com/status-im/status-go/pkg/services/stickers
+            chain: sg/pkg/services/stickers <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+
+## go-waku: lightpush: 0.016 MB (2 pkgs)
+      0.013  github.com/waku-org/go-waku/waku/v2/protocol/lightpush
+            chain: waku-org/go-waku/waku/v2/protocol/lightpush <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+      0.003  github.com/waku-org/go-waku/waku/v2/protocol/lightpush/pb
+            chain: waku-org/go-waku/waku/v2/protocol/lightpush/pb <- waku-org/go-waku/waku/v2/protocol/lightpush <- sg/pkg/messaging/waku <- sg/pkg/messaging <- sg/internal/protocol <- sg/mobile
+
+## wallet: transfer/history: 0.012 MB (1 pkgs)
+      0.012  github.com/status-im/status-go/pkg/services/wallet/transfer
+            chain: sg/pkg/services/wallet/transfer <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+
+## wallet: market: 0.011 MB (5 pkgs)
+      0.009  github.com/status-im/status-go/pkg/services/wallet/market
+            chain: sg/pkg/services/wallet/market <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+      0.001  github.com/status-im/status-go/pkg/services/wallet/market.(*MarketCachemapgithub.com/status-im/status-go/pkg/services/wallet/market
+            chain: (not reachable in graph)
+      0.000  github.com/status-im/status-go/pkg/services/wallet/market.Readmapgithub.com/status-im/status-go/pkg/services/wallet/market
+            chain: (not reachable in graph)
+      0.000  github.com/status-im/status-go/pkg/services/wallet/market.Readmapgithub.com/status-im/status-go/pkg/services/wallet/market.DataPoint,go.shape.mapmapgithub.com/status-im/status-go/pkg/services/wallet/market
+            chain: (not reachable in graph)
+      0.000  github.com/status-im/status-go/pkg/services/wallet/market.Writemapgithub.com/status-im/status-go/pkg/services/wallet/market
+            chain: (not reachable in graph)
+
+## backup: 0.008 MB (1 pkgs)
+      0.008  github.com/status-im/status-go/pkg/services/backup
+            chain: sg/pkg/services/backup <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+
+## browser/dapps permissions: 0.005 MB (1 pkgs)
+      0.005  github.com/status-im/status-go/pkg/services/permissions
+            chain: sg/pkg/services/permissions <- sg/pkg/backend/node <- sg/pkg/backend <- sg/mobile
+
+## wallet: onramp: 0.002 MB (1 pkgs)
+      0.002  github.com/status-im/status-go/pkg/services/wallet/onramp
+            chain: sg/pkg/services/wallet/onramp <- sg/pkg/services/wallet <- sg/internal/protocol <- sg/mobile
+
+## OTHER top 40
+      0.164  gopkg.in/yaml%2ev3
+      0.107  github.com/lib/pq
+      0.099  gopkg.in/go-playground/validator%2ev9
+      0.086  github.com/klauspost/compress/zstd
+      0.083  olympos.io/encoding/edn
+      0.080  github.com/Masterminds/squirrel
+      0.074  github.com/mutecomm/go-sqlcipher/v4
+      0.072  github.com/klauspost/reedsolomon
+      0.072  github.com/russross/blackfriday/v2
+      0.071  github.com/urfave/cli/v2
+      0.061  github.com/jellydator/ttlcache/v3
+      0.049  github.com/decred/dcrd/dcrec/secp256k1/v4
+      0.036  github.com/kilic/bls12-381
+      0.034  github.com/klauspost/compress/huff0
+      0.026  github.com/deckarep/golang-set/v2
+      0.019  github.com/golang/freetype/raster
+      0.019  github.com/go-logr/logr/funcr
+      0.018  github.com/afex/hystrix-go/hystrix
+      0.018  github.com/rivo/uniseg
+      0.018  main
+      0.018  github.com/flynn/noise
+      0.017  github.com/ipfs/go-log/v2
+      0.017  github.com/mat/besticon/besticon
+      0.016  github.com/ladydascalie/currency
+      0.016  github.com/ethereum/go-verkle
+      0.016  github.com/fogleman/gg
+      0.014  github.com/klauspost/compress/fse
+      0.013  github.com/golang/groupcache
+      0.013  github.com/lucasb-eyer/go-colorful
+      0.013  github.com/benbjohnson/clock
+      0.012  gopkg.in/natefinch/lumberjack%2ev2
+      0.012  github.com/imdario/mergo
+      0.011  github.com/kr/pretty
+      0.011  github.com/gorilla/securecookie
+      0.011  github.com/mikioh/tcpinfo
+      0.010  github.com/DataDog/zstd
+      0.010  github.com/golang-jwt/jwt/v4
+      0.010  github.com/leodido/go-urn
+      0.010  github.com/wk8/go-ordered-map/v2
+      0.009  github.com/btcsuite/btcd/chaincfg

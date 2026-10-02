@@ -1,0 +1,367 @@
+# Experiment patches (applied to copies of the module-cache sources, wired in with a go.mod replace via -modfile; status-go tree untouched)
+
+## A: go-libp2p v0.39.1 without the WebRTC transport
+diff -ru /Users/alexjbanca/go/pkg/mod/github.com/libp2p/go-libp2p@v0.39.1/config/config.go /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/config/config.go
+--- /Users/alexjbanca/go/pkg/mod/github.com/libp2p/go-libp2p@v0.39.1/config/config.go	2026-08-12 11:24:22
++++ /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/config/config.go	2026-10-02 12:14:48
+@@ -5,7 +5,6 @@
+ 	"crypto/rand"
+ 	"errors"
+ 	"fmt"
+-	"net"
+ 	"slices"
+ 	"time"
+ 
+@@ -39,7 +38,6 @@
+ 	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
+ 	"github.com/libp2p/go-libp2p/p2p/transport/quicreuse"
+ 	"github.com/libp2p/go-libp2p/p2p/transport/tcpreuse"
+-	libp2pwebrtc "github.com/libp2p/go-libp2p/p2p/transport/webrtc"
+ 	"github.com/prometheus/client_golang/prometheus"
+ 
+ 	ma "github.com/multiformats/go-multiaddr"
+@@ -297,29 +295,6 @@
+ 				return nil
+ 			}
+ 			return tcpreuse.NewConnMgr(tcpreuse.EnvReuseportVal, gater, rcmgr)
+-		}),
+-		fx.Provide(func(cm *quicreuse.ConnManager, sw *swarm.Swarm) libp2pwebrtc.ListenUDPFn {
+-			hasQuicAddrPortFor := func(network string, laddr *net.UDPAddr) bool {
+-				quicAddrPorts := map[string]struct{}{}
+-				for _, addr := range sw.ListenAddresses() {
+-					if _, err := addr.ValueForProtocol(ma.P_QUIC_V1); err == nil {
+-						netw, addr, err := manet.DialArgs(addr)
+-						if err != nil {
+-							return false
+-						}
+-						quicAddrPorts[netw+"_"+addr] = struct{}{}
+-					}
+-				}
+-				_, ok := quicAddrPorts[network+"_"+laddr.String()]
+-				return ok
+-			}
+-
+-			return func(network string, laddr *net.UDPAddr) (net.PacketConn, error) {
+-				if hasQuicAddrPortFor(network, laddr) {
+-					return cm.SharedNonQUICPacketConn(network, laddr)
+-				}
+-				return net.ListenUDP(network, laddr)
+-			}
+ 		}),
+ 	}
+ 	fxopts = append(fxopts, cfg.Transports...)
+diff -ru /Users/alexjbanca/go/pkg/mod/github.com/libp2p/go-libp2p@v0.39.1/defaults.go /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/defaults.go
+--- /Users/alexjbanca/go/pkg/mod/github.com/libp2p/go-libp2p@v0.39.1/defaults.go	2026-08-12 11:24:22
++++ /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/defaults.go	2026-10-02 12:14:48
+@@ -15,7 +15,6 @@
+ 	tls "github.com/libp2p/go-libp2p/p2p/security/tls"
+ 	quic "github.com/libp2p/go-libp2p/p2p/transport/quic"
+ 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
+-	libp2pwebrtc "github.com/libp2p/go-libp2p/p2p/transport/webrtc"
+ 	ws "github.com/libp2p/go-libp2p/p2p/transport/websocket"
+ 	webtransport "github.com/libp2p/go-libp2p/p2p/transport/webtransport"
+ 	"github.com/prometheus/client_golang/prometheus"
+@@ -47,7 +46,6 @@
+ 	Transport(quic.NewTransport),
+ 	Transport(ws.New),
+ 	Transport(webtransport.New),
+-	Transport(libp2pwebrtc.New),
+ )
+ 
+ // DefaultPrivateTransports are the default libp2p transports when a PSK is supplied.
+diff -ru /Users/alexjbanca/go/pkg/mod/github.com/libp2p/go-libp2p@v0.39.1/p2p/host/basic/basic_host.go /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/p2p/host/basic/basic_host.go
+--- /Users/alexjbanca/go/pkg/mod/github.com/libp2p/go-libp2p@v0.39.1/p2p/host/basic/basic_host.go	2026-08-12 11:24:22
++++ /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/p2p/host/basic/basic_host.go	2026-10-02 12:14:48
+@@ -30,7 +30,6 @@
+ 	"github.com/libp2p/go-libp2p/p2p/protocol/holepunch"
+ 	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
+ 	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
+-	libp2pwebrtc "github.com/libp2p/go-libp2p/p2p/transport/webrtc"
+ 	libp2pwebtransport "github.com/libp2p/go-libp2p/p2p/transport/webtransport"
+ 	"github.com/prometheus/client_golang/prometheus"
+ 
+@@ -852,7 +851,7 @@
+ func (h *BasicHost) NormalizeMultiaddr(addr ma.Multiaddr) ma.Multiaddr {
+ 	ok, n := libp2pwebtransport.IsWebtransportMultiaddr(addr)
+ 	if !ok {
+-		ok, n = libp2pwebrtc.IsWebRTCDirectMultiaddr(addr)
++		ok, n = isWebRTCDirectMultiaddr(addr)
+ 	}
+ 	if ok && n > 0 {
+ 		out := addr
+@@ -995,7 +994,7 @@
+ 
+ 	for i, addr := range addrs {
+ 		wtOK, wtN := libp2pwebtransport.IsWebtransportMultiaddr(addr)
+-		webrtcOK, webrtcN := libp2pwebrtc.IsWebRTCDirectMultiaddr(addr)
++		webrtcOK, webrtcN := isWebRTCDirectMultiaddr(addr)
+ 		if (wtOK && wtN == 0) || (webrtcOK && webrtcN == 0) {
+ 			t := s.TransportForListening(addr)
+ 			tpt, ok := t.(addCertHasher)
+Only in /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/p2p/host/basic: f05_addr_helpers.go
+
+## B: additionally without QUIC/WebTransport (diff against A)
+diff -ru /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/config/config.go /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p-noquic/config/config.go
+--- /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/config/config.go	2026-10-02 12:14:48
++++ /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p-noquic/config/config.go	2026-10-02 12:18:47
+@@ -36,13 +36,11 @@
+ 	relayv2 "github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay"
+ 	"github.com/libp2p/go-libp2p/p2p/protocol/holepunch"
+ 	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
+-	"github.com/libp2p/go-libp2p/p2p/transport/quicreuse"
+ 	"github.com/libp2p/go-libp2p/p2p/transport/tcpreuse"
+ 	"github.com/prometheus/client_golang/prometheus"
+ 
+ 	ma "github.com/multiformats/go-multiaddr"
+ 	manet "github.com/multiformats/go-multiaddr/net"
+-	"github.com/quic-go/quic-go"
+ 	"go.uber.org/fx"
+ 	"go.uber.org/fx/fxevent"
+ )
+@@ -348,27 +346,6 @@
+ 			)))
+ 	}
+ 
+-	fxopts = append(fxopts, fx.Provide(PrivKeyToStatelessResetKey))
+-	fxopts = append(fxopts, fx.Provide(PrivKeyToTokenGeneratorKey))
+-	if cfg.QUICReuse != nil {
+-		fxopts = append(fxopts, cfg.QUICReuse...)
+-	} else {
+-		fxopts = append(fxopts,
+-			fx.Provide(func(key quic.StatelessResetKey, tokenGenerator quic.TokenGeneratorKey, lifecycle fx.Lifecycle) (*quicreuse.ConnManager, error) {
+-				var opts []quicreuse.Option
+-				if !cfg.DisableMetrics {
+-					opts = append(opts, quicreuse.EnableMetrics(cfg.PrometheusRegisterer))
+-				}
+-				cm, err := quicreuse.NewConnManager(key, tokenGenerator, opts...)
+-				if err != nil {
+-					return nil, err
+-				}
+-				lifecycle.Append(fx.StopHook(cm.Close))
+-				return cm, nil
+-			}),
+-		)
+-	}
+-
+ 	fxopts = append(fxopts, fx.Invoke(
+ 		fx.Annotate(
+ 			func(swrm *swarm.Swarm, tpts []transport.Transport) error {
+@@ -475,7 +452,7 @@
+ 		// Make sure the swarm constructor depends on the quicreuse.ConnManager.
+ 		// That way, the ConnManager will be started before the swarm, and more importantly,
+ 		// the swarm will be stopped before the ConnManager.
+-		fx.Provide(func(eventBus event.Bus, _ *quicreuse.ConnManager, lifecycle fx.Lifecycle) (*swarm.Swarm, error) {
++		fx.Provide(func(eventBus event.Bus, lifecycle fx.Lifecycle) (*swarm.Swarm, error) {
+ 			sw, err := cfg.makeSwarm(eventBus, !cfg.DisableMetrics)
+ 			if err != nil {
+ 				return nil, err
+Only in /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/config: quic.go
+diff -ru /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/defaults.go /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p-noquic/defaults.go
+--- /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/defaults.go	2026-10-02 12:14:48
++++ /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p-noquic/defaults.go	2026-10-02 12:18:47
+@@ -13,10 +13,8 @@
+ 	"github.com/libp2p/go-libp2p/p2p/net/swarm"
+ 	"github.com/libp2p/go-libp2p/p2p/security/noise"
+ 	tls "github.com/libp2p/go-libp2p/p2p/security/tls"
+-	quic "github.com/libp2p/go-libp2p/p2p/transport/quic"
+ 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
+ 	ws "github.com/libp2p/go-libp2p/p2p/transport/websocket"
+-	webtransport "github.com/libp2p/go-libp2p/p2p/transport/webtransport"
+ 	"github.com/prometheus/client_golang/prometheus"
+ 
+ 	"github.com/multiformats/go-multiaddr"
+@@ -43,9 +41,7 @@
+ // libp2p instead of replacing them.
+ var DefaultTransports = ChainOptions(
+ 	Transport(tcp.NewTCPTransport),
+-	Transport(quic.NewTransport),
+ 	Transport(ws.New),
+-	Transport(webtransport.New),
+ )
+ 
+ // DefaultPrivateTransports are the default libp2p transports when a PSK is supplied.
+diff -ru /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/options.go /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p-noquic/options.go
+--- /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/options.go	2026-10-02 12:13:07
++++ /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p-noquic/options.go	2026-10-02 12:18:47
+@@ -27,7 +27,6 @@
+ 	tptu "github.com/libp2p/go-libp2p/p2p/net/upgrader"
+ 	relayv2 "github.com/libp2p/go-libp2p/p2p/protocol/circuitv2/relay"
+ 	"github.com/libp2p/go-libp2p/p2p/protocol/holepunch"
+-	"github.com/libp2p/go-libp2p/p2p/transport/quicreuse"
+ 	"github.com/prometheus/client_golang/prometheus"
+ 
+ 	ma "github.com/multiformats/go-multiaddr"
+@@ -95,33 +94,6 @@
+ func Muxer(name string, muxer network.Multiplexer) Option {
+ 	return func(cfg *Config) error {
+ 		cfg.Muxers = append(cfg.Muxers, tptu.StreamMuxer{Muxer: muxer, ID: protocol.ID(name)})
+-		return nil
+-	}
+-}
+-
+-func QUICReuse(constructor interface{}, opts ...quicreuse.Option) Option {
+-	return func(cfg *Config) error {
+-		tag := `group:"quicreuseopts"`
+-		typ := reflect.ValueOf(constructor).Type()
+-		numParams := typ.NumIn()
+-		isVariadic := typ.IsVariadic()
+-
+-		if !isVariadic && len(opts) > 0 {
+-			return errors.New("QUICReuse constructor doesn't take any options")
+-		}
+-
+-		var params []string
+-		if isVariadic && len(opts) > 0 {
+-			// If there are options, apply the tag.
+-			// Since options are variadic, they have to be the last argument of the constructor.
+-			params = make([]string, numParams)
+-			params[len(params)-1] = tag
+-		}
+-
+-		cfg.QUICReuse = append(cfg.QUICReuse, fx.Provide(fx.Annotate(constructor, fx.ParamTags(params...))))
+-		for _, opt := range opts {
+-			cfg.QUICReuse = append(cfg.QUICReuse, fx.Supply(fx.Annotate(opt, fx.ResultTags(tag))))
+-		}
+ 		return nil
+ 	}
+ }
+diff -ru /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/p2p/host/basic/basic_host.go /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p-noquic/p2p/host/basic/basic_host.go
+--- /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/p2p/host/basic/basic_host.go	2026-10-02 12:14:48
++++ /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p-noquic/p2p/host/basic/basic_host.go	2026-10-02 12:18:47
+@@ -30,7 +30,6 @@
+ 	"github.com/libp2p/go-libp2p/p2p/protocol/holepunch"
+ 	"github.com/libp2p/go-libp2p/p2p/protocol/identify"
+ 	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
+-	libp2pwebtransport "github.com/libp2p/go-libp2p/p2p/transport/webtransport"
+ 	"github.com/prometheus/client_golang/prometheus"
+ 
+ 	"github.com/libp2p/go-netroute"
+@@ -849,7 +848,7 @@
+ // NormalizeMultiaddr returns a multiaddr suitable for equality checks.
+ // If the multiaddr is a webtransport component, it removes the certhashes.
+ func (h *BasicHost) NormalizeMultiaddr(addr ma.Multiaddr) ma.Multiaddr {
+-	ok, n := libp2pwebtransport.IsWebtransportMultiaddr(addr)
++	ok, n := isWebtransportMultiaddr(addr)
+ 	if !ok {
+ 		ok, n = isWebRTCDirectMultiaddr(addr)
+ 	}
+@@ -993,7 +992,7 @@
+ 	copy(addrs, addrsOld)
+ 
+ 	for i, addr := range addrs {
+-		wtOK, wtN := libp2pwebtransport.IsWebtransportMultiaddr(addr)
++		wtOK, wtN := isWebtransportMultiaddr(addr)
+ 		webrtcOK, webrtcN := isWebRTCDirectMultiaddr(addr)
+ 		if (wtOK && wtN == 0) || (webrtcOK && webrtcN == 0) {
+ 			t := s.TransportForListening(addr)
+diff -ru /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/p2p/host/basic/f05_addr_helpers.go /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p-noquic/p2p/host/basic/f05_addr_helpers.go
+--- /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p/p2p/host/basic/f05_addr_helpers.go	2026-10-02 12:14:48
++++ /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-libp2p-noquic/p2p/host/basic/f05_addr_helpers.go	2026-10-02 12:18:47
+@@ -31,3 +31,37 @@
+ 	})
+ 	return foundUDP && foundWebRTC, certHashCount
+ }
++
++// copy of webtransport.IsWebtransportMultiaddr so the host does not link quic-go
++func isWebtransportMultiaddr(multiaddr ma.Multiaddr) (bool, int) {
++	const (
++		init = iota
++		foundUDP
++		foundQuicV1
++		foundWebTransport
++	)
++	state := init
++	certhashCount := 0
++	ma.ForEach(multiaddr, func(c ma.Component) bool {
++		switch c.Protocol().Code {
++		case ma.P_UDP:
++			if state == init {
++				state = foundUDP
++			}
++		case ma.P_QUIC_V1:
++			if state == foundUDP {
++				state = foundQuicV1
++			}
++		case ma.P_WEBTRANSPORT:
++			if state == foundQuicV1 {
++				state = foundWebTransport
++			}
++		case ma.P_CERTHASH:
++			if state == foundWebTransport {
++				certhashCount++
++			}
++		}
++		return true
++	})
++	return state == foundWebTransport, certhashCount
++}
+
+## B: go-waku v0.10.3 DefaultLibP2POptions without QUIC/WebTransport
+diff -ru /Users/alexjbanca/go/pkg/mod/github.com/waku-org/go-waku@v0.10.3/waku/v2/node/wakuoptions.go /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-waku/waku/v2/node/wakuoptions.go
+--- /Users/alexjbanca/go/pkg/mod/github.com/waku-org/go-waku@v0.10.3/waku/v2/node/wakuoptions.go	2026-08-12 11:24:31
++++ /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor/fork-go-waku/waku/v2/node/wakuoptions.go	2026-10-02 12:18:01
+@@ -19,9 +19,7 @@
+ 	basichost "github.com/libp2p/go-libp2p/p2p/host/basic"
+ 	"github.com/libp2p/go-libp2p/p2p/muxer/yamux"
+ 	"github.com/libp2p/go-libp2p/p2p/net/connmgr"
+-	quic "github.com/libp2p/go-libp2p/p2p/transport/quic"
+ 	"github.com/libp2p/go-libp2p/p2p/transport/tcp"
+-	libp2pwebtransport "github.com/libp2p/go-libp2p/p2p/transport/webtransport"
+ 	"github.com/multiformats/go-multiaddr"
+ 	manet "github.com/multiformats/go-multiaddr/net"
+ 	"github.com/prometheus/client_golang/prometheus"
+@@ -630,8 +628,6 @@
+ var DefaultLibP2POptions = []libp2p.Option{
+ 	libp2p.ChainOptions(
+ 		libp2p.Transport(tcp.NewTCPTransport),
+-		libp2p.Transport(quic.NewTransport),
+-		libp2p.Transport(libp2pwebtransport.New),
+ 	),
+ 	libp2p.UserAgent(UserAgent),
+ 	libp2p.ChainOptions(
+
+## C: gofeed stub module
+// Package gofeed: F05 size experiment stub with the API surface status-go uses.
+package gofeed
+
+import (
+	"errors"
+	"time"
+)
+
+type Extension struct{ Value string }
+type Extensions map[string]map[string][]Extension
+type Image struct{ URL, Title string }
+type Item struct {
+	Title, Description, Content string
+	Image                       *Image
+	PublishedParsed             *time.Time
+	Custom                      map[string]string
+	Extensions                  Extensions
+}
+type Feed struct{ Items []*Item }
+type Parser struct{}
+
+func NewParser() *Parser                             { return &Parser{} }
+func (p *Parser) ParseURL(url string) (*Feed, error) { return nil, errors.New("newsfeed disabled") }
+
+## build script
+#!/bin/bash
+# usage: f05-build.sh <variant-name>  -- uses $SP/go.mod.<variant> via -modfile, never touches status-go go.mod
+set -e
+SP=/private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/bc83e5da-a729-4aaf-8e23-239567339916/scratchpad/floor
+WT=/Users/alexjbanca/Repos/status-desktop.worktrees/perf-21528-memory
+NDK=/Users/alexjbanca/Library/Android/sdk/ndk/27.2.12479018/toolchains/llvm/prebuilt/darwin-x86_64
+OUT=$SP/libstatus-android-$1.so
+MODFILE=$SP/f05-$1.mod
+cd $WT/vendor/status-go
+time CC="$NDK/bin/clang --target=aarch64-linux-android28 --sysroot=$NDK/sysroot" CGO_ENABLED=1 GOOS=android GOARCH=arm64 \
+ CGO_LDFLAGS="-L$WT/mobile/lib/android/qt6 -lsds" CGO_CFLAGS="-I$WT/vendor/nim-sds/library" \
+ go build -modfile=$MODFILE -buildmode=c-shared -tags 'gowaku_no_rln nowatchdog disable_torrent' \
+ -ldflags="-checklinkname=0 -X github.com/status-im/status-go/vendor/github.com/ethereum/go-ethereum/metrics.EnabledStr=true" \
+ -o "$OUT" ./build/bin/statusgo-lib
+ls -l $OUT
+$NDK/bin/llvm-readelf -S -W $OUT > $SP/f05-readelf-$1.txt
+go tool nm -size $OUT 2>/dev/null | awk '$3 ~ /^[tT]$/ {print $2, $4}' > $SP/f05-nm-$1.txt
+CC="$NDK/bin/clang --target=aarch64-linux-android28 --sysroot=$NDK/sysroot" CGO_ENABLED=1 GOOS=android GOARCH=arm64 CGO_LDFLAGS="-L$WT/mobile/lib/android/qt6 -lsds" CGO_CFLAGS="-I$WT/vendor/nim-sds/library" go list -modfile=$MODFILE -deps -f '{{.ImportPath}} {{join .Imports " "}}' -tags 'gowaku_no_rln nowatchdog disable_torrent' ./build/bin/statusgo-lib > $SP/f05-imports-$1.txt
+echo "DONE $1"

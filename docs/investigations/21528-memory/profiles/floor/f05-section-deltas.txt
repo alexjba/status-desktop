@@ -1,0 +1,6 @@
+variant            file    .text  pclntab  .rodata  data.rel.ro  rela.dyn | resident est (0.74*text+0.58*pclntab+1.0*relro)
+baseline            155.82   28.04   24.09   15.51      9.61      8.97 | delta vs ref: file +0.00 text +0.00 pclntab +0.00 rodata +0.00 relro +0.00 rela +0.00 => resident -0.00 MB
+nowebrtc (A)        149.32   26.73   22.92   15.46      9.14      8.55 | delta vs ref: file -6.50 text -1.31 pclntab -1.17 rodata -0.05 relro -0.46 rela -0.42 => resident -2.11 MB
+noquic (B, on A)    143.50   25.62   21.79   15.42      8.75      8.21 | delta vs ref: file -5.82 text -1.11 pclntab -1.12 rodata -0.04 relro -0.40 rela -0.34 => resident -1.87 MB
+noquic (B) vs base  143.50   25.62   21.79   15.42      8.75      8.21 | delta vs ref: file -12.32 text -2.42 pclntab -2.29 rodata -0.09 relro -0.86 rela -0.76 => resident -3.98 MB
+nonews (C)          154.04   27.70   23.74   15.50      9.49      8.85 | delta vs ref: file -1.78 text -0.34 pclntab -0.34 rodata -0.01 relro -0.12 rela -0.12 => resident -0.57 MB

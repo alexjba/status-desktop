@@ -136,6 +136,12 @@ Resident pages scale with text: text 19/25.7MB, pclntab 13.3/22.8, relocation da
 so every MB of text removed is worth ~2MB resident on the service process. Level 1 (dead code, `floor-issues/F04`)
 and the level-2 feature list (`F05`) are built from this table.
 
+Level-2 measurements (2026-10-02, `profiles/floor/f05-*`): rebuilding without the libp2p WebRTC transport removes 1.31MB
+of text (file −6.5MB, ≈2.1MB resident), QUIC+WebTransport on top of that another 1.11MB (file −5.8MB, ≈1.9MB resident),
+the RSS news feed 0.34MB (≈0.6MB resident); neither Waku transport is used by the mobile light client. The per-feature
+table, mechanisms and product owners are in `floor-issues/F05`. The same pass found that the `go-ethereum/node` row in
+F04 also carries 1.03MB of C `ZSTD_*` code (DataDog/zstd ← pebble), so that level-1 row is ≈2.9MB of text, not 1.3.
+
 ## Qt/QML dependency cost (UI process, login screen, page-table residency; `profiles/floor/ui-login-apk-pages.txt`)
 
 129 Qt libraries and plugins are packaged (91MB in the APK); 48.6MB of them is resident at the login screen, and the
