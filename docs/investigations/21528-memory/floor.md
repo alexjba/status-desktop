@@ -169,3 +169,17 @@ Removable or lazy-loadable at the login screen: ~16MB resident (fault-around inf
 ~50MB of APK. The persistent memory gain beyond that is the Qt5Compat effects → Mali host heap, which has to be
 measured per screen (count of layered items × texture size) before it can be sized; the 28MB growth of Mali host
 allocations after login is the upper bound.
+
+## Sizing after the analysis pass (2026-10-02, agents F01/F03/F05/F13; details in each draft)
+
+| item | before (est.) | after analysis | basis |
+|---|---|---|---|
+| Go pre-login heap (F01) | 0–15 | **−11 to −12** (20 → 8–9 at the login screen) | host reproduction: 13.7MB live, 99.5% from `init()`; zxcvbn 6.3 lazy-able, token lists 3.25 → `go:embed`, validator 1.1, gofakeit 0.5; metrics link flag is a no-op |
+| scene-graph atlas (F03) | 5–15 | **−28 login, −25..−40 settle** on the iPad; same 2048×4096 formula on a 1080×2400 phone (Android unmeasured) | 8 iPad runs, Qt log confirms atlas dimensions; 1024² with identical screenshots |
+| Go binary diet level 2 (F05) | "up to ~10" | **−4.6 resident measured** (WebRTC, QUIC/WebTransport, news feed; no mobile impact) + ≈−4.4 estimated (relay/pubsub/gogo, NAT, product rows) | three unstripped Android rebuilds; level-1 row corrected to 2.9MB text (pebble drags 1MB of C zstd) |
+| layered effects (F13) | up to 28 | login screen: **0** layered items; post-login: communities portal +76..90MB GPU and +65MB native heap vs other screens (10 non-virtualised cards at 2× texture size + mipmap + DropShadow); skeletons and chat chrome textures alive while invisible | `dumpsys gpu` + PSS per screen on the Redmi, desktop texture count per screen; Mali host heap column unmeasured |
+
+Net for the floor (persisting after login): Go heap ~11, atlas ~28–30 per process pair (Android to confirm), Go binary
+~5–7 resident, fonts 8–11 (F06), Qt modules/packaging ~8–10 (F08), R8 ~5 (F07): **≈65–75MB of measured or
+near-certain floor reduction**, before the property-cache prototype (F02, 15–25 est.) and the URL-module convention
+(F10/F11, post-login). The effects work (F13) is a post-login item concentrated on the communities portal.
