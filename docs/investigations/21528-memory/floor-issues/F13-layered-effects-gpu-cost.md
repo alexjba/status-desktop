@@ -45,16 +45,18 @@ the process, outside PSS on this Mali SoC) and `dumpsys meminfo` per screen; hea
 
 ### Per screen
 
-| screen (Redmi, r2 walk) | desktop textures (count / MB @DPR1, visible MB) | Redmi GPU MB | Redmi native heap PSS+swap MB (heap size) | EGL mtrack / Graphics MB | total PSS MB |
-|---|---|---|---|---|---|
-| login screen | 0 / 0 (178 items; onboarding welcome page: 4 / 0.2) | 53.1 | 96.7 (105.6) | 16.1 | 273 |
-| post-login, wallet (privacy wall on device; desktop restored the portal: 100 / 31.2) | — | 88.6 | 201.1 (209.7) | 12.3 | 378 |
-| chat (Messages) | 40 / 3.4, visible 0.15 | 67.1 | 205.3 (214.8) | 12.3 | 376 |
-| communities portal (10 curated cards) | 100 / 31.2, visible 25.3 | **159.3** | **269.5 (280.9)** | 12.3 | **448** |
-| home | 72 / 3.1, visible 2.9 | 83.1 | 236.4 (246.1) | 12.3 | 406 |
-| wallet (loaded) | 68 / 2.4, visible 1.3 | 87.1 | 237.0 (247.1) | 12.3 | 407 |
-| market | 27 / 2.3, visible 0.19 | 89.2 | 236.5 (246.6) | 12.3 | 407 |
-| chat again | 45 / 5.4, visible 0.20 | 76.3 | 233.3 (243.1) | 12.3 | 404 |
+| screen (Redmi, r2 walk) | desktop textures (count / MB @DPR1, visible MB) | Redmi GPU MB | Redmi native heap PSS+swap MB (heap size) | Mali host heap MB | EGL mtrack / Graphics MB | total PSS MB |
+|---|---|---|---|---|---|---|
+| login screen | 0 / 0 (178 items; onboarding welcome page: 4 / 0.2) | 53.1 | 96.7 (105.6) | not measured¹ | 16.1 | 273 |
+| post-login, wallet (privacy wall on device; desktop restored the portal: 100 / 31.2) | — | 88.6 | 201.1 (209.7) | not measured¹ | 12.3 | 378 |
+| chat (Messages) | 40 / 3.4, visible 0.15 | 67.1 | 205.3 (214.8) | not measured¹ | 12.3 | 376 |
+| communities portal (10 curated cards) | 100 / 31.2, visible 25.3 | **159.3** | **269.5 (280.9)** | not measured¹ | 12.3 | **448** |
+| home | 72 / 3.1, visible 2.9 | 83.1 | 236.4 (246.1) | not measured¹ | 12.3 | 406 |
+| wallet (loaded) | 68 / 2.4, visible 1.3 | 87.1 | 237.0 (247.1) | not measured¹ | 12.3 | 407 |
+| market | 27 / 2.3, visible 0.19 | 89.2 | 236.5 (246.6) | not measured¹ | 12.3 | 407 |
+| chat again | 45 / 5.4, visible 0.20 | 76.3 | 233.3 (243.1) | not measured¹ | 12.3 | 404 |
+
+¹ Mali host heap (libGLES_mali.so allocations in heapprofd): not measured — no profileable `app.status.mobile` build on the device (see `profiles/floor/f13-heapprofd-redmi-a5-EMPTY.txt`); the only reference points are the floor.md login (16.7MB) and post-login (~45MB) values from the debuggable build.
 
 The login screen has no layered item at all (desktop count 0; the mobile `LoginScreen` has none in the static inventory):
 its 53MB of GPU memory and 16.7MB Mali host heap are swapchain buffers, atlases and decoded images, not effects. Section
@@ -101,8 +103,12 @@ Not texture-related but found on the way: `layer.samples` (MSAA) is used only by
 
 What could not be measured: Mali host-side heap per screen. The installed `app.status.mobile` is the Sep 2 release APK
 without `<profileable>`, so heapprofd produced an empty trace (`profiles/floor/f13-heapprofd-redmi-a5-EMPTY.txt`); the
-profiling build is only installed as `app.status.mobile.debug` (not started). `adb install -r` of
-`mobile/bin/android/qt6/Status.apk` (same debug signing key, keeps the profile data) would enable the heapprofd column;
+profiling APK `mobile/bin/android/qt6/Status.apk` turns out to be package `app.status.mobile.debug` (not started; an
+in-place install attempt was reverted, see the EMPTY note), so a profileable `app.status.mobile` build has to be produced first;
 the native-heap delta at the portal (+65MB heap size) is the upper bound for the Mali host mirror of its +90MB of GPU
 textures. Desktop count caveat: macOS DPR 1 and a 1200×680 window; mobile layouts (`StatusSectionLayoutPortrait`) show the
 same components full-width, so per-site counts transfer, sizes do not.
+
+### Device state (2026-10-02 12:50–12:52, after the measurement)
+Backed up the installed `app.status.mobile` base.apk (Sep 2 release) to `scratchpad/floor/release-sep02-base.apk`, md5 89ff8b0f5080f23c175ea2e56f2e379b; an `adb install -r -d mobile/bin/android/qt6/Status.apk` meant for that package instead replaced `app.status.mobile.debug` (the APK's package name; 29847635 → 29847287), because the first attempt failed with VERSION_DOWNGRADE and the retry carried `-d`.
+Restored `app.status.mobile.debug` immediately from `/Users/alexjbanca/Repos/status-desktop/mobile/bin/android/qt6/Status.apk` (versionCode 29847635, md5 f7e24545459aa2d2ca89d6baf229c164 verified on device); `app.status.mobile` unchanged (md5 89ff8b0f… verified before and after); neither package was uninstalled, cleared or launched during this, and both data dirs are intact.

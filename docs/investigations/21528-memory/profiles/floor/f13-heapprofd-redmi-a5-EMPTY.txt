@@ -14,3 +14,12 @@ Fallback used instead: `dumpsys gpu` "Proc <pid> total" (gpu_mem_total tracepoin
 `dumpsys meminfo` rows per screen; see f13-device-redmi-a5.txt and ledger/f13-effects-redmi-a5.csv.
 Mali host-side heap per screen (libGLES_mali.so allocations) remains unmeasured; the only data points are the earlier
 login-screen (16.7MB) and post-login (~45MB) numbers in floor.md, taken on the debuggable build.
+
+Follow-up 12:50-12:52: with the lead's authorisation an in-place `adb install -r` of mobile/bin/android/qt6/Status.apk was attempted.
+That APK's package name is app.status.mobile.debug (aapt badging, versionCode 29847287), so app.status.mobile stayed untouched
+(md5 89ff8b0f… before and after; backup at scratchpad/floor/release-sep02-base.apk). The install (after a VERSION_DOWNGRADE
+retry with -d) replaced app.status.mobile.debug (previously 29847635, updated Oct 1 15:39); it was restored at once from
+/Users/alexjbanca/Repos/status-desktop/mobile/bin/android/qt6/Status.apk (29847635, md5 f7e24545459aa2d2ca89d6baf229c164),
+data preserved, package never launched. Net: the only heapprofd-capable builds on the device are app.status.mobile.debug
+packages; a profileable app.status.mobile build does not exist and must be produced before the Mali host-heap column can be
+filled.
