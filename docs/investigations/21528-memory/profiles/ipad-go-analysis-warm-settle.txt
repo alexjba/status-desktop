@@ -1,0 +1,163 @@
+== idle churn 30s (alloc_space B-A) ==
+File: Status
+Type: alloc_space
+Time: 2026-10-02 09:54:44 EEST
+Showing nodes accounting for 88.86MB, 93.67% of 94.86MB total
+Showing top 30 nodes out of 176
+      flat  flat%   sum%        cum   cum%
+   17.51MB 18.46% 18.46%    26.01MB 27.42%  github.com/ethereum/go-ethereum/accounts/abi.Type.pack
+    7.32MB  7.72% 26.17%    21.96MB 23.15%  encoding/json.Marshal
+    7.25MB  7.64% 33.81%     7.25MB  7.64%  io.ReadAll
+    5.99MB  6.32% 40.13%     6.49MB  6.85%  encoding/json.(*Decoder).refill
+    5.63MB  5.94% 46.06%     5.63MB  5.94%  bytes.growSlice
+    5.13MB  5.41% 51.47%     5.13MB  5.41%  encoding/json.appendString[go.shape.[]uint8]
+    4.38MB  4.62% 56.09%     4.38MB  4.62%  github.com/ethereum/go-ethereum/common/hexutil.Bytes.MarshalText
+    4.33MB  4.56% 60.65%    30.33MB 31.98%  github.com/ethereum/go-ethereum/accounts/abi.Arguments.Pack
+    4.30MB  4.53% 65.18%    34.63MB 36.51%  github.com/ethereum/go-ethereum/accounts/abi.ABI.Pack
+    3.77MB  3.97% 69.15%     6.28MB  6.62%  github.com/status-im/status-go/pkg/services/wallet.(*MultistandardBalanceTokenListProvider).GetTokenContractAddresses
+    2.50MB  2.64% 71.79%     3.50MB  3.69%  github.com/ethereum/go-ethereum/accounts/abi.mapArgNamesToStructFields
+    1.98MB  2.08% 73.87%     1.98MB  2.08%  encoding/json.(*RawMessage).UnmarshalJSON
+    1.80MB  1.89% 75.77%     5.80MB  6.11%  github.com/status-im/go-wallet-sdk/pkg/balance/multistandardfetcher.buildERC20Job
+    1.51MB  1.59% 77.36%     2.52MB  2.65%  github.com/status-im/status-go/pkg/services/wallet/token.(*Manager).GetTokensByChain
+    1.50MB  1.58% 78.94%        3MB  3.16%  github.com/ethereum/go-ethereum/accounts/abi.packBytesSlice
+    1.44MB  1.52% 80.46%     1.44MB  1.52%  github.com/ethereum/go-ethereum/common/hexutil.(*Bytes).UnmarshalText
+    1.20MB  1.27% 81.73%    35.88MB 37.82%  github.com/status-im/go-wallet-sdk/pkg/multicall.ProcessJobs
+    1.16MB  1.22% 82.95%     1.16MB  1.22%  runtime/pprof.StartCPUProfile
+    1.05MB  1.11% 84.06%     1.05MB  1.11%  runtime/pprof.(*protobuf).string
+       1MB  1.05% 85.11%        1MB  1.05%  github.com/ethereum/go-ethereum/common.RightPadBytes (inline)
+       1MB  1.05% 86.17%        1MB  1.05%  math/big.nat.make (inline)
+       1MB  1.05% 87.22%        1MB  1.05%  github.com/ethereum/go-ethereum/accounts/abi.lengthPrefixPointsTo
+       1MB  1.05% 88.28%        1MB  1.05%  github.com/ethereum/go-ethereum/common/math.PaddedBigBytes
+       1MB  1.05% 89.33%        1MB  1.05%  github.com/ethereum/go-ethereum/accounts/abi.mustArrayToByteSlice
+       1MB  1.05% 90.38%        4MB  4.22%  github.com/status-im/go-wallet-sdk/pkg/multicall.BuildERC20BalanceCall
+       1MB  1.05% 91.44%        1MB  1.05%  internal/bytealg.MakeNoZero
+    0.57MB   0.6% 92.04%     0.57MB   0.6%  compress/flate.newDeflateFast
+    0.54MB  0.57% 92.61%     0.54MB  0.57%  reflect.unsafe_NewArray
+    0.50MB  0.53% 93.14%     0.50MB  0.53%  crypto/internal/fips140/mlkem.NewDecapsulationKey768
+    0.50MB  0.53% 93.67%     0.50MB  0.53%  github.com/status-im/go-wallet-sdk/pkg/tokens/manager.(*manager).GetTokensByChain
+
+== cpu 30s ==
+File: Status
+Type: cpu
+Time: 2026-10-02 09:54:44 EEST
+Duration: 30.10s, Total samples = 1.60s ( 5.32%)
+Showing nodes accounting for 1.60s, 100% of 1.60s total
+Showing top 30 nodes out of 283
+      flat  flat%   sum%        cum   cum%
+     0.79s 49.38% 49.38%      0.79s 49.38%  <unknown>
+     0.16s 10.00% 59.38%      0.16s 10.00%  runtime.cgocall
+     0.14s  8.75% 68.12%      0.14s  8.75%  syscall.rawsyscalln
+     0.12s  7.50% 75.62%      0.12s  7.50%  runtime.pthread_cond_signal
+     0.07s  4.38% 80.00%      0.11s  6.88%  encoding/json.(*Decoder).readValue
+     0.05s  3.12% 83.12%      0.05s  3.12%  encoding/json.(*decodeState).rescanLiteral
+     0.03s  1.88% 85.00%      0.03s  1.88%  encoding/json.appendCompact
+     0.03s  1.88% 86.88%      0.03s  1.88%  runtime.kevent
+     0.03s  1.88% 88.75%      0.03s  1.88%  runtime.tryDeferToSpanScan
+     0.02s  1.25% 90.00%      0.02s  1.25%  hash/crc32.slicingUpdate
+     0.02s  1.25% 91.25%      0.02s  1.25%  runtime.pthread_cond_wait
+     0.02s  1.25% 92.50%      0.02s  1.25%  runtime.usleep
+     0.01s  0.62% 93.12%      0.02s  1.25%  compress/flate.(*decompressor).huffmanBlock
+     0.01s  0.62% 93.75%      0.01s  0.62%  crypto/tls.(*Conn).maxPayloadSizeForWrite
+     0.01s  0.62% 94.38%      0.02s  1.25%  encoding/json.checkValid
+     0.01s  0.62% 95.00%      0.01s  0.62%  encoding/json.stateInString
+     0.01s  0.62% 95.62%      0.01s  0.62%  github.com/ethereum/go-ethereum/accounts/abi.set
+     0.01s  0.62% 96.25%      0.01s  0.62%  github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoremem.(*protoSegments).get
+     0.01s  0.62% 96.88%      0.01s  0.62%  runtime.(*mspan).writeHeapBitsSmall
+     0.01s  0.62% 97.50%      0.01s  0.62%  runtime.madvise
+     0.01s  0.62% 98.12%      0.02s  1.25%  runtime.mallocgcSmallScanNoHeader
+     0.01s  0.62% 98.75%      0.01s  0.62%  runtime.mapaccess2_fast64
+     0.01s  0.62% 99.38%      0.01s  0.62%  runtime.memclrNoHeapPointers
+     0.01s  0.62%   100%      0.01s  0.62%  runtime/pprof.mach_vm_region
+         0     0%   100%      0.03s  1.88%  _cgoexp_f9d94b05b249_WriteHeapProfile
+         0     0%   100%      0.01s  0.62%  bufio.(*Reader).ReadByte
+         0     0%   100%      0.01s  0.62%  bufio.(*Reader).fill
+         0     0%   100%      0.01s  0.62%  bufio.(*Writer).Flush
+         0     0%   100%      0.08s  5.00%  bufio.(*Writer).Write
+         0     0%   100%      0.01s  0.62%  bytes.(*Buffer).ReadFrom
+
+== live after GC ==
+File: Status
+Type: inuse_space
+Time: 2026-10-02 09:53:03 EEST
+Showing nodes accounting for 51.32MB, 91.94% of 55.82MB total
+Showing top 40 nodes out of 299
+      flat  flat%   sum%        cum   cum%
+    4.50MB  8.06%  8.06%     5.94MB 10.64%  encoding/json.(*decodeState).literalStore
+       4MB  7.17% 15.23%        4MB  7.17%  github.com/syndtr/goleveldb/leveldb/memdb.New
+    3.85MB  6.89% 22.12%     3.85MB  6.89%  io.ReadAll
+    3.75MB  6.72% 28.84%     3.75MB  6.72%  github.com/ethereum/go-ethereum/accounts/abi.ABI.Pack
+    2.57MB  4.60% 33.44%     2.57MB  4.60%  github.com/status-im/zxcvbn-go/matching.buildRankedDict
+    2.52MB  4.52% 37.96%     4.52MB  8.11%  github.com/status-im/go-wallet-sdk/pkg/tokens/parsers.(*StandardTokenListParser).Parse
+    2.04MB  3.65% 41.61%     2.04MB  3.65%  runtime.mallocgc
+    1.54MB  2.76% 44.37%     2.04MB  3.65%  github.com/status-im/go-wallet-sdk/pkg/tokens/builder.(*Builder).AddTokenList
+    1.44MB  2.57% 46.94%     1.44MB  2.57%  github.com/ethereum/go-ethereum/common/hexutil.(*Bytes).UnmarshalText
+    1.38MB  2.47% 49.41%     1.38MB  2.47%  reflect.growslice
+    1.17MB  2.10% 51.51%     4.92MB  8.82%  github.com/status-im/go-wallet-sdk/pkg/multicall.ProcessJobs
+    1.16MB  2.07% 53.58%     1.16MB  2.07%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.3
+    1.12MB  2.01% 55.59%     1.12MB  2.01%  github.com/forPelevin/gomoji.map.init.0
+    1.11MB  1.98% 57.57%     1.11MB  1.98%  github.com/decred/dcrd/dcrec/secp256k1/v4.init.init.func2.func3
+    1.10MB  1.96% 59.53%     1.10MB  1.96%  encoding/json.appendString[go.shape.[]uint8]
+    1.10MB  1.96% 61.50%     1.10MB  1.96%  github.com/ethereum/go-ethereum/common/hexutil.Bytes.MarshalText
+    1.08MB  1.94% 63.43%     1.08MB  1.94%  github.com/status-im/status-go/pkg/services/wallet.(*MultistandardBalanceTokenListProvider).GetTokenContractAddresses
+    1.04MB  1.86% 65.29%     1.04MB  1.86%  github.com/status-im/go-wallet-sdk/pkg/balance/multistandardfetcher.processERC20JobResult
+    1.03MB  1.84% 67.13%     1.03MB  1.84%  github.com/go-playground/validator/v10.map.init.4
+    1.02MB  1.82% 68.96%     1.02MB  1.82%  github.com/ethereum/go-ethereum/metrics.newExpDecaySampleHeap
+       1MB  1.79% 70.75%        1MB  1.79%  regexp/syntax.(*compiler).inst
+       1MB  1.79% 72.54%        1MB  1.79%  math/big.nat.make (inline)
+    0.98MB  1.76% 74.30%     3.67MB  6.58%  encoding/json.Marshal
+    0.92MB  1.65% 75.95%     0.92MB  1.65%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.2
+    0.79MB  1.42% 77.37%     1.30MB  2.33%  net/http.(*http2clientStream).writeRequestBody
+    0.79MB  1.41% 78.78%     0.79MB  1.41%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.1
+    0.69MB  1.23% 80.01%     2.19MB  3.92%  github.com/status-im/go-wallet-sdk/pkg/balance/multistandardfetcher.buildERC20Job
+    0.60MB  1.08% 81.09%     0.60MB  1.08%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.0
+    0.51MB  0.92% 82.01%     0.51MB  0.92%  github.com/brianvoe/gofakeit/v7/data.map.init.12
+    0.51MB  0.92% 82.93%     0.51MB  0.92%  html.init.func1
+    0.51MB  0.91% 83.84%     0.51MB  0.91%  crypto/tls.(*halfConn).encrypt
+    0.51MB  0.91% 84.75%     0.51MB  0.91%  github.com/ladydascalie/currency.map.init.0
+    0.50MB   0.9% 85.65%     0.50MB   0.9%  github.com/status-im/status-go/pkg/messaging/waku.New
+    0.50MB   0.9% 86.55%     0.50MB   0.9%  github.com/status-im/status-go/internal/db/appdatabase/migrations.init
+    0.50MB   0.9% 87.45%     0.50MB   0.9%  github.com/status-im/status-go/pkg/messaging/layers/encryption.init
+    0.50MB   0.9% 88.35%     0.50MB   0.9%  google.golang.org/protobuf/internal/filedesc.(*Message).unmarshalFull
+    0.50MB   0.9% 89.25%     0.50MB   0.9%  github.com/libp2p/go-yamux/v4.newSession
+    0.50MB   0.9% 90.15%     0.50MB   0.9%  regexp.onePassCopy
+    0.50MB   0.9% 91.04%     0.50MB   0.9%  encoding/json.typeFields
+    0.50MB   0.9% 91.94%     0.50MB   0.9%  github.com/libp2p/go-libp2p/p2p/host/peerstore/pstoremem.(*memoryPeerMetadata).Put
+
+== alloc_space since launch ==
+File: Status
+Type: alloc_space
+Time: 2026-10-02 09:53:03 EEST
+Showing nodes accounting for 2581.90MB, 91.59% of 2818.94MB total
+Dropped 818 nodes (cum <= 14.09MB)
+Showing top 30 nodes out of 192
+      flat  flat%   sum%        cum   cum%
+  284.28MB 10.08% 10.08%   284.28MB 10.08%  github.com/status-im/status-go/pkg/services/wallet/common.allMandatoryTokens
+     272MB  9.65% 19.73%   272.50MB  9.67%  golang.org/x/crypto/argon2.initBlocks
+     260MB  9.22% 28.96%      260MB  9.22%  golang.org/x/crypto/scrypt.Key
+  234.51MB  8.32% 37.28%   234.51MB  8.32%  fmt.Sprintf
+  231.51MB  8.21% 45.49%   617.53MB 21.91%  github.com/ethereum/go-ethereum/common.Address.Hex (inline)
+  226.01MB  8.02% 53.51%   226.01MB  8.02%  github.com/ethereum/go-ethereum/common.Address.hex (inline)
+  171.25MB  6.08% 59.58%  1118.56MB 39.68%  github.com/status-im/status-go/pkg/services/wallet/common.MandatoryTokens
+     160MB  5.68% 65.26%      160MB  5.68%  golang.org/x/crypto/sha3.(*state).Sum
+  151.01MB  5.36% 70.61%   151.01MB  5.36%  internal/bytealg.MakeNoZero
+      94MB  3.33% 73.95%  1095.05MB 38.85%  github.com/status-im/go-wallet-sdk/pkg/tokens/types.TokenKey
+   83.92MB  2.98% 76.93%    85.45MB  3.03%  io.ReadAll
+   54.62MB  1.94% 78.86%    54.62MB  1.94%  reflect.growslice
+   44.22MB  1.57% 80.43%   218.50MB  7.75%  github.com/status-im/status-go/pkg/services/wallet/thirdparty/market/coingecko.(*Client).getCoingeckoTokensByTokenKey
+   44.05MB  1.56% 81.99%    76.06MB  2.70%  github.com/ethereum/go-ethereum/accounts/abi.Type.pack
+   43.35MB  1.54% 83.53%    43.35MB  1.54%  bytes.growSlice
+   38.78MB  1.38% 84.91%   130.34MB  4.62%  encoding/json.Marshal
+   28.02MB  0.99% 85.90%    28.02MB  0.99%  reflect.mapassign_faststr0
+   27.50MB  0.98% 86.88%    27.50MB  0.98%  math/big.nat.make (inline)
+   25.08MB  0.89% 87.77%    26.11MB  0.93%  encoding/json.(*Decoder).refill
+   21.69MB  0.77% 88.54%    21.69MB  0.77%  bytes.Clone
+   20.50MB  0.73% 89.26%    31.21MB  1.11%  encoding/json.(*decodeState).literalStore
+   19.80MB   0.7% 89.97%    19.80MB   0.7%  github.com/mutecomm/go-sqlcipher/v4._Cfunc_GoBytes
+   14.55MB  0.52% 90.48%    90.61MB  3.21%  github.com/ethereum/go-ethereum/accounts/abi.Arguments.Pack
+   11.27MB   0.4% 90.88%   101.88MB  3.61%  github.com/ethereum/go-ethereum/accounts/abi.ABI.Pack
+    7.58MB  0.27% 91.15%    16.28MB  0.58%  github.com/status-im/status-go/pkg/backend/node/rpc.(*SingleRequestCodec).encode
+       4MB  0.14% 91.29%    46.50MB  1.65%  github.com/status-im/status-go/pkg/services/wallet/thirdparty/market/coingecko.(*GeckoToken).keys
+    3.03MB  0.11% 91.40%    17.44MB  0.62%  github.com/status-im/go-wallet-sdk/pkg/tokens/parsers.(*StandardTokenListParser).Parse
+       2MB 0.071% 91.47%  1508.08MB 53.50%  github.com/status-im/status-go/pkg/services/wallet.(*Reader).balancesToTokensByAddress
+    1.86MB 0.066% 91.54%   115.29MB  4.09%  github.com/status-im/go-wallet-sdk/pkg/multicall.ProcessJobs
+    1.50MB 0.053% 91.59%    83.33MB  2.96%  encoding/json.(*decodeState).object

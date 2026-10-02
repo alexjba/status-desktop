@@ -6,3 +6,17 @@ ts,label,footprint,go_memstats
 20261002-092953,fresh-settle-60s,phys_mb=493 resident_mb=911,Sys=546 HeapAlloc=66 HeapSys=531 HeapIdle=454 HeapInuse=77 HeapReleased=387 NumGC=78 
 20261002-093024,fresh-settle-90s,phys_mb=496 resident_mb=911,Sys=546 HeapAlloc=66 HeapSys=531 HeapIdle=454 HeapInuse=77 HeapReleased=387 NumGC=78 
 20261002-093055,fresh-settle-120s,phys_mb=459 resident_mb=912,Sys=546 HeapAlloc=77 HeapSys=531 HeapIdle=444 HeapInuse=86 HeapReleased=380 NumGC=78 
+20261002-095021,warm-b14-login-screen,phys_mb=210 resident_mb=313,
+20261002-095054,warm-b14-postlogin-20s,phys_mb=512 resident_mb=969,
+20261002-095119,warm-b14-postlogin-45s,phys_mb=511 resident_mb=969,HeapAlloc=62 HeapIdle=398 HeapInuse=69 HeapReleased=376 HeapSys=467 NumGC=64 Sys=480
+20261002-095150,warm-b14-settle-30s,phys_mb=518 resident_mb=940,HeapAlloc=62 HeapIdle=398 HeapInuse=69 HeapReleased=376 HeapSys=467 NumGC=64 Sys=480
+20261002-095221,warm-b14-settle-60s,phys_mb=522 resident_mb=919,HeapAlloc=72 HeapIdle=388 HeapInuse=79 HeapReleased=375 HeapSys=467 NumGC=64 Sys=480
+20261002-095252,warm-b14-settle-90s,phys_mb=531 resident_mb=920,HeapAlloc=72 HeapIdle=388 HeapInuse=79 HeapReleased=375 HeapSys=467 NumGC=64 Sys=480
+20261002-095323,warm-b14-settle-120s,phys_mb=531 resident_mb=920,HeapAlloc=65 HeapIdle=387 HeapInuse=80 HeapReleased=362 HeapSys=468 NumGC=69 Sys=480
+20261002-095729,native-b15-login-screen,,HeapAlloc=48 HeapIdle=402 HeapInuse=66 HeapReleased=371 HeapSys=468 NumGC=82 Sys=480
+20261002-095951,native-b15-settle-120s,,HeapAlloc=48 HeapIdle=402 HeapInuse=66 HeapReleased=371 HeapSys=468 NumGC=82 Sys=480
+20261002-100254,native-b16-login-screen,phys_mb=255 resident_mb=360,HeapAlloc=48 HeapIdle=402 HeapInuse=66 HeapReleased=371 HeapSys=468 NumGC=82 Sys=480
+20261002-100510,native-b16-settle-120s,phys_mb=549 resident_mb=1124,HeapAlloc=90 HeapIdle=373 HeapInuse=98 HeapReleased=351 HeapSys=471 NumGC=63 Sys=485
+20261002-100708,native-b17-login-screen,phys_mb=197 resident_mb=287,HeapAlloc=82 HeapIdle=377 HeapInuse=94 HeapReleased=351 HeapSys=471 NumGC=67 Sys=485
+20261002-100924,native-b17-settle-120s,phys_mb=435 resident_mb=928,HeapAlloc=98 HeapIdle=364 HeapInuse=103 HeapReleased=358 HeapSys=467 NumGC=61 Sys=481
+20261002-101033,native-b18-login-screen,,HeapAlloc=61 HeapIdle=392 HeapInuse=76 HeapReleased=359 HeapSys=468 NumGC=66 Sys=481

@@ -221,6 +221,11 @@ static long long status_phys_footprint(long long *resident) {
   proc vmSummary(path: cstring) {.importc: "status_vm_summary".}
   {.compile: "app/global/malloc_blocks.c".}
   proc mallocBlocks(path: cstring) {.importc: "status_malloc_blocks".}
+  proc mallocLoggingStart(): cint {.importc: "status_malloc_logging_start".}
+  {.compile: "app/global/malloc_log_hook.c".}
+  proc mallocHookStart(): cint {.importc: "status_malloc_hook_start".}
+  proc mallocHookActive(): cint {.importc: "status_malloc_hook_active".}
+  proc mallocHookDump(path: cstring) {.importc: "status_malloc_hook_dump".}
   var footprintThread: Thread[void]
   proc footprintLoop() {.thread.} =
     var tick = 0
@@ -239,7 +244,10 @@ static long long status_phys_footprint(long long *resident) {
       {.cast(gcsafe).}:
         if fileExists(LOGDIR / "dump-malloc"):
           removeFile(LOGDIR / "dump-malloc")
-          mallocBlocks(cstring(LOGDIR / "malloc-blocks-latest.txt"))
+          if mallocHookActive() != 0:
+            mallocHookDump(cstring(LOGDIR / "malloc-blocks-latest.txt"))
+          else:
+            mallocBlocks(cstring(LOGDIR / "malloc-blocks-latest.txt"))
 
 proc mainProc() =
 
@@ -273,6 +281,8 @@ proc mainProc() =
     # Profiling builds: serve net/http/pprof from the in-process status-go (iOS/desktop)
     # and log the process footprint every 15s (the number jetsam acts on).
     echo "go pprof: ", status_go.startPprof("127.0.0.1:6060")
+    echo "malloc stack logging rc=", mallocLoggingStart()
+    echo "malloc hook rc=", mallocHookStart()
     createThread(footprintThread, footprintLoop)
 
   let logCleanupProcessStartedAt = getTime()

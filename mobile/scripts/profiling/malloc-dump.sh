@@ -13,4 +13,4 @@ for i in $(seq 1 24); do
   fi
 done
 head -1 $OUT/$L-malloc-blocks.txt
-python3 $S/ios/mallocsym.py $OUT/$L-malloc-blocks.txt $W/mobile/build/ios/qt6/Release-iphoneos/Status.app.dSYM/Contents/Resources/DWARF/Status ${2:-30} | tee $OUT/$L-malloc-top.txt
+python3 $S/ios/mallocsym.py $OUT/$L-malloc-blocks.txt ${DSYM:-$W/mobile/build/ios/qt6/Release-iphoneos/Status.app.dSYM}/Contents/Resources/DWARF/Status ${2:-30} | tee $OUT/$L-malloc-top.txt
