@@ -1,0 +1,21 @@
+# baseline-a: launched baseline-a env:  
+
+# memfootprint series (15 s):
+phys_mb=196 resident_mb=286
+phys_mb=196 resident_mb=286
+phys_mb=196 resident_mb=286
+phys_mb=196 resident_mb=286
+phys_mb=197 resident_mb=288
+phys_mb=197 resident_mb=288
+phys_mb=449 resident_mb=564
+phys_mb=417 resident_mb=1051
+phys_mb=416 resident_mb=1052
+phys_mb=416 resident_mb=1052
+phys_mb=416 resident_mb=1052
+phys_mb=417 resident_mb=1052
+phys_mb=420 resident_mb=1052
+phys_mb=417 resident_mb=1052
+phys_mb=417 resident_mb=1052
+phys_mb=439 resident_mb=1052
+phys_mb=442 resident_mb=960
+phys_mb=442 resident_mb=960

@@ -1,0 +1,30 @@
+# transient: launched transient env: STATUS_RUNTIME_LOG_LEVEL=DEBUG QSG_TRANSIENT_IMAGES=1 
+"threaded render loop"
+"Animation Driver: using vsync: 16.67 ms"
+"Animation Driver: using vsync: 16.67 ms"
+"Creating QRhi with backend Metal for window 0x11c21ae00 (wflags 0xC00000)\n  Graphics API debug/validation layers: 0\n  Debug markers: 0\n  Timestamps: 0\n  Prefer software device: 0\n  Shader/pipeline cache collection: 1"
+"Metal device: Apple A14 GPU"
+"Created QRhi 0x13170bc10 for window 0x11c21ae00"
+"MSAA sample count for the swapchain is 1. Alpha channel requested = no."
+"rhi texture atlas dimensions: 2048x4096"
+"got CAMetalLayer, pixel size 820x1180 (scale 1.00)"
+"got CAMetalLayer, pixel size 1640x2360 (scale 2.00)"
+
+# memfootprint series (15 s):
+phys_mb=192 resident_mb=283
+phys_mb=192 resident_mb=283
+phys_mb=192 resident_mb=283
+phys_mb=192 resident_mb=283
+phys_mb=683 resident_mb=819
+phys_mb=437 resident_mb=957
+phys_mb=427 resident_mb=957
+phys_mb=427 resident_mb=957
+phys_mb=426 resident_mb=958
+phys_mb=429 resident_mb=957
+phys_mb=426 resident_mb=957
+phys_mb=426 resident_mb=957
+phys_mb=426 resident_mb=953
+phys_mb=435 resident_mb=953
+phys_mb=435 resident_mb=953
+phys_mb=435 resident_mb=953
+phys_mb=435 resident_mb=945
