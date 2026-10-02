@@ -1,0 +1,24 @@
+== by lib (MB present)
+   57.8  libstatus.so
+   11.8  apk-other
+    1.0  libc++_shared.so
+    0.1  libsds.so
+    0.1  libstatus_service.so
+== by section
+   19.0  libstatus.so:.text
+   13.3  libstatus.so:.gopclntab
+    8.9  libstatus.so:.data.rel.ro
+    8.5  libstatus.so:.rela.dyn
+    6.3  libstatus.so:.rodata
+    1.1  libstatus.so:.noptrdata
+    0.5  libstatus.so:.data
+    0.0  libstatus.so:.dynstr
+    0.0  libstatus.so:.dynsym
+    0.0  libstatus.so:.eh_frame_hdr
+    0.0  libstatus.so:.gnu.hash
+    0.0  libstatus.so:.plt
+    0.0  libstatus.so:?
+    0.0  libstatus.so:.gnu.version
+    0.0  libstatus.so:.rela.plt
+    0.0  libstatus.so:.eh_frame
+== rodata pages not in any resource: 0.0 MB; resources parsed: 6519, total 29.4 MB, compressed flagged 717
