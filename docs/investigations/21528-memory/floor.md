@@ -135,3 +135,31 @@ Issue drafts: `floor-issues/` (local until agreed for GitHub).
 Resident pages scale with text: text 19/25.7MB, pclntab 13.3/22.8, relocation data 8.9 + 8.5 at the login screen,
 so every MB of text removed is worth ~2MB resident on the service process. Level 1 (dead code, `floor-issues/F04`)
 and the level-2 feature list (`F05`) are built from this table.
+
+## Qt/QML dependency cost (UI process, login screen, page-table residency; `profiles/floor/ui-login-apk-pages.txt`)
+
+129 Qt libraries and plugins are packaged (91MB in the APK); 48.6MB of them is resident at the login screen, and the
+release ledger shows code pages growing only ~4MB after login, so this is the dependency cost. Module heap is small
+(post-login heapprofd: QuickTemplates2 0.5, QuickControls2 0.3, Layouts 0.2, QmlModels 0.2); the heap lives in
+Qml/Core/Gui/Mali regardless of which modules are linked.
+
+| group | resident MB | APK MB | pulled in by | verdict |
+|---|---|---|---|---|
+| Core, Gui, Qml, Quick, Network, Svg, QmlModels, QuickTemplates2, Controls2 Basic+Impl, Layouts, Shapes, Effects, platform plugin, c++_shared | 27 | 33 | the app | keep |
+| Controls2 styles: Material 1.9 (loaded as Android's default style although no file imports it), Universal 1.0 (12 files + `gen_controls_shim.sh … Universal`), Fusion 0.8, Imagine 0.7, FluentWinUI3 0.2 (+3.2 plugin, untouched) | 4.6 | 12.5 | `import QtQuick.Controls` makes androiddeployqt bundle every style; the default style loads Material at engine start | set the style explicitly before the engine (Basic or our own), drop the 12 Universal imports, exclude the other style plugins from the package: −3.8 resident, −11 APK |
+| Multimedia + MultimediaQuick + android & ffmpeg plugins + libav* | 3.9 | 17 | 4 QML files (`StatusSoundEffect`, `StatusQrCodeCapture`, `StatusVideo`, `StatusVideoModal`); the plugins are in `load_local_libs`, so they load at start | lazy: load the plugins on first use; consider the Android media plugin only (ffmpeg is a second backend, 16MB): −3.5 resident, −16 APK |
+| Widgets | 2.4 | 6.7 | `QT += widgets` (no C++ consumer found; app is `QGuiApplication`) | unlink: −2.4 resident, −6.7 APK |
+| QuickDialogs2 + QuickImpl + Utils | 1.3 | 3.2 | 3 StatusQ file dialogs | lazy or native pickers on mobile: −1.3 |
+| ShaderTools | 1.0 | 4.1 | 5 `ShaderEffect`s without `.qsb` | precompile shaders: −1.0 resident, −4.1 APK, no runtime compile |
+| Qt5Compat GraphicalEffects (+private) + Core5Compat | 1.1 | 2.0 | 86 files, 71 `layer.effect:` sites (DropShadow 37, OpacityMask 34, FastBlur 11, ColorOverlay 4, Glow 4) | file cost is small; the real cost is one offscreen texture per layered item plus blur intermediates, host-side in the Mali driver (17→45MB after login) and GPU memory outside PSS. Replace with `MultiEffect` (QuickEffects already loaded, 7 uses) and with plain items where a shadow is decorative; measure Mali host heap per screen |
+| VirtualKeyboard + input-context plugin | 0.4 | 0.5 | packaged by default | unlink (native IME on mobile) |
+| StateMachine + Qml plugin | 0.5 | 0.5 | 2 files | replace with plain state handling, or lazy |
+| WebChannel + WebView + MobileWebView | 0.4 | 1.3 (+6.4 MobileWebView) | Browser section (4 files) | already section-scoped; load on first open |
+| Labs (platform, qmlmodels, folderlistmodel) | 0.6 | 0.5 | `StatusTrayIcon`, 1–2 files each | drop on mobile |
+| Lottie + VectorImage generators, Quick3DUtils, Nfc, OpenGL, QmlMeta/QmlCore/WorkerScript, image formats (tiff/jpeg/webp/ico/gif), tls backends | 2.2 | 3.5 | transitive (Lottie/VectorImage via QtQuick.VectorImage deps, Nfc via keycard flag) | exclude Lottie/VectorImage/Quick3DUtils/tiff/icns/tga/wbmp from the package; keep jpeg/webp/svg/tls |
+| qmltooling (9 debug plugins), offscreen/minimal platforms, android style | 0 | 1.2 | packaged by default | exclude from release packages (APK only) |
+
+Removable or lazy-loadable at the login screen: ~16MB resident (fault-around inflated; ~8–10 of real touched pages),
+~50MB of APK. The persistent memory gain beyond that is the Qt5Compat effects → Mali host heap, which has to be
+measured per screen (count of layered items × texture size) before it can be sized; the 28MB growth of Mali host
+allocations after login is the upper bound.
