@@ -1,5 +1,7 @@
 # Qt modules, Controls styles and runtime shader compilation loaded without being used
 
+**Expected gain:** mostly APK, some memory. Resident Qt file pages at the login screen: styles −3.8, Multimedia/ffmpeg −3.5 (lazy), Widgets −2.4, ShaderTools −1.0, Dialogs fallback −1.1, VirtualKeyboard/StateMachine/Labs/Lottie/Quick3D −2.5: ≈−14..−16MB PSS warm (≈8–10 of really touched pages; clean, evictable). APK ≈−50MB (styles 12.5, ffmpeg 16, Widgets 6.7, ShaderTools 4.1, Dialogs 3.2, extras ~7). Also removes runtime shader compilation at startup (CPU).
+
 Context: status-im/status-app#21528. Page-table residency of the UI process at the login screen (Redmi A5,
 2026-10-02): 129 Qt libraries/plugins are packaged (91MB of APK), 48.6MB resident, and code pages grow only ~4MB after
 login. 27MB is the core set (Core, Gui, Qml, Quick, Network, Svg, QmlModels, QuickTemplates2, Controls2 Basic+Impl,

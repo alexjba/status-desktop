@@ -1,5 +1,7 @@
 # Android: 9MB of dex mapped in both processes, no R8
 
+**Expected gain:** memory and APK. Dex 9MB + 5 secondary; UI process maps ~21MB of dex pages (~11MB PSS, shared with the service). R8 typically halves the dex: ≈−4..−6MB PSS over the two processes, −5..−8MB APK. Estimate until built; clean pages, so cold-cache gain is smaller than warm.
+
 Context: status-im/status-app#21528. `classes.dex` is 9.0MB plus 5 secondary dex files; `minifyEnabled = false`
 in `mobile/android/qt6/build.gradle` for release. At the login screen the UI process has 21.4MB of dex pages mapped
 (the service ~12MB), counted as PSS shared between the two processes (~11MB PSS in the UI process). Dex pages are

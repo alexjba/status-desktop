@@ -1,5 +1,7 @@
 # Go binary diet, level 1: dead code and build configuration on mobile
 
+**Expected gain:** memory and binary size, service process. Dead code removal: ≈3–4MB of Go text (node framework incl. pebble + 1MB of C zstd 2.9, testify/gofakeit 0.75, otel+grpc 0.7, sentry/pq/prometheus 0.4, kzg 0.27) → ≈−6..−8MB resident (resident ≈ 1.65× text, from the F05 rebuilds) and ≈−18..−22MB of `libstatus.so` (APK). Partly measured (ratio), rows estimated from symbol sizes.
+
 Context: status-im/status-app#21528. The Android `libstatus.so` is 84MB (text 25.7, pclntab 22.8, rodata 14.8,
 `.data.rel.ro` 9.2 + `.rela.dyn` 8.6 for relocations). At the login screen 57.8MB of it is resident
 (text 19, pclntab 13.3, relocated data 8.9 dirty, rela 8.5, rodata 6.3). Resident pages scale with binary size:

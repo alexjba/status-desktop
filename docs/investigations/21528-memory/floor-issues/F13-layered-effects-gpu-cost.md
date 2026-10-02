@@ -1,5 +1,7 @@
 # Qt5Compat effects: layered items drive the GPU driver's host memory (17MB at login, 45MB after)
 
+**Expected gain:** memory after login, concentrated on one screen. Login screen: 0 (no layered items). Communities portal: GPU +76..90MB and native heap +65MB vs other screens; card fix + grid virtualisation ≈−60..−70 GPU / −20..−40 heap when the portal is open (estimate from the per-card texture math, matched by the device delta). Skeleton and chat-chrome unloads ≈−15..−20 across screens, rounded masks ≈−10..−15. GPU memory is outside PSS on the Redmi (`dumpsys gpu`), native heap is in PSS. Design review needed for look changes.
+
 Context: status-im/status-app#21528. heapprofd attributes 16.7MB of the UI heap at the login screen and ~45MB after
 login to `libGLES_mali.so` host-side allocations; GPU memory itself is outside PSS on this device. The UI has 86 files
 importing `Qt5Compat.GraphicalEffects` and 71 `layer.effect:` sites (DropShadow 37, OpacityMask 34, FastBlur 11,

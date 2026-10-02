@@ -1,5 +1,7 @@
 # Service process: 20MB of Go heap before any profile is opened
 
+**Expected gain:** memory. Service process Go heap at the login screen 20MB → 8–9MB (−11..−12MB PSS, persists after login and lowers GC headroom proportionally). Measured on a host reproduction (13.7MB live, 99.5% from `init()`); device confirmation pending the next profiling build. APK: −0 (token lists stay in the binary as rodata).
+
 Context: status-im/status-app#21528. At the login screen the Android service process holds 20.1MB of Go heap plus
 2.3MB of immortal runtime metadata (smaps `[anon: Go: heap]`, Redmi A5, 2026-10-02) before `Login`/`CreateAccount`
 is called. Nothing user-visible runs yet, so this is init-time state: package `init()` tables, the embedded default

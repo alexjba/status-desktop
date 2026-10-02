@@ -1,5 +1,7 @@
 # Translations: 4MB of `.qm` in the binary, the active one copied to the heap
 
+**Expected gain:** small memory, APK. Active `.qm` mapped instead of copied: ≈−0.9MB heap. Translations out of rodata / on demand: −4MB APK. Near-certain; low priority on its own, ride along with F06/F08.
+
 Context: status-im/status-app#21528. Six `.qm` files (4.0MB) are embedded in the app library's rodata; the active
 language is loaded from `qrc:` and copied into the heap (~0.9MB for the large languages), the others cost APK size
 only. Small, but persistent and cheap.

@@ -1,5 +1,7 @@
 # QML engine: 13MB of property-cache copies at the login screen, ~25MB after login
 
+**Expected gain:** memory. UI process heap: property caches are 13MB at the login screen and ~25MB after login; sharing parent tables is expected to return 15–25MB at settle (estimate, from the heapprofd share; the prototype decides). Applies to desktop and iOS equally. APK: none. Risk: CPU on property lookup, to be benched.
+
 Context: status-im/status-app#21528. heapprofd on the UI process at the login screen (Redmi A5, 2026-10-02):
 13.3MB live under `QQmlPropertyCache::copyAndReserve` called from `QQmlTypeLoader::setCachedUnit` →
 `QQmlDataBlob::tryDone`, i.e. one full flattened property table per QML type and per inner object that declares

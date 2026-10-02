@@ -1,5 +1,7 @@
 # Fonts: 23 font files copied into the heap at startup, 5 weights ever used
 
+**Expected gain:** memory and APK. UI heap −7MB (`readAll` copies of 23 font files) −1.3MB+ (FreeType face copies), plus −3MB of file pages: ≈−8..−11MB PSS at the login screen, persists. APK −3.5MB (14 unused weights). Near-certain: the allocation sites are in the login-screen heapprofd. Same change benefits desktop and iOS.
+
 Context: status-im/status-app#21528. `StatusQ/Core/Theme/Fonts.qml` declares 23 `FontLoader`s (Inter 8 weights,
 InterStatus 9 incl. an italic, RobotoMono 6). Each `FontLoader.source` on a `qrc:` URL runs
 `QFontDatabase::addApplicationFont` → `QIODevice::readAll`, so all 23 files (5.3MB) are copied into QByteArrays for

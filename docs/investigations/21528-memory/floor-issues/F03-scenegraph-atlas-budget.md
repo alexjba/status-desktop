@@ -1,5 +1,7 @@
 # GPU driver host memory: 17MB at the login screen, 45MB after login
 
+**Expected gain:** memory, measured. Atlas 1024² instead of the per-surface 2048×4096: iPad −28MB at the login screen (197→168, repeatable ±2), −25..−40MB at the wallet settle, identical screenshots. Android uses the same formula (32MB inside the Mali driver's host allocations) and is expected in the same range; to confirm on the Redmi. APK: none. Change is one `putEnv` line.
+
 Context: status-im/status-app#21528. heapprofd attributes 16.7MB of the UI heap at the login screen to
 `libGLES_mali.so` host-side allocations (`eglCreateContext` 3.4MB, texture staging under `glTexSubImage2D`,
 per-frame allocations under `QRhi::endFrame`), 45MB after login, plus 16MB of EGL window buffers (`EGL mtrack`).

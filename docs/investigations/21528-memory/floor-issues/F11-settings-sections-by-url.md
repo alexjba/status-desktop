@@ -1,5 +1,7 @@
 # Settings subpages and sections referenced by URL (follow-up of the popups pilot)
 
+**Expected gain:** memory after login. Settings subpages (4.2MB of units, loaded on first open) and sticky sections released after an unload policy: the remainder of F10's −10..−20MB range, measured as settle PSS after a full section tour. APK: none.
+
 Context: status-im/status-app#21528. Same mechanism as the popups pilot, applied to the profile/settings subpages
 (`AppLayouts/Profile`, 4.2MB of compiled units, 99% loaded once the section opens) and to the remaining section
 loaders that still hold static `sourceComponent` references (`WalletLoader`, `HomePageLoader`, `ChatLoader`

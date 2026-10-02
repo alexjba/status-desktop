@@ -1,5 +1,7 @@
 # Floor measurement tooling: page-table residency, APK attribution, cold-cache rows
 
+**Expected gain:** none directly (tooling). Enables every other row: warm/cold PSS at login screen and settle, both processes, unreclaimable vs clean split, build ids. Required before any floor PR can carry its before/after table.
+
 Context: status-im/status-app#21528. The pre-login floor was measured with ad-hoc tools (`mobile/scripts/profiling/floor/`):
 `pmscan` reads page-present bits from `/proc/pid/pagemap` inside the app uid (needs the debuggable package),
 `apkattr.py`/`pmattr.py` attribute `base.apk` pages to libraries, ELF sections and embedded Qt resources,

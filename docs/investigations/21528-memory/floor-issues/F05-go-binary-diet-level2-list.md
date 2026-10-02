@@ -1,5 +1,7 @@
 # Go binary diet, level 2: sized feature-removal list for product sign-off
 
+**Expected gain:** memory and binary size, service process. Measured rows (WebRTC, QUIC/WebTransport, news feed): −2.76MB text, −14MB `libstatus.so`, ≈−4.6MB resident, no mobile impact. Estimated further rows (relay/pubsub/gogo, NAT, seven product features): ≈−2.7MB text / −4.4MB resident, each needing product sign-off. This issue produces the decision list; the removals are separate PRs.
+
 Context: status-im/status-app#21528. After the dead-code pass (level 1) the remaining size of the mobile Go library
 is features: libp2p transports and services the mobile client may not need (WebRTC via `pion/*` ~0.9MB text, QUIC
 ~0.7MB incl. `gojay` qlog, DNS/mDNS discovery), go-waku store/filter/lightpush code paths, wallet providers and

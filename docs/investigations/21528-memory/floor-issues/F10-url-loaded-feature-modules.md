@@ -1,5 +1,7 @@
 # QML convention: feature modules referenced by URL and trimmed on close (pilot: popups)
 
+**Expected gain:** memory after login, growing with app size. Each loaded QML type costs heap for the process lifetime (regenerated unit + property cache + registration); engine heap is 33MB at login and 49MB after. URL-loaded popups with trim on close: ≈−5..−10MB at settle for the pilot, −10..−20MB with F11 (estimate; the pilot measures it). No login-screen change (engine loads only ~250 files before login). APK: none. Cost: first-open latency per module, benched.
+
 Context: status-im/status-app#21528. Each QML type the engine loads costs heap for the process lifetime: its
 regenerated compilation unit, a full property cache per type and per inner object, and the type registration
 (~18MB for the ~250 files loaded before login; 49MB engine heap after login). Qt cannot unload a type that is still
