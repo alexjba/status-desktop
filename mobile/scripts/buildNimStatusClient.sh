@@ -102,6 +102,11 @@ else
     NIM_FLAGS+=(-d:release -d:production)
 fi
 
+# GO_PPROF=1 starts the status-go pprof server at 127.0.0.1:6060 (in-process platforms: iOS).
+if [ "${GO_PPROF:-0}" -eq 1 ]; then
+    NIM_FLAGS+=(-d:goPprof)
+fi
+
 # build status-client with feature flags
 env "${FEATURE_FLAGS[@]}" ./vendor/nimbus-build-system/scripts/env.sh nim c "${PLATFORM_SPECIFIC[@]}" "${APP_CONFIG_DEFINES[@]}" ${QML_SERVER_DEFINES}  \
     "${NIM_FLAGS[@]}" \

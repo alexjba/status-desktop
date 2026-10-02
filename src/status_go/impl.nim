@@ -10,6 +10,8 @@ proc hashMessage*(message: cstring): cstring {.importc: "HashMessage".}
 
 proc initializeApplication*(paramsJSON: cstring): cstring {.importc: "InitializeApplication".}
 
+proc startPprof*(address: cstring): cstring {.importc: "StartPprof".}
+
 proc toggleCentralizedMetrics*(paramsJSON: cstring): cstring {.importc: "ToggleCentralizedMetrics".}
 
 proc addCentralizedMetric*(paramsJSON: cstring): cstring {.importc: "AddCentralizedMetric".}

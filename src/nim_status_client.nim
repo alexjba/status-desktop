@@ -207,6 +207,24 @@ proc enableHDPI(uiScaleFilePath: string) =
       warn "Error parsing 'ui-scale' file contents, not a float"
       discard
 
+when defined(goPprof):
+  {.emit: """/*INCLUDESECTION*/
+#include <mach/mach.h>
+static long long status_phys_footprint(long long *resident) {
+  task_vm_info_data_t info; mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
+  if (task_info(mach_task_self(), TASK_VM_INFO, (task_info_t)&info, &count) != KERN_SUCCESS) return -1;
+  *resident = (long long)info.resident_size; return (long long)info.phys_footprint;
+}
+""".}
+  proc physFootprint(resident: var int64): int64 {.importc: "status_phys_footprint", nodecl.}
+  var footprintThread: Thread[void]
+  proc footprintLoop() {.thread.} =
+    while true:
+      sleep(15000)
+      var r: int64
+      let f = physFootprint(r)
+      echo "memfootprint phys_mb=", f div 1048576, " resident_mb=", r div 1048576
+
 proc mainProc() =
 
   when defined(macosx) and defined(arm64):
@@ -234,6 +252,12 @@ proc mainProc() =
     setCurrentDir(getAppDir())
 
   ensureDirectories(DATADIR, TMPDIR, LOGDIR)
+
+  when defined(goPprof):
+    # Profiling builds: serve net/http/pprof from the in-process status-go (iOS/desktop)
+    # and log the process footprint every 15s (the number jetsam acts on).
+    info "go pprof", response = status_go.startPprof(when defined(ios): "0.0.0.0:6060" else: "127.0.0.1:6060")
+    createThread(footprintThread, footprintLoop)
 
   let logCleanupProcessStartedAt = getTime()
   initializeLogCleanup(logCleanupProcessStartedAt)

@@ -16,6 +16,11 @@ proc initializeApplication*(paramsJSON: string): string =
   defer: go_shim.free(funcOut)
   return $funcOut
 
+proc startPprof*(address: string): string =
+  var funcOut = go_shim.startPprof(address.cstring)
+  defer: go_shim.free(funcOut)
+  return $funcOut
+
 proc toggleCentralizedMetrics*(paramsJSON: string): string =
   var funcOut = go_shim.toggleCentralizedMetrics(paramsJSON.cstring)
   defer: go_shim.free(funcOut)

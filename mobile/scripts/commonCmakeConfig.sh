@@ -13,7 +13,10 @@ CMAKE_TOOLCHAIN_FILE=""
 COMMON_CMAKE_CONFIG=()
 
 if [[ "$OS" == "ios" ]]; then
-    if [[ "$ARCH" == "x86_64" ]]; then
+    # IPHONE_SDK wins (arm64 simulator); the arch rule is the historical fallback.
+    if [[ -n "${IPHONE_SDK:-}" ]]; then
+        SDK="$IPHONE_SDK"
+    elif [[ "$ARCH" == "x86_64" ]]; then
         SDK="iphonesimulator"
     else
         SDK="iphoneos"

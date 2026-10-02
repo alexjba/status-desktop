@@ -1,0 +1,46 @@
+File: Status
+Type: inuse_space
+Time: 2026-10-02 07:03:15 EEST
+Showing nodes accounting for 44595.58kB, 100% of 44595.58kB total
+Showing top 40 nodes out of 258
+      flat  flat%   sum%        cum   cum%
+ 4608.26kB 10.33% 10.33%  4608.26kB 10.33%  encoding/json.(*decodeState).literalStore
+ 4097.37kB  9.19% 19.52%  4097.37kB  9.19%  github.com/syndtr/goleveldb/leveldb/memdb.New
+ 3677.99kB  8.25% 27.77%  3677.99kB  8.25%  github.com/status-im/zxcvbn-go/matching.buildRankedDict
+ 2572.31kB  5.77% 33.54%  5644.55kB 12.66%  github.com/status-im/go-wallet-sdk/pkg/tokens/parsers.(*StandardTokenListParser).Parse
+ 2571.10kB  5.77% 39.30%  2571.10kB  5.77%  runtime.mallocgc
+ 2192.26kB  4.92% 44.22%  2192.26kB  4.92%  io.ReadAll
+ 2084.21kB  4.67% 48.89%  2084.21kB  4.67%  github.com/ethereum/go-ethereum/metrics.newExpDecaySampleHeap
+ 2048.12kB  4.59% 53.48%  2048.12kB  4.59%  math/big.nat.make (inline)
+ 1536.07kB  3.44% 56.93%  1536.07kB  3.44%  fmt.Sprintf
+ 1477.33kB  3.31% 60.24%  1477.33kB  3.31%  reflect.growslice
+ 1184.27kB  2.66% 62.90%  1184.27kB  2.66%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.3
+ 1148.68kB  2.58% 65.47%  1148.68kB  2.58%  github.com/forPelevin/gomoji.map.init.0
+ 1133.89kB  2.54% 68.02%  1133.89kB  2.54%  github.com/decred/dcrd/dcrec/secp256k1/v4.init.init.func2.func3
+ 1050.86kB  2.36% 70.37%  2586.93kB  5.80%  github.com/status-im/go-wallet-sdk/pkg/tokens/builder.(*Builder).AddTokenList
+ 1034.71kB  2.32% 72.69%  1034.71kB  2.32%  encoding/json.typeFields
+ 1024.06kB  2.30% 74.99%  1024.06kB  2.30%  github.com/prometheus/client_golang/prometheus.MakeLabelPairs
+ 1024.03kB  2.30% 77.28%  3072.16kB  6.89%  github.com/status-im/go-wallet-sdk/pkg/multicall.ProcessERC20BalanceResult
+  942.23kB  2.11% 79.40%   942.23kB  2.11%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.2
+  869.29kB  1.95% 81.35%   869.29kB  1.95%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.7
+  804.69kB  1.80% 83.15%   804.69kB  1.80%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.1
+  758.02kB  1.70% 84.85%   758.02kB  1.70%  net/http.(*http2Framer).startWriteDataPadded
+  544.67kB  1.22% 86.07%   544.67kB  1.22%  github.com/status-im/status-go/internal/protocol/identity/emojihash.loadAlphabet.func1
+  536.37kB  1.20% 87.28%   536.37kB  1.20%  github.com/brianvoe/gofakeit/v7/data.map.init.28
+  532.26kB  1.19% 88.47%   532.26kB  1.19%  github.com/status-im/go-wallet-sdk/pkg/balance/multistandardfetcher.processERC20JobResult
+  525.43kB  1.18% 89.65%   525.43kB  1.18%  github.com/russross/blackfriday/v2.map.init.0
+  516.64kB  1.16% 90.81%   516.64kB  1.16%  github.com/status-im/status-go/pkg/messaging/waku.New
+  515.32kB  1.16% 91.96%   515.32kB  1.16%  github.com/brianvoe/gofakeit/v7/data.map.init.5
+  512.75kB  1.15% 93.11%   512.75kB  1.15%  crypto/x509.parseCertificate
+  512.16kB  1.15% 94.26%   512.16kB  1.15%  encoding/base32.NewEncoding (inline)
+  512.09kB  1.15% 95.41%   512.09kB  1.15%  github.com/ethereum/go-ethereum/accounts/abi.(*ABI).UnmarshalJSON
+  512.05kB  1.15% 96.56%   512.05kB  1.15%  regexp/syntax.(*parser).newRegexp
+  512.03kB  1.15% 97.70%   512.03kB  1.15%  regexp.mergeRuneSets.func2
+  512.02kB  1.15% 98.85%   512.02kB  1.15%  github.com/multiformats/go-multicodec.init
+  512.02kB  1.15%   100%   512.02kB  1.15%  github.com/ethereum/go-ethereum/rpc.(*callback).makeArgTypes
+         0     0%   100%   512.75kB  1.15%  _cgoexp_ff65c102ba52_ImageServerTLSCert
+         0     0%   100%   512.75kB  1.15%  crypto/tls.X509KeyPair
+         0     0%   100%   512.75kB  1.15%  crypto/x509.ParseCertificate
+         0     0%   100%   512.16kB  1.15%  encoding/base32.init
+         0     0%   100%   512.09kB  1.15%  encoding/json.(*Decoder).Decode
+         0     0%   100%  6597.68kB 14.79%  encoding/json.(*decodeState).array

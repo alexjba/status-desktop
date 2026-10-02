@@ -1,0 +1,5 @@
+ts,label,pid,phys_footprint_mb,rss_mb,malloc_tiny,malloc_small,malloc_medium,malloc_large,vm_allocate,coreanimation,cg_image,graphics,data_segments,mapped_file,stack,rosetta,malloc_nano,go_memstats
+20261002-070135,fresh-settle-30s,75161,1660.0,1822.0,31.0,182.0,159.0,0.0,556.0,0.0,0,0.0,26.1,15.0,1.4,195.0,351.0,Sys=555 HeapAlloc=78 HeapSys=540 HeapIdle=448 HeapInuse=92 HeapReleased=398 NumGC=82 
+20261002-070207,fresh-settle-60s,75161,1658.0,1808.9,31.0,182.0,158.0,0.0,555.0,0.0,0,0.0,26.1,15.0,1.4,195.0,351.0,Sys=555 HeapAlloc=89 HeapSys=540 HeapIdle=439 HeapInuse=100 HeapReleased=390 NumGC=82 
+20261002-070240,fresh-settle-90s,75161,1660.0,1810.5,31.0,182.0,159.0,0.0,556.0,0.0,0,0.0,26.1,15.0,1.4,195.0,351.0,Sys=555 HeapAlloc=62 HeapSys=540 HeapIdle=468 HeapInuse=71 HeapReleased=454 NumGC=89 
+20261002-070313,fresh-settle-120s,75161,1660.0,1809.8,31.0,182.0,158.0,0.0,556.0,0.0,0,0.0,26.1,15.0,1.4,195.0,351.0,Sys=555 HeapAlloc=39 HeapSys=540 HeapIdle=483 HeapInuse=56 HeapReleased=456 NumGC=90 
