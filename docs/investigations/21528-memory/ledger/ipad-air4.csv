@@ -1,3 +1,8 @@
 ts,label,footprint,go_memstats
 20261002-081351,login-screen,phys_mb=189 resident_mb=283,Sys=33 HeapAlloc=15 HeapSys=26 HeapIdle=7 HeapInuse=19 HeapReleased=7 NumGC=6 
 20261002-090205,login-screen-b8,phys_mb=197 resident_mb=289,Sys=29 HeapAlloc=15 HeapSys=22 HeapIdle=4 HeapInuse=18 HeapReleased=3 NumGC=6 
+20261002-092852,fresh-postcreate,phys_mb=426 resident_mb=996,Sys=546 HeapAlloc=76 HeapSys=531 HeapIdle=439 HeapInuse=91 HeapReleased=383 NumGC=70 
+20261002-092923,fresh-settle-30s,phys_mb=490 resident_mb=916,Sys=546 HeapAlloc=76 HeapSys=531 HeapIdle=439 HeapInuse=91 HeapReleased=383 NumGC=70 
+20261002-092953,fresh-settle-60s,phys_mb=493 resident_mb=911,Sys=546 HeapAlloc=66 HeapSys=531 HeapIdle=454 HeapInuse=77 HeapReleased=387 NumGC=78 
+20261002-093024,fresh-settle-90s,phys_mb=496 resident_mb=911,Sys=546 HeapAlloc=66 HeapSys=531 HeapIdle=454 HeapInuse=77 HeapReleased=387 NumGC=78 
+20261002-093055,fresh-settle-120s,phys_mb=459 resident_mb=912,Sys=546 HeapAlloc=77 HeapSys=531 HeapIdle=444 HeapInuse=86 HeapReleased=380 NumGC=78 

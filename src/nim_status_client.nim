@@ -219,6 +219,8 @@ static long long status_phys_footprint(long long *resident) {
   proc physFootprint(resident: var int64): int64 {.importc: "status_phys_footprint", nodecl.}
   {.compile: "app/global/vm_summary.c".}
   proc vmSummary(path: cstring) {.importc: "status_vm_summary".}
+  {.compile: "app/global/malloc_blocks.c".}
+  proc mallocBlocks(path: cstring) {.importc: "status_malloc_blocks".}
   var footprintThread: Thread[void]
   proc footprintLoop() {.thread.} =
     var tick = 0
@@ -231,8 +233,13 @@ static long long status_phys_footprint(long long *resident) {
       if tick mod 4 == 0:
         # once a minute: Go heap profile into the log dir, for devices whose pprof port is unreachable
         {.cast(gcsafe).}:
-          discard status_go.writeHeapProfile(LOGDIR / "go-heap-latest.txt")
+          discard status_go.writeHeapProfile(LOGDIR / "go-heap-latest.pb.gz")
           vmSummary(cstring(LOGDIR / "vm-summary-latest.txt"))
+      # on demand (push an empty "dump-malloc" file into the log dir): live malloc blocks with their stacks
+      {.cast(gcsafe).}:
+        if fileExists(LOGDIR / "dump-malloc"):
+          removeFile(LOGDIR / "dump-malloc")
+          mallocBlocks(cstring(LOGDIR / "malloc-blocks-latest.txt"))
 
 proc mainProc() =
 
@@ -265,7 +272,7 @@ proc mainProc() =
   when defined(goPprof):
     # Profiling builds: serve net/http/pprof from the in-process status-go (iOS/desktop)
     # and log the process footprint every 15s (the number jetsam acts on).
-    info "go pprof", response = status_go.startPprof(when defined(ios): "0.0.0.0:6060" else: "127.0.0.1:6060")
+    echo "go pprof: ", status_go.startPprof("127.0.0.1:6060")
     createThread(footprintThread, footprintLoop)
 
   let logCleanupProcessStartedAt = getTime()

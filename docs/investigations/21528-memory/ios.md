@@ -67,3 +67,29 @@ exportable, local or device); WebDriverAgent (`Timed out while enabling automati
 | mapped file resident (binary + frameworks, shared) | 810 (dirty 5) |
 Android pre-login floor was ~330MB over two processes; iOS pays one process and no Dalvik/Binder, but the 45MB of
 IOSurface is a tablet-resolution cost an iPhone would halve.
+
+### Fresh profile created on the device, wallet settle (build 8, WebDriverAgent-driven onboarding)
+| point | phys footprint MB | resident MB | Go HeapSys / live | notes |
+|---|---|---|---|---|
+| login screen | 197 | 289 | 22 / 15 | |
+| right after profile creation (+20s) | 426 | 996 | 531 / 76 | startup burst peak in resident |
+| wallet settle 30 / 60 / 90 / 120 s | 490 / 493 / 496 / 459 | 916 → 912 | 531 / 66–77 | NumGC 70→78 |
+
+Breakdown at settle 120s (in-process VM summary): footprint 501 = internal 353 + compressed 44 + IOSurface 45 +
+GPU 11 + JSC 10 + misc. Internal 353 ≈ **malloc dirty 190** (DefaultMallocZone: 219MB in use in 1.27M blocks,
+559MB allocated → the native heap peaked at ~560MB during login and libmalloc keeps 340MB of freed pages mapped)
++ **Go dirty 167** (`untagged`/VM_ALLOCATE: HeapInuse 86, HeapReleased 380 — released with MADV_FREE_REUSABLE, so
+resident 912 vs footprint 501: the device does drop released Go pages from the footprint, unlike the Rosetta
+simulator; ~80MB are still dirty-but-unreclaimed).
+
+Go live heap 60MB at that instant, by owner: puzzleauth argon2 16MB (a solve in flight), token-list parser 7MB,
+zxcvbn 5MB + 1.4MB, leveldb memdb 4MB, gomoji 2.2MB, token builder 2MB, multicall results 2MB, geth metrics 1.5MB,
+default token lists ~3MB, gofakeit 1.5MB, blackfriday 0.5MB — identical to the Android service process.
+Cumulative allocations since launch (2.5 min): 4.06GB — argon2 704MB, scrypt 572MB, MandatoryTokens 450MB
+(fixed by status-go#7865), Address.Hex 345MB, go-sqlcipher GoBytes 126MB, sha3 124MB.
+
+So on the iPad the footprint at the settle point is ~460–500MB in one process, ~250MB of it the two heaps that
+hold on to their login-burst peak (native malloc 190 dirty of 219 live; Go 167 dirty of 86 in use), plus 45MB
+of IOSurface at tablet resolution. Native-heap attribution (which code owns the 219MB live / 560MB peak) is the
+next step: in-process live-block enumeration with MallocStackLogging stacks (`src/app/global/malloc_blocks.c`,
+`mobile/scripts/profiling/malloc-dump.sh` + `mallocsym.py`).

@@ -102,6 +102,11 @@ else
     NIM_FLAGS+=(-d:release -d:production)
 fi
 
+# NIM_TYPE_NAMES=1 adds runtime type names (per-type instance dumps) to any build type.
+if [ "${NIM_TYPE_NAMES:-0}" -eq 1 ] && [[ " ${NIM_FLAGS[*]} " != *" -d:nimTypeNames "* ]]; then
+    NIM_FLAGS+=(-d:nimTypeNames)
+fi
+
 # GO_PPROF=1 starts the status-go pprof server at 127.0.0.1:6060 (in-process platforms: iOS).
 if [ "${GO_PPROF:-0}" -eq 1 ]; then
     NIM_FLAGS+=(-d:goPprof)
