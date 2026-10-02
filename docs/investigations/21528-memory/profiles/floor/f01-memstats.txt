@@ -1,0 +1,46 @@
+# F01 pre-login Go heap probe, host darwin/arm64, go1.26.0, tags gowaku_no_rln nowatchdog disable_torrent, ldflags -checklinkname=0
+# status-go 6bd2973d3797 (worktree perf-21528-memory). Probe source: scratchpad f01/main.go (cmd/prelogin-heap, not committed).
+# 'pre-GC' = MemStats as found; the other line is after runtime.GC() x2 + debug.FreeOSMemory().
+
+## run with GODEBUG=memprofilerate=1 (exact attribution; BuckHashSys inflated by the profiler)
+metrics.Enabled=false GOOS=darwin GOARCH=arm64 go=go1.26.0 MemProfileRate=1
+[00-after-package-init pre-GC] HeapInuse=17.38MB HeapAlloc=14.18MB HeapSys=23.31MB HeapReleased=4.76MB NextGC=20.88MB NumGC=6
+[00-after-package-init] HeapInuse=17.11MB HeapAlloc=13.62MB HeapSys=23.34MB HeapReleased=5.70MB HeapObjects=74814 Sys=42.00MB StackInuse=0.66MB MSpanInuse=0.21MB MCacheInuse=0.02MB BuckHashSys=9.28MB GCSys=3.84MB OtherSys=4.64MB TotalAlloc=28.52MB Mallocs=148882 NumGC=9 goroutines=3
+InitializeApplication -> {"accounts":null}
+[01-after-initialize-application pre-GC] HeapInuse=30.26MB HeapAlloc=27.09MB HeapSys=35.25MB HeapReleased=3.84MB NextGC=36.42MB NumGC=10
+[01-after-initialize-application] HeapInuse=17.23MB HeapAlloc=13.68MB HeapSys=35.25MB HeapReleased=16.86MB HeapObjects=75414 Sys=56.35MB StackInuse=0.75MB MSpanInuse=0.25MB MCacheInuse=0.02MB BuckHashSys=9.78MB GCSys=3.96MB OtherSys=6.19MB TotalAlloc=50.25MB Mallocs=283730 NumGC=13 goroutines=6
+ConnectionChange -> {"error":""}
+[02-after-connection-change pre-GC] HeapInuse=29.84MB HeapAlloc=26.60MB HeapSys=35.25MB HeapReleased=4.29MB NextGC=36.99MB NumGC=14
+[02-after-connection-change] HeapInuse=17.23MB HeapAlloc=13.69MB HeapSys=35.25MB HeapReleased=17.37MB HeapObjects=75459 Sys=56.60MB StackInuse=0.75MB MSpanInuse=0.26MB MCacheInuse=0.02MB BuckHashSys=9.88MB GCSys=3.96MB OtherSys=6.32MB TotalAlloc=71.44MB Mallocs=425161 NumGC=17 goroutines=6
+
+## 3 runs with the default MemProfileRate (what a device build has)
+--- run 1
+metrics.Enabled=false GOOS=darwin GOARCH=arm64 go=go1.26.0 MemProfileRate=524288
+[00-after-package-init pre-GC] HeapInuse=17.00MB HeapAlloc=14.15MB HeapSys=23.25MB HeapReleased=5.52MB NextGC=25.67MB NumGC=6
+[00-after-package-init] HeapInuse=16.80MB HeapAlloc=13.65MB HeapSys=23.34MB HeapReleased=6.05MB HeapObjects=74817 Sys=31.25MB StackInuse=0.66MB MSpanInuse=0.20MB MCacheInuse=0.02MB BuckHashSys=1.40MB GCSys=3.94MB OtherSys=1.66MB TotalAlloc=28.57MB Mallocs=148868 NumGC=9 goroutines=3
+InitializeApplication -> {"accounts":null}
+[01-after-initialize-application pre-GC] HeapInuse=19.83MB HeapAlloc=16.80MB HeapSys=23.25MB HeapReleased=2.98MB NextGC=28.02MB NumGC=9
+[01-after-initialize-application] HeapInuse=16.86MB HeapAlloc=13.71MB HeapSys=23.25MB HeapReleased=5.89MB HeapObjects=75424 Sys=31.28MB StackInuse=0.75MB MSpanInuse=0.21MB MCacheInuse=0.02MB BuckHashSys=1.40MB GCSys=3.99MB OtherSys=1.65MB TotalAlloc=31.72MB Mallocs=153118 NumGC=12 goroutines=6
+ConnectionChange -> {"error":""}
+[02-after-connection-change pre-GC] HeapInuse=18.19MB HeapAlloc=15.11MB HeapSys=23.25MB HeapReleased=4.66MB NextGC=28.15MB NumGC=12
+[02-after-connection-change] HeapInuse=16.86MB HeapAlloc=13.71MB HeapSys=23.25MB HeapReleased=5.88MB HeapObjects=75467 Sys=31.28MB StackInuse=0.75MB MSpanInuse=0.21MB MCacheInuse=0.02MB BuckHashSys=1.40MB GCSys=3.99MB OtherSys=1.64MB TotalAlloc=33.12MB Mallocs=154314 NumGC=15 goroutines=6
+--- run 2
+metrics.Enabled=false GOOS=darwin GOARCH=arm64 go=go1.26.0 MemProfileRate=524288
+[00-after-package-init pre-GC] HeapInuse=16.83MB HeapAlloc=14.13MB HeapSys=23.28MB HeapReleased=5.09MB NextGC=22.27MB NumGC=6
+[00-after-package-init] HeapInuse=16.66MB HeapAlloc=13.67MB HeapSys=23.38MB HeapReleased=6.23MB HeapObjects=74810 Sys=31.49MB StackInuse=0.62MB MSpanInuse=0.19MB MCacheInuse=0.02MB BuckHashSys=1.40MB GCSys=3.91MB OtherSys=1.95MB TotalAlloc=28.58MB Mallocs=148869 NumGC=9 goroutines=3
+InitializeApplication -> {"accounts":null}
+[01-after-initialize-application pre-GC] HeapInuse=19.70MB HeapAlloc=16.83MB HeapSys=23.25MB HeapReleased=3.23MB NextGC=28.06MB NumGC=9
+[01-after-initialize-application] HeapInuse=16.72MB HeapAlloc=13.73MB HeapSys=23.25MB HeapReleased=6.00MB HeapObjects=75411 Sys=31.52MB StackInuse=0.75MB MSpanInuse=0.19MB MCacheInuse=0.02MB BuckHashSys=1.40MB GCSys=3.95MB OtherSys=1.93MB TotalAlloc=31.74MB Mallocs=153106 NumGC=12 goroutines=6
+ConnectionChange -> {"error":""}
+[02-after-connection-change pre-GC] HeapInuse=18.04MB HeapAlloc=15.13MB HeapSys=23.25MB HeapReleased=4.76MB NextGC=28.18MB NumGC=12
+[02-after-connection-change] HeapInuse=16.72MB HeapAlloc=13.73MB HeapSys=23.25MB HeapReleased=6.02MB HeapObjects=75452 Sys=31.53MB StackInuse=0.75MB MSpanInuse=0.20MB MCacheInuse=0.02MB BuckHashSys=1.40MB GCSys=3.97MB OtherSys=1.93MB TotalAlloc=33.14MB Mallocs=154302 NumGC=15 goroutines=6
+--- run 3
+metrics.Enabled=false GOOS=darwin GOARCH=arm64 go=go1.26.0 MemProfileRate=524288
+[00-after-package-init pre-GC] HeapInuse=17.18MB HeapAlloc=14.17MB HeapSys=23.31MB HeapReleased=5.43MB NextGC=27.46MB NumGC=6
+[00-after-package-init] HeapInuse=16.98MB HeapAlloc=13.67MB HeapSys=23.34MB HeapReleased=5.88MB HeapObjects=74819 Sys=31.49MB StackInuse=0.66MB MSpanInuse=0.20MB MCacheInuse=0.02MB BuckHashSys=1.40MB GCSys=3.89MB OtherSys=1.97MB TotalAlloc=28.62MB Mallocs=148895 NumGC=9 goroutines=3
+InitializeApplication -> {"accounts":null}
+[01-after-initialize-application pre-GC] HeapInuse=19.91MB HeapAlloc=16.76MB HeapSys=27.25MB HeapReleased=6.98MB NextGC=28.06MB NumGC=9
+[01-after-initialize-application] HeapInuse=17.03MB HeapAlloc=13.73MB HeapSys=27.25MB HeapReleased=9.69MB HeapObjects=75435 Sys=35.77MB StackInuse=0.75MB MSpanInuse=0.20MB MCacheInuse=0.02MB BuckHashSys=1.40MB GCSys=3.93MB OtherSys=2.21MB TotalAlloc=31.71MB Mallocs=152933 NumGC=12 goroutines=6
+ConnectionChange -> {"error":""}
+[02-after-connection-change pre-GC] HeapInuse=18.33MB HeapAlloc=15.09MB HeapSys=27.25MB HeapReleased=8.41MB NextGC=28.19MB NumGC=12
+[02-after-connection-change] HeapInuse=17.03MB HeapAlloc=13.74MB HeapSys=27.25MB HeapReleased=9.66MB HeapObjects=75478 Sys=35.77MB StackInuse=0.75MB MSpanInuse=0.20MB MCacheInuse=0.02MB BuckHashSys=1.40MB GCSys=3.93MB OtherSys=2.20MB TotalAlloc=33.06MB Mallocs=153927 NumGC=15 goroutines=6

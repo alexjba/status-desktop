@@ -1,0 +1,61 @@
+# alloc_space during package init (churn; TotalAlloc 28.5MB vs 13.7MB live)
+File: probe-metricsOff
+Type: alloc_space
+Time: Oct 2, 2026 at 12:17pm (EEST)
+Showing nodes accounting for 25182.79kB, 86.24% of 29200.67kB total
+Dropped 2332 nodes (cum <= 146kB)
+Showing top 40 nodes out of 90
+      flat  flat%   sum%        cum   cum%
+ 7891.68kB 27.03% 27.03%  7891.68kB 27.03%  github.com/status-im/zxcvbn-go/matching.buildRankedDict
+ 6689.57kB 22.91% 49.93%  6689.57kB 22.91%  reflect.growslice
+ 2534.62kB  8.68% 58.61%  2534.62kB  8.68%  bytes.growSlice
+ 1096.38kB  3.75% 62.37%  1096.38kB  3.75%  regexp/syntax.(*compiler).inst (inline)
+    1024kB  3.51% 65.88%     1024kB  3.51%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.3
+  719.75kB  2.46% 68.34%      720kB  2.47%  encoding/json.(*decodeState).literalStore
+     704kB  2.41% 70.75%      704kB  2.41%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.2
+     600kB  2.05% 72.81%      600kB  2.05%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.7
+  559.34kB  1.92% 74.72%   559.34kB  1.92%  regexp/syntax.(*parser).newRegexp (inline)
+  559.30kB  1.92% 76.64%   559.30kB  1.92%  regexp.onePassCopy
+     504kB  1.73% 78.36%      504kB  1.73%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.1
+     320kB  1.10% 79.46%      320kB  1.10%  compress/flate.(*dictDecoder).init (inline)
+  313.40kB  1.07% 80.53%   313.40kB  1.07%  runtime.mallocgc
+  269.50kB  0.92% 81.46%   382.70kB  1.31%  regexp/syntax.(*Regexp).Simplify
+     240kB  0.82% 82.28%   256.64kB  0.88%  github.com/ethereum/go-ethereum/core/vm.newFrontierInstructionSet
+  223.97kB  0.77% 83.04%   438.56kB  1.50%  regexp.makeOnePass.func1
+  214.59kB  0.73% 83.78%   214.59kB  0.73%  regexp.mergeRuneSets.func2 (inline)
+  209.75kB  0.72% 84.50%      777kB  2.66%  regexp.makeOnePass
+     200kB  0.68% 85.18%      200kB  0.68%  github.com/status-im/status-go/pkg/services/wallet/token/local-token-lists/default-lists.init.0
+   75.31kB  0.26% 85.44%   395.31kB  1.35%  compress/flate.NewReader
+   57.81kB   0.2% 85.64%  3721.14kB 12.74%  regexp.compile
+   51.38kB  0.18% 85.81%   148.46kB  0.51%  regexp/syntax.(*parser).collapse
+   45.75kB  0.16% 85.97%   845.39kB  2.90%  regexp/syntax.parse
+   30.94kB  0.11% 86.08%   154.37kB  0.53%  google.golang.org/protobuf/internal/filedesc.newRawFile
+   13.15kB 0.045% 86.12%   690.11kB  2.36%  github.com/go-playground/validator/v10.init.0
+    6.88kB 0.024% 86.15%   402.19kB  1.38%  compress/gzip.NewReader (inline)
+    6.48kB 0.022% 86.17%   277.72kB  0.95%  github.com/ethereum/go-ethereum/core/vm.init
+    4.12kB 0.014% 86.18%   286.72kB  0.98%  google.golang.org/protobuf/internal/filetype.Builder.Build
+    3.12kB 0.011% 86.19%   177.34kB  0.61%  github.com/ethereum/go-ethereum/core/vm.newConstantinopleInstructionSet
+    2.95kB  0.01% 86.20%  7493.62kB 25.66%  encoding/json.Unmarshal
+    2.75kB 0.0094% 86.21%   191.64kB  0.66%  github.com/ethereum/go-ethereum/core/vm.newByzantiumInstructionSet
+    1.94kB 0.0066% 86.22%  2536.56kB  8.69%  bytes.(*Buffer).grow
+    1.73kB 0.0059% 86.22%  7893.56kB 27.03%  github.com/status-im/zxcvbn-go/matching.loadFrequencyList
+    1.14kB 0.0039% 86.23%  7490.41kB 25.65%  encoding/json.(*decodeState).object
+    0.88kB 0.003% 86.23%   240.41kB  0.82%  github.com/ethereum/go-ethereum/core/vm.newHomesteadInstructionSet
+    0.84kB 0.0029% 86.23%   150.14kB  0.51%  regexp.(*Regexp).backtrack
+    0.47kB 0.0016% 86.24%  2937.71kB 10.06%  github.com/status-im/zxcvbn-go/data.bindataRead
+    0.47kB 0.0016% 86.24% 10022.81kB 34.32%  github.com/status-im/zxcvbn-go/frequency.init.0
+    0.42kB 0.0014% 86.24%  1320.91kB  4.52%  github.com/go-playground/validator/v10.init
+    0.41kB 0.0014% 86.24%   361.72kB  1.24%  github.com/status-im/zxcvbn-go/adjacency.init.0
+
+# regexp.Compile callers (inuse)
+File: probe-metricsOff
+Type: inuse_space
+Time: Oct 2, 2026 at 12:17pm (EEST)
+Showing nodes accounting for 14283560B, 100% of 14283560B total
+----------------------------------------------------------+-------------
+      flat  flat%   sum%        cum   cum%   calls calls% + context 	 	 
+----------------------------------------------------------+-------------
+                                          1445112B   100% |   regexp.MustCompile (inline)
+         0     0%     0%   1445112B 10.12%                | regexp.Compile
+                                          1445112B   100% |   regexp.compile
+----------------------------------------------------------+-------------
