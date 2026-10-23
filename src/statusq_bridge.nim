@@ -11,7 +11,7 @@ proc statusq_installBoostedIncubationController*(engine: pointer, msPerTick: cin
 proc statusq_installBackgroundGraphicsRelease*() {.cdecl, importc.}
 
 when defined(android):
-  proc statusq_selectGraphicsApi*() {.cdecl, importc.}
+  proc statusq_selectGraphicsApi*(engine: pointer) {.cdecl, importc.}
 
 proc statusq_osnotification_create*(): pointer {.cdecl, importc.}
 proc statusq_osnotification_show_notification*(obj: pointer, title: cstring, message: cstring, identifier: cstring) {.cdecl, importc.}
