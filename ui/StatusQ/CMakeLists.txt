@@ -193,6 +193,7 @@ add_library(StatusQ ${LIB_TYPE}
         include/StatusQ/fonts.h
         include/StatusQ/formatteddoubleproperty.h
         include/StatusQ/genericvalidator.h
+        include/StatusQ/graphicsapiselection.h
         include/StatusQ/httpstats.h
         include/StatusQ/imageencoderutils.h
         include/StatusQ/inputmethodeventfilter.h
@@ -250,6 +251,7 @@ add_library(StatusQ ${LIB_TYPE}
         src/fonts.cpp
         src/formatteddoubleproperty.cpp
         src/genericvalidator.cpp
+        src/graphicsapiselection.cpp
         src/httpstats.cpp
         src/imageencoderutils.cpp
         src/inputmethodeventfilter.cpp
@@ -363,6 +365,7 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "iOS")
     )
 elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
     target_sources(StatusQ PRIVATE
+        src/graphicsapiselection_android.cpp
         src/keychain_android.cpp
         src/securestorage_android.cpp
         src/safutils_android.cpp
