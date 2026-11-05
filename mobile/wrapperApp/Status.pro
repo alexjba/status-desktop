@@ -1,6 +1,6 @@
 TEMPLATE = app
 
-QT += quick gui qml webview svg multimedia
+QT += quick gui qml svg multimedia
 
 CONFIG += qtquickcompiler
 # AOT Storage classes are polymorphic; no RTTI user in this lib, so drop typeinfo
@@ -32,7 +32,7 @@ contains(DEFINES, FLAG_KEYCARD_ENABLED) {
 
 equals(QT_MAJOR_VERSION, 6) {
     message("qt 6 config!!")
-    QT += core5compat core
+    QT += core
 }
 
 SOURCES += \

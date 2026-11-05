@@ -21,3 +21,9 @@ libQt6Quick3DUtils
 qmldbg_quick3dprofiler
 libplugins_platforms_q(offscreen|minimal)_
 libplugins_imageformats_q(tiff|ico|tga|wbmp|icns)_
+
+# Not imported anywhere (EnsView/SetupSyncingPopup/MessageRowsSkeleton no longer use them)
+libQt6StateMachine
+libqml_QtQml_StateMachine_
+libQt6LabsQmlModels
+libqml_Qt_labs_qmlmodels_
