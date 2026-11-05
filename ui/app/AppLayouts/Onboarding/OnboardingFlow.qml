@@ -21,7 +21,6 @@ import AppLayouts.Onboarding.stores
 import QtModelsToolkit
 
 import shared.popups
-import shared.popups.keycard_new
 import utils
 import SortFilterProxyModel
 
@@ -403,16 +402,19 @@ OnboardingStackView {
         }).open()
     }
 
-    Component {
+    SQUtils.DeferredComponent {
         id: keycardManagementPopupComponent
 
-        KeycardManagementPopup {
-            store: onboardingKeycardStore
-            passwordStrengthScoreFunction: root.passwordStrengthScoreFunction
-
+        module: "shared.popups.keycard_new"
+        typeName: "KeycardManagementPopup"
+        properties: ({
+            store: onboardingKeycardStore,
+            passwordStrengthScoreFunction: root.passwordStrengthScoreFunction,
             destroyOnClose: true
+        })
 
-            onMetadataResult: function(keycardInfo) {
+        onCreated: popup => {
+            popup.metadataResult.connect(keycardInfo => {
                 const top = root.currentItem
                 if (top && top.objectName === "keycardDetailsPage") {
                     for (const k in keycardInfo)
@@ -420,9 +422,9 @@ OnboardingStackView {
                 } else {
                     root.push(keycardDetailsComponent, keycardInfo)
                 }
-            }
+            })
 
-            onKeycardFlowCompletedWithData: function(flow, dataJson) {
+            popup.keycardFlowCompletedWithData.connect((flow, dataJson) => {
                 let onboardingFlow = Onboarding.OnboardingFlow.Unknown
                 switch (flow) {
                 case Constants.keycard.flow.onboardingLoginWithKeycard:
@@ -446,10 +448,10 @@ OnboardingStackView {
                 root.skippedBiometricFlow()
                 root.onboardingKeycardFlowCompletedWithData(flow, dataJson)
                 root.finished(onboardingFlow)
-            }
+            })
 
-            onKeycardFlowCompleted: function(flow, kUid, kcUid, success) {
-                console.info("onboarding - keycard flow completed, flow: ", flow, " keyUid: ", keyUid, " keycardUid: ", keycardUid," done successfully: ", success)
+            popup.keycardFlowCompleted.connect((flow, kUid, kcUid, success) => {
+                console.info("onboarding - keycard flow completed, flow: ", flow, " keyUid: ", popup.keyUid, " keycardUid: ", popup.keycardUid," done successfully: ", success)
                 if (flow === Constants.keycard.flow.readKeycard) {
                     return
                 }
@@ -466,7 +468,7 @@ OnboardingStackView {
                 if (root.currentItem && root.currentItem.objectName === "keycardDetailsPage") {
                     root.pop()
                 }
-            }
+            })
         }
     }
 

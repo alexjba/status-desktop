@@ -677,19 +677,21 @@ RightTabBaseView {
                         isError: RootStore.collectiblesStore.areCollectiblesError
                     }
                 }
-                Component {
+                SQUtils.DeferredComponent {
                     id: historyView
-                    HistoryView {
-                        objectName: "walletAccountHistoryView"
-                        overview: RootStore.overview
-                        activityStore: RootStore
-                        communitiesStore: root.communitiesStore
-                        currencyStore: root.sharedRootStore.currencyStore
-                        networksStore: root.networksStore
-                        showAllAccounts: RootStore.showAllAccounts
-                        filterVisible: false  // TODO #16761: Re-enable filter for activity when implemented
+
+                    source: Qt.resolvedUrl("../../../../imports/shared/views/HistoryView.qml")
+                    properties: ({
+                        objectName: "walletAccountHistoryView",
+                        overview: Qt.binding(() => RootStore.overview),
+                        activityStore: RootStore,
+                        communitiesStore: root.communitiesStore,
+                        currencyStore: root.sharedRootStore.currencyStore,
+                        networksStore: root.networksStore,
+                        showAllAccounts: Qt.binding(() => RootStore.showAllAccounts),
+                        filterVisible: false,  // TODO #16761: Re-enable filter for activity when implemented
                         bannerComponent: buyReceiveBannerComponent
-                    }
+                    })
                 }
             }
         }

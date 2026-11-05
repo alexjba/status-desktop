@@ -9,8 +9,6 @@ import StatusQ.Core.Theme
 
 import utils
 import shared.controls
-import shared.popups.addaccount
-import shared.popups.keypairimport
 
 import shared.stores as SharedStores
 import shared.stores.send
@@ -117,19 +115,25 @@ Item {
         }
 
         function onDisplayKeypairImportPopup() {
-            keypairImport.active = true
+            if (d.keypairImportPopup)
+                return
+            d.keypairImportPopup = keypairImport.createObject(root)
+            d.keypairImportPopup?.open()
         }
 
         function onDestroyKeypairImportPopup() {
-            keypairImport.active = false
+            d.keypairImportPopup?.destroy()
         }
 
         function onDisplayAddAccountPopup() {
-            addAccount.active = true
+            if (d.addAccountPopup)
+                return
+            d.addAccountPopup = addAccount.createObject(root)
+            d.addAccountPopup?.open()
         }
 
         function onDestroyAddAccountPopup() {
-            addAccount.active = false
+            d.addAccountPopup?.destroy()
         }
     }
 
@@ -207,6 +211,9 @@ Item {
 
     QtObject {
         id: d
+
+        property QtObject addAccountPopup
+        property QtObject keypairImportPopup
 
         // Only the panel the user is looking at is built when the section
         // activates; the other follows once that one is up. Portrait shows one
@@ -538,30 +545,22 @@ Item {
         onLaunchBuyCryptoModal: d.launchBuyCryptoModal()
     }
 
-    Loader {
+    StatusQUtils.DeferredComponent {
         id: addAccount
-        active: false
 
-        sourceComponent: AddAccountPopup {
-            isKeycardEnabled: root.isKeycardEnabled
-            store.addAccountModule: walletSection.addAccountModule
-        }
-
-        onLoaded: {
-            addAccount.item.open()
-        }
+        source: Qt.resolvedUrl("AddAccountPopupInstance.qml")
+        properties: ({
+            isKeycardEnabled: Qt.binding(() => root.isKeycardEnabled),
+            addAccountModule: walletSection.addAccountModule
+        })
     }
 
-    Loader {
+    StatusQUtils.DeferredComponent {
         id: keypairImport
-        active: false
 
-        sourceComponent: KeypairImportPopup {
-            store.keypairImportModule: RootStore.keypairImportModule
-        }
-
-        onLoaded: {
-            keypairImport.item.open()
-        }
+        source: Qt.resolvedUrl("KeypairImportPopupInstance.qml")
+        properties: ({
+            keypairImportModule: RootStore.keypairImportModule
+        })
     }
 }
