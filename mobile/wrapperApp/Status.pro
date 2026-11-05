@@ -1,6 +1,6 @@
 TEMPLATE = app
 
-QT += quick gui qml webview svg widgets multimedia
+QT += quick gui qml webview svg multimedia
 
 CONFIG += qtquickcompiler
 # AOT Storage classes are polymorphic; no RTTI user in this lib, so drop typeinfo
