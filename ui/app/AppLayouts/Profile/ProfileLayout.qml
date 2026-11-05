@@ -268,7 +268,12 @@ StatusSectionLayout {
             console.warn("ProfileLayout.loadSection: unhandled settings subsection:", section)
             break
         }
-        if (!!componentToLoad) {
+        if (typeof componentToLoad?.adopt === "function") {
+            const item = profileContainer.replaceCurrentItem(componentToLoad.component(),
+                                                             componentToLoad.properties,
+                                                             StackView.Immediate)
+            componentToLoad.adopt(item)
+        } else if (!!componentToLoad) {
             profileContainer.replaceCurrentItem(componentToLoad, {}, StackView.Immediate)
         }
     }
@@ -391,32 +396,31 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: walletViewComp
-            WalletView {
-                contentWidth: d.contentWidth
 
-                settingsSubSubsection: root.settingsSubSubsection
-                isKeycardEnabled: root.isKeycardEnabled
-
-                walletStore: root.walletStore
-                tokensStore: root.tokensStore
-                networkConnectionStore: root.networkConnectionStore
-                assetsStore: root.walletAssetsStore
-                collectiblesStore: root.collectiblesStore
-                networksStore: root.networksStore
-                contactsStore: root.contactsStore
-
-                thirdpartyServicesEnabled: root.privacyStore.thirdpartyServicesEnabled
-                myPublicKey: userProfile.pubKey
-                currencySymbol: root.sharedRootStore.currencyStore.currentCurrency
+            source: Qt.resolvedUrl("views/WalletView.qml")
+            properties: ({
+                contentWidth: Qt.binding(() => d.contentWidth),
+                settingsSubSubsection: Qt.binding(() => root.settingsSubSubsection),
+                isKeycardEnabled: Qt.binding(() => root.isKeycardEnabled),
+                walletStore: root.walletStore,
+                tokensStore: root.tokensStore,
+                networkConnectionStore: root.networkConnectionStore,
+                assetsStore: root.walletAssetsStore,
+                collectiblesStore: root.collectiblesStore,
+                networksStore: root.networksStore,
+                contactsStore: root.contactsStore,
+                thirdpartyServicesEnabled: Qt.binding(() => root.privacyStore.thirdpartyServicesEnabled),
+                myPublicKey: Qt.binding(() => userProfile.pubKey),
+                currencySymbol: Qt.binding(() => root.sharedRootStore.currencyStore.currentCurrency),
                 sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.wallet)
+            })
 
-                onAddressWasShownRequested: (address) => root.addressWasShownRequested(address)
-
-                onBackButtonNameChanged: d.backButtonName = backButtonName
-
-                Component.onCompleted: initStack()
+            onCreated: view => {
+                view.addressWasShownRequested.connect(address => root.addressWasShownRequested(address))
+                view.backButtonNameChanged.connect(() => d.backButtonName = view.backButtonName)
+                view.initStack()
             }
         }
 
@@ -506,18 +510,20 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: advancedViewComp
-            AdvancedView {
-                advancedStore: root.advancedStore
-                walletStore: root.walletStore
-                isFleetSelectionEnabled: fleetSelectionEnabled
-                isBrowserEnabled: root.isBrowserEnabled
-                messageLinkSharingFeatureEnabled: root.messageLinkSharingFeatureEnabled
-                minimizeOnCloseOptionVisible: root.minimizeOnCloseOptionVisible
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.advanced)
-                contentWidth: d.contentWidth
-            }
+
+            source: Qt.resolvedUrl("views/AdvancedView.qml")
+            properties: ({
+                advancedStore: root.advancedStore,
+                walletStore: root.walletStore,
+                isFleetSelectionEnabled: fleetSelectionEnabled,
+                isBrowserEnabled: Qt.binding(() => root.isBrowserEnabled),
+                messageLinkSharingFeatureEnabled: Qt.binding(() => root.messageLinkSharingFeatureEnabled),
+                minimizeOnCloseOptionVisible: Qt.binding(() => root.minimizeOnCloseOptionVisible),
+                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.advanced),
+                contentWidth: Qt.binding(() => d.contentWidth)
+            })
         }
 
         Component {

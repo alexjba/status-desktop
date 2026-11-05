@@ -876,20 +876,6 @@ QtObject {
         },
 
         Component {
-            id: keycardManagementPopupComponent
-            KeycardManagementPopup {
-                store: root.keycardManagementStore
-                passwordStrengthScoreFunction: root.sharedRootStore.getPasswordStrengthScore
-                onMetadataResult: keycardInfo => Global.keycardManagementResult(keycardInfo)
-                onKeycardFlowCompleted: function(flow, keyUid, keycardUid, success) {
-                    Global.keycardFlowDone(flow, keyUid, keycardUid, success)
-                }
-
-                onClosed: destroy()
-            }
-        },
-
-        Component {
             id: downloadPageComponent
             DownloadPage {
                 onClosed: destroy()
@@ -1214,18 +1200,6 @@ QtObject {
                             dialogRoot.replaceLoader.item.allSigned()
                         }
                     }
-                }
-            }
-        },
-
-        Component {
-            id: createCommunitiesPopupComponent
-            CreateCommunityPopup {
-                store: root.communitiesStore
-                advancedStore: root.advancedStore
-                isDevBuild: root.isDevBuild
-                onClosed: {
-                    destroy()
                 }
             }
         },
@@ -1898,6 +1872,39 @@ QtObject {
                     root.restartRequested()
                 }
             }
+        }
+    ]
+
+    readonly property list<QtObject> _deferredComponents: [
+        SQUtils.DeferredComponent {
+            id: keycardManagementPopupComponent
+
+            module: "shared.popups.keycard_new"
+            typeName: "KeycardManagementPopup"
+            properties: ({
+                store: root.keycardManagementStore,
+                passwordStrengthScoreFunction: root.sharedRootStore.getPasswordStrengthScore
+            })
+            onCreated: popup => {
+                popup.metadataResult.connect(keycardInfo => Global.keycardManagementResult(keycardInfo))
+                popup.keycardFlowCompleted.connect((flow, keyUid, keycardUid, success) => {
+                    Global.keycardFlowDone(flow, keyUid, keycardUid, success)
+                })
+                popup.closed.connect(() => popup.destroy())
+            }
+        },
+
+        SQUtils.DeferredComponent {
+            id: createCommunitiesPopupComponent
+
+            module: "AppLayouts.Communities.popups"
+            typeName: "CreateCommunityPopup"
+            properties: ({
+                store: root.communitiesStore,
+                advancedStore: root.advancedStore,
+                isDevBuild: Qt.binding(() => root.isDevBuild)
+            })
+            onCreated: popup => popup.closed.connect(() => popup.destroy())
         }
     ]
 }
