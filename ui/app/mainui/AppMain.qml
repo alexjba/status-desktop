@@ -2144,22 +2144,23 @@ Item {
                     id: acPanelLoader
                     // kept alive while the panel animates out, released once fully closed
                     active: mainLayoutItem.openACCenterPanel || acSlideContainer._shown || acPortraitPopup.visible
-                    sourceComponent: ActivityCenterAdaptor {
-                        contactsModel: appMain.contactsStore?.contactsModel ?? null
-                        userProfileName: appMain.profileStore?.name ?? ""
-                        resolveMentionsFn: (text, knownNames) => appMain.mentionResolver.resolveFor(text, knownNames)
-                        notifications: appMain.activityCenterStore?.activityCenterNotifications ?? null
+                    Component.onCompleted: setSource(Qt.resolvedUrl("../AppLayouts/ActivityCenter/adaptors/ActivityCenterAdaptor.qml"), {
+                        contactsModel: Qt.binding(() => appMain.contactsStore?.contactsModel ?? null),
+                        userProfileName: Qt.binding(() => appMain.profileStore?.name ?? ""),
+                        resolveMentionsFn: (text, knownNames) => appMain.mentionResolver.resolveFor(text, knownNames),
+                        notifications: Qt.binding(() => appMain.activityCenterStore?.activityCenterNotifications ?? null),
                         getCommunityDetails: function(communityId) {
                             return appMain.rootChatStore?.getCommunityDetailsAsJson(communityId) ?? ({})
-                        }
+                        },
                         getChatDetails: function(chatId) {
                             return appMain.rootChatStore?.getChatDetails(chatId) ?? ({})
                         }
-                        onPopulateContactDetailsRequested: (contactId) => appMain.contactsStore.populateContactDetails(contactId)
-                    }
+                    })
+                    onLoaded: item.populateContactDetailsRequested.connect(
+                                  contactId => appMain.contactsStore.populateContactDetails(contactId))
                 }
 
-                readonly property ActivityCenterAdaptor adaptor: acPanelLoader.item
+                readonly property QtObject adaptor: acPanelLoader.item
 
                 backgroundColor: Theme.palette.statusAppLayout.backgroundColor
 
