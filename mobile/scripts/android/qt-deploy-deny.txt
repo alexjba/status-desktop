@@ -27,3 +27,9 @@ libQt6StateMachine
 libqml_QtQml_StateMachine_
 libQt6LabsQmlModels
 libqml_Qt_labs_qmlmodels_
+
+# ffmpeg media backend (main.cpp selects the android one)
+ffmpegmediaplugin
+libav(codec|format|util|device|filter)
+libsw(scale|resample)
+libQt6FFmpegStub
