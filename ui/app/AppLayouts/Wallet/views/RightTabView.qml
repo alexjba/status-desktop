@@ -713,18 +713,17 @@ RightTabBaseView {
                 }
             }
 
-            sourceComponent: CollectibleDetailView {
-                objectName: "collectibleDetailView"
-
-                collectible: RootStore.collectiblesStore.detailedCollectible
-                isCollectibleLoading: RootStore.collectiblesStore.isDetailedCollectibleLoading
-                activityModel: d.detailedCollectibleActivityController.model
-                addressFilters: RootStore.addressFilters
-                rootStore: root.sharedRootStore
-                walletRootStore: RootStore
-                communitiesStore: root.communitiesStore
+            Component.onCompleted: setSource(Qt.resolvedUrl("collectibles/CollectibleDetailView.qml"), {
+                objectName: "collectibleDetailView",
+                collectible: Qt.binding(() => RootStore.collectiblesStore.detailedCollectible),
+                isCollectibleLoading: Qt.binding(() => RootStore.collectiblesStore.isDetailedCollectibleLoading),
+                activityModel: Qt.binding(() => d.detailedCollectibleActivityController.model),
+                addressFilters: Qt.binding(() => RootStore.addressFilters),
+                rootStore: root.sharedRootStore,
+                walletRootStore: RootStore,
+                communitiesStore: root.communitiesStore,
                 networksStore: root.networksStore
-            }
+            })
         }
         Loader {
             id: assetDetailLoader
@@ -738,19 +737,16 @@ RightTabBaseView {
                     RootStore.resetCurrentViewedHolding(Constants.TokenType.ERC20)
             }
 
-            sourceComponent: AssetsDetailView {
-                objectName: "assetDetailView"
-
-                tokenGroup: d.assetDetailTokenGroup ?? ({})
-
-                tokensStore: RootStore.tokensStore
-                allNetworksModel: root.networksStore.activeNetworks
-                address: RootStore.overview.mixedcaseAddress
-                currencyStore: RootStore.currencyStore
-                networkFilters: root.networksStore.networkFilters
-
+            Component.onCompleted: setSource(Qt.resolvedUrl("AssetsDetailView.qml"), {
+                objectName: "assetDetailView",
+                tokenGroup: Qt.binding(() => d.assetDetailTokenGroup ?? ({})),
+                tokensStore: RootStore.tokensStore,
+                allNetworksModel: Qt.binding(() => root.networksStore.activeNetworks),
+                address: Qt.binding(() => RootStore.overview.mixedcaseAddress),
+                currencyStore: RootStore.currencyStore,
+                networkFilters: Qt.binding(() => root.networksStore.networkFilters),
                 networkConnectionStore: root.networkConnectionStore
-            }
+            })
         }
     }
 }
