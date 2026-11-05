@@ -2,7 +2,6 @@ TEMPLATE = app
 
 QT += quick gui qml svg multimedia
 
-CONFIG += qtquickcompiler
 # AOT Storage classes are polymorphic; no RTTI user in this lib, so drop typeinfo
 CONFIG += rtti_off
 
@@ -154,5 +153,21 @@ ios {
         MY_ENTITLEMENTS.name = CODE_SIGN_ENTITLEMENTS
         MY_ENTITLEMENTS.value = $$PWD/../ios/Status-NoKeycard.entitlements
         QMAKE_MAC_XCODE_SETTINGS += MY_ENTITLEMENTS
+    }
+}
+
+# Loaded here instead of CONFIG so RESOURCES holds the filtered qmlcache qrc files below
+load(qtquickcompiler)
+
+PROFILE_BUILD = $$(PROFILE)
+
+# A connected QML debugger turns the AOT cache off and compiles from source, so profile builds keep it
+android:!equals(PROFILE_BUILD, 1) {
+    QMLSTUB_FILE = $$OUT_PWD/qmlstub.qml
+    for(res, RESOURCES) {
+        contains(res, .*_qmlcache\\.qrc$) {
+            STUB_RESULT = $$system(bash $$PWD/../scripts/stub_qmlcache_sources.sh $$system_quote($$res) $$system_quote($$QMLSTUB_FILE) 2>&1)
+            !isEmpty(STUB_RESULT): error("stub_qmlcache_sources: $$STUB_RESULT")
+        }
     }
 }
