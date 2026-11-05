@@ -194,7 +194,11 @@ QtObject {
             return null
         }
 
+        const __t0 = Date.now()
         root.currentPopup = popupComponent.createObject(popupParent, params)
+        const __t1 = Date.now()
+        const __p = root.currentPopup
+        __p.onOpened.connect(() => console.info("[open-latency]", String(__p).split("(")[0], "created", __t1 - __t0, "visible", Date.now() - __t0))
         root.currentPopup.open();
         if (cb)
             cb(root.currentPopup)

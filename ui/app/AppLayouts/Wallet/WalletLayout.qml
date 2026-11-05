@@ -103,6 +103,8 @@ Item {
         resetView()
     }
 
+    Component.onCompleted: console.info("[wallet-visible]", Date.now())
+
     onVisibleChanged: {
         resetView()
     }
@@ -128,7 +130,11 @@ Item {
         function onDisplayAddAccountPopup() {
             if (d.addAccountPopup)
                 return
+            const __t0 = Date.now()
             d.addAccountPopup = addAccount.createObject(root)
+            const __t1 = Date.now()
+            const __p = d.addAccountPopup
+            __p.onOpened.connect(() => console.info("[open-latency]", String(__p).split("(")[0], "created", __t1 - __t0, "visible", Date.now() - __t0))
             d.addAccountPopup?.open()
         }
 
