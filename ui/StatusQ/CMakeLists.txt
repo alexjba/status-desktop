@@ -184,6 +184,7 @@ add_library(StatusQ ${LIB_TYPE}
         include/StatusQ/chatinputhighlighter.h
         include/StatusQ/clipboardutils.h
         include/StatusQ/incubationhints.h
+        include/StatusQ/qmlinventory.h
         include/StatusQ/constantrole.h
         include/StatusQ/contextmenueventfilter.h
         include/StatusQ/delegatepool.h
@@ -241,6 +242,7 @@ add_library(StatusQ ${LIB_TYPE}
         src/spellchecker.cpp
         src/clipboardutils.cpp
         src/incubationhints.cpp
+        src/qmlinventory.cpp
         src/constantrole.cpp
         src/delegatepool.cpp
         src/externc.cpp
