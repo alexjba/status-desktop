@@ -2,7 +2,6 @@ TEMPLATE = app
 
 QT += quick gui qml webview svg widgets multimedia
 
-CONFIG += qtquickcompiler
 # Per-binding AOT stats, written next to each generated .cpp
 QMLCACHE_FLAGS += --dump-aot-stats --module-id=status
 # qtquickcompiler.prf passes no import paths; without these, in-repo modules don't AOT-compile
@@ -145,5 +144,21 @@ ios {
         MY_ENTITLEMENTS.name = CODE_SIGN_ENTITLEMENTS
         MY_ENTITLEMENTS.value = $$PWD/../ios/Status-NoKeycard.entitlements
         QMAKE_MAC_XCODE_SETTINGS += MY_ENTITLEMENTS
+    }
+}
+
+# Loaded here instead of CONFIG so RESOURCES holds the filtered qmlcache qrc files below
+load(qtquickcompiler)
+
+PROFILE_BUILD = $$(PROFILE)
+
+# A connected QML debugger turns the AOT cache off and compiles from source, so profile builds keep it
+android:!equals(PROFILE_BUILD, 1) {
+    QMLSTUB_FILE = $$OUT_PWD/qmlstub.qml
+    for(res, RESOURCES) {
+        contains(res, .*_qmlcache\\.qrc$) {
+            STUB_RESULT = $$system(bash $$PWD/../scripts/stub_qmlcache_sources.sh $$system_quote($$res) $$system_quote($$QMLSTUB_FILE) 2>&1)
+            !isEmpty(STUB_RESULT): error("stub_qmlcache_sources: $$STUB_RESULT")
+        }
     }
 }
