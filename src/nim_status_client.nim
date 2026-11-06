@@ -301,6 +301,11 @@ proc mainProc() =
     if not existsEnv("QSG_ATLAS_HEIGHT"):
       putEnv("QSG_ATLAS_HEIGHT", MobileQsgAtlasSize)
 
+  # Mali keeps a host copy of every texture atlas page; no atlas saves ~10 MB GPU memory
+  when defined(android):
+    if not existsEnv("QSG_ATLAS_SIZE_LIMIT"):
+      putEnv("QSG_ATLAS_SIZE_LIMIT", "0")
+
   # Required by the WalletConnectSDK view right after creating the QGuiApplication instance
   statusq_initializeWebEngine()
 
