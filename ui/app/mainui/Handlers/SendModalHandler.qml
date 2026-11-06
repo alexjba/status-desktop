@@ -172,7 +172,10 @@ QtObject {
 
     function openSend(params = {}) {
         root.simpleSendParams = params
+        const __t0 = Date.now()
         let sendModalInst = simpleSendModalComponent.createObject(popupParent)
+        const __t1 = Date.now()
+        sendModalInst.onOpened.connect(() => console.info("[open-latency]", String(sendModalInst).split("(")[0], "created", __t1 - __t0, "visible", Date.now() - __t0))
         root.openModals++
         sendModalInst.closed.connect(() => root.openModals--)
         sendModalInst.open()

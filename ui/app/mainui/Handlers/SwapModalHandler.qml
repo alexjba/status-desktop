@@ -37,9 +37,12 @@ QtObject {
 
         d.swapInputParams.resetFormData()
 
+        const __t0 = Date.now()
         let swapModalInst = swapModalComponent.createObject(popupParent)
         root.openModals++
         swapModalInst.closed.connect(() => root.openModals--)
+        const __t1 = Date.now()
+        swapModalInst.onOpened.connect(() => console.info("[open-latency]", String(swapModalInst).split("(")[0], "created", __t1 - __t0, "visible", Date.now() - __t0))
         swapModalInst.open()
 
         if (callback)

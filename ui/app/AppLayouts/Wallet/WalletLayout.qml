@@ -105,6 +105,8 @@ Item {
         resetView()
     }
 
+    Component.onCompleted: console.info("[wallet-visible]", Date.now())
+
     onVisibleChanged: {
         resetView()
     }
@@ -125,6 +127,7 @@ Item {
         }
 
         function onDisplayAddAccountPopup() {
+            addAccount.t0 = Date.now()
             addAccount.active = true
         }
 
@@ -547,7 +550,12 @@ Item {
             store.addAccountModule: walletSection.addAccountModule
         }
 
+        property double t0
         onLoaded: {
+            const __t0 = addAccount.t0
+            const __t1 = Date.now()
+            const __p = addAccount.item
+            __p.onOpened.connect(() => console.info("[open-latency]", String(__p).split("(")[0], "created", __t1 - __t0, "visible", Date.now() - __t0))
             addAccount.item.open()
         }
     }
