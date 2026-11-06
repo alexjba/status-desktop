@@ -118,15 +118,17 @@ RUN set -e; \
     echo "23c666d0edf20f14249b3d8f0368acaee9ab585b09e1de82107c66e1f3ec9533  openssl.tar.gz" | sha256sum -c -; \
     tar -xzf openssl.tar.gz && rm openssl.tar.gz
 
-# Qt loads OpenSSL at runtime (the app ships libcrypto_3/libssl_3); it only needs the generated headers.
+# Qt and FFmpeg load OpenSSL at runtime (the app ships libcrypto_3/libssl_3). Qt needs the headers;
+# FFmpeg also links against stand-ins built from the static libraries (see build-ffmpeg-android.sh).
 RUN cd openssl-${OPENSSL_VERSION} \
  && PATH=${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH \
     ./Configure android-arm64 -D__ANDROID_API__=28 no-shared no-tests > /dev/null \
- && make build_generated > /dev/null
+ && PATH=${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH make -j"$(nproc)" build_libs > /dev/null
 
 COPY build-ffmpeg-android.sh build-qt-android.sh /src/
 
-RUN FFMPEG_SRC_DIR=/src/ffmpeg-${FFMPEG_VERSION} FFMPEG_DIR=/opt/ffmpeg ./build-ffmpeg-android.sh
+RUN FFMPEG_SRC_DIR=/src/ffmpeg-${FFMPEG_VERSION} FFMPEG_DIR=/opt/ffmpeg OPENSSL_DIR=/src/openssl-${OPENSSL_VERSION} \
+    ./build-ffmpeg-android.sh
 
 RUN QT_SRC_DIR=/src/qt QT_HOST_PATH=/opt/qt/${QT_VERSION}/gcc_64 FFMPEG_DIR=/opt/ffmpeg \
     OPENSSL_INCLUDE_DIR=/src/openssl-${OPENSSL_VERSION}/include QT_MODULES="${QT_ANDROID_MODULES}" \
