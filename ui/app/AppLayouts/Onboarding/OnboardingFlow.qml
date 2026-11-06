@@ -71,6 +71,8 @@ OnboardingStackView {
     signal biometricsRequested(string profileId)
     signal dismissBiometricsRequested
     signal loginRequested(string keyUid, int method, var data)
+    // the user is heading to the app: typing the login secret, biometrics, or leaving the welcome page
+    signal loginIntent()
     signal enableBiometricsRequested(bool enable)
     signal stayLoggedInRequested(bool enabled)
     signal syncProceedWithConnectionString(string connectionString)
@@ -182,8 +184,14 @@ OnboardingStackView {
             privacyModeFeatureEnabled: root.privacyModeFeatureEnabled
             thirdpartyServicesEnabled: root.thirdpartyServicesEnabled
 
-            onCreateProfileRequested: root.push(createProfilePage)
-            onLoginRequested: root.push(loginPage)
+            onCreateProfileRequested: {
+                root.loginIntent()
+                root.push(createProfilePage)
+            }
+            onLoginRequested: {
+                root.loginIntent()
+                root.push(loginPage)
+            }
 
             onPrivacyPolicyRequested: d.openPrivacyPolicyPopup()
             onTermsOfUseRequested: d.openTermsOfUsePopup()
@@ -215,13 +223,22 @@ OnboardingStackView {
 
             onProfileSelected: (keyUid) => root.profileSelected(keyUid)
             onBiometricsRequested: (profileId) => {
-                if (visible)
-                    root.biometricsRequested(profileId)
+                if (!visible)
+                    return
+                root.loginIntent()
+                root.biometricsRequested(profileId)
             }
             onDismissBiometricsRequested: root.dismissBiometricsRequested()
             onLoginRequested: (keyUid, method, data) => root.loginRequested(keyUid, method, data)
-            onOnboardingCreateProfileFlowRequested: root.push(createProfilePage)
-            onOnboardingLoginFlowRequested: root.push(loginPage)
+            onLoginIntent: root.loginIntent()
+            onOnboardingCreateProfileFlowRequested: {
+                root.loginIntent()
+                root.push(createProfilePage)
+            }
+            onOnboardingLoginFlowRequested: {
+                root.loginIntent()
+                root.push(loginPage)
+            }
             onLostKeycardFlowRequested: {
                 root.keyUidSubmitted(loginScreen.selectedProfileKeyId)
                 root.push(keycardLostPage)
