@@ -105,6 +105,8 @@ Item {
         resetView()
     }
 
+    Component.onCompleted: console.info("[wallet-visible]", Date.now())
+
     onVisibleChanged: {
         resetView()
     }
