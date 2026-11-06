@@ -120,6 +120,12 @@ OnboardingStackView {
 
         readonly property int delegateHeight: 64
 
+        function pushDeferred(deferred, params = {}) {
+            const item = root.push(deferred.component(), Object.assign({}, deferred.properties, params))
+            deferred.adopt(item)
+            return item
+        }
+
         property int flow
         property LoginScreen loginScreen: null
         property var manageProfilesDialog: null
@@ -269,8 +275,8 @@ OnboardingStackView {
             }
             onCreateProfileWithSeedphraseRequested: {
                 d.flow = Onboarding.OnboardingFlow.CreateProfileWithSeedphrase
-                root.push(useRecoveryPhraseFlow,
-                          { type: UseRecoveryPhraseFlow.Type.NewProfile })
+                d.pushDeferred(useRecoveryPhraseFlow,
+                          { type: RecoveryPhraseFlowType.Type.NewProfile })
             }
             onCreateProfileWithEmptyKeycardRequested: {
                 root.openKeycardPopup(Constants.keycard.flow.readKeycard, "", "", "", "[]", false)
@@ -286,15 +292,15 @@ OnboardingStackView {
             isKeycardEnabled: root.isKeycardEnabled
             thirdpartyServicesEnabled: root.thirdpartyServicesEnabled
 
-            onLoginWithSyncingRequested: root.push(logInBySyncingFlow)
+            onLoginWithSyncingRequested: d.pushDeferred(logInBySyncingFlow)
             onLoginWithKeycardRequested: {
                 root.openKeycardPopup(Constants.keycard.flow.readKeycard, "", "", "", "[]", false)
             }
 
             onLoginWithSeedphraseRequested: {
                 d.flow = Onboarding.OnboardingFlow.LoginWithSeedphrase
-                root.push(useRecoveryPhraseFlow,
-                          { type: UseRecoveryPhraseFlow.Type.Login })
+                d.pushDeferred(useRecoveryPhraseFlow,
+                          { type: RecoveryPhraseFlowType.Type.Login })
             }
         }
     }
@@ -334,54 +340,54 @@ OnboardingStackView {
         }
     }
 
-    Component {
+    SQUtils.DeferredComponent {
         id: useRecoveryPhraseFlow
 
-        UseRecoveryPhraseFlow {
-            isSeedPhraseValid: root.isSeedPhraseValid
-            isSeedPhraseDuplicate: root.isSeedPhraseDuplicate
-            passwordStrengthScoreFunction: root.passwordStrengthScoreFunction
-            stayLoggedInAvailable: root.stayLoggedInAvailable
-            biometricsAvailable: root.biometricsAvailable
-            isProfileMigratedToDEKEncryption: {
+        source: Qt.resolvedUrl("UseRecoveryPhraseFlow.qml")
+        properties: ({
+            isSeedPhraseValid: root.isSeedPhraseValid,
+            isSeedPhraseDuplicate: root.isSeedPhraseDuplicate,
+            passwordStrengthScoreFunction: root.passwordStrengthScoreFunction,
+            stayLoggedInAvailable: Qt.binding(() => root.stayLoggedInAvailable),
+            biometricsAvailable: Qt.binding(() => root.biometricsAvailable),
+            isProfileMigratedToDEKEncryption: Qt.binding(() => {
                 const keyUid = root.loginScreen ? root.loginScreen.selectedProfileKeyId : ""
                 return keyUid ? root.isProfileMigratedToDEKEncryption(keyUid) : false
-            }
+            })
+        })
 
-            onSeedphraseSubmitted: (seedphrase) => root.seedphraseSubmitted(seedphrase)
-            onSetPasswordRequested: (password) => root.setPasswordRequested(password)
-            onStayLoggedInRequested: (enabled) => root.stayLoggedInRequested(enabled)
-            onEnableBiometricsRequested: (enable) => root.enableBiometricsRequested(enable)
-
-            onImportLocalBackupRequested: (importFilePath) => root.importLocalBackupRequested(importFilePath)
-
-            onFinished: {
-                d.finishCurrentFlow()
-            }
+        onCreated: flow => {
+            flow.seedphraseSubmitted.connect(seedphrase => root.seedphraseSubmitted(seedphrase))
+            flow.setPasswordRequested.connect(password => root.setPasswordRequested(password))
+            flow.stayLoggedInRequested.connect(enabled => root.stayLoggedInRequested(enabled))
+            flow.enableBiometricsRequested.connect(enable => root.enableBiometricsRequested(enable))
+            flow.importLocalBackupRequested.connect(importFilePath => root.importLocalBackupRequested(importFilePath))
+            flow.finished.connect(() => d.finishCurrentFlow())
         }
     }
 
-    Component {
+    SQUtils.DeferredComponent {
         id: logInBySyncingFlow
 
-        LoginBySyncingFlow {
-            validateConnectionString: root.validateConnectionString
-            syncState: root.syncState
+        source: Qt.resolvedUrl("LoginBySyncingFlow.qml")
+        properties: ({
+            validateConnectionString: root.validateConnectionString,
+            syncState: Qt.binding(() => root.syncState)
+        })
 
-            onSyncProceedWithConnectionString:
-                (connectionString) => root.syncProceedWithConnectionString(connectionString)
-
-            onLoginWithSeedphraseRequested: {
+        onCreated: flow => {
+            flow.syncProceedWithConnectionString.connect(
+                connectionString => root.syncProceedWithConnectionString(connectionString))
+            flow.loginWithSeedphraseRequested.connect(() => {
                 d.flow = Onboarding.OnboardingFlow.LoginWithSeedphrase
 
-                root.push(useRecoveryPhraseFlow,
-                          { type: UseRecoveryPhraseFlow.Type.Login })
-            }
-
-            onFinished: {
+                d.pushDeferred(useRecoveryPhraseFlow,
+                               { type: RecoveryPhraseFlowType.Type.Login })
+            })
+            flow.finished.connect(() => {
                 d.flow = Onboarding.OnboardingFlow.LoginWithSyncing
                 d.finishCurrentFlow()
-            }
+            })
         }
     }
 
