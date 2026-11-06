@@ -184,6 +184,12 @@ StatusSectionLayout {
     QtObject {
         id: _internal
 
+        // menus and dialogs below are built on first use
+        function lazy(loader) {
+            loader.active = true
+            return loader.item
+        }
+
         readonly property Item currentWebView: webViewContext.currentWebView
         readonly property bool currentTabIncognito: currentWebView?.incognito ?? false
         readonly property bool currentTabLoading: currentWebView?.loading ?? false
@@ -431,10 +437,10 @@ StatusSectionLayout {
         downloadRequestHandler: (download, hostView, token) =>
             downloadsContext.handleDownloadRequest(download, hostView, token)
         linkLongPressHandler: (linkUrl, imageUrl, position, hostView) =>
-            linkContextMenuInst.openAt(linkUrl, imageUrl, position, webStackView, hostView)
+            _internal.lazy(linkContextMenuLoader).openAt(linkUrl, imageUrl, position, webStackView, hostView)
         sslErrorHandler: (error) => {
                              error.defer()
-                             sslDialog.enqueue(error)
+                             _internal.lazy(sslDialogLoader).enqueue(error)
                          }
         jsDialogHandler: (request) => dialogsContext.openJsDialog(request)
         findTextFinishedHandler: function(result) {
@@ -546,9 +552,9 @@ StatusSectionLayout {
                 }
                 function onOpenSettingMenu(target, pos) {
                     if (root.isMobile)
-                        mobileSettingsMenu.open()
+                        _internal.lazy(mobileSettingsMenuLoader).open()
                     else
-                        settingsMenu.popup(target, pos)
+                        _internal.lazy(settingsMenuLoader).popup(target, pos)
                 }
                 function onRequestSearch() {
                     browserToolbarLoader.activateAddressBar()
@@ -799,58 +805,66 @@ StatusSectionLayout {
         }
     }
 
-    BrowserSettingsMenu {
-        id: settingsMenu
+    Loader {
+        id: settingsMenuLoader
+        active: false
+        sourceComponent: BrowserSettingsMenu {
+            id: settingsMenu
 
-        parent: browserToolbarLoader
-        modal: true
-        dim: false
+            parent: browserToolbarLoader
+            modal: true
+            dim: false
 
-        incognitoMode: _internal.currentTabIncognito
-        zoomFactor: _internal.currentWebView?.zoomFactor ?? 1
-        browserSettings: localAccountSensitiveSettings
-        clearingBrowsingData: _internal.currentWebView?.clearing ?? false
-        clearSiteDataSupported: _internal.currentWebView?.clearSiteDataSupported ?? true
-        onForceReload: webViewContext.forceReloadCurrent()
-        onClearSiteData: webViewContext.clearSiteDataCurrent()
-        onClearBrowsingData: root.clearBrowsingDataOnCurrentTab()
-        onAddNewTab: _internal.addNewEmptyTab()
-        onOpenDownloads: _internal.openDownloadsOverview()
-        onOpenSupportedFormats: _internal.openSupportedFormats()
-        onGoIncognito: (checked) => root.applyIncognitoMode(checked)
-        onZoomIn: webViewContext.changeZoomCurrent(0.1)
-        onZoomOut: webViewContext.changeZoomCurrent(-0.1)
-        onResetZoomFactor: webViewContext.resetZoomCurrent()
-        onLaunchFindBar: _internal.showFindBar()
-        onLaunchBrowserSettings: {
-            Global.changeAppSectionBySectionType(Constants.appSection.profile, Constants.settingsSubsection.browserSettings);
+            incognitoMode: _internal.currentTabIncognito
+            zoomFactor: _internal.currentWebView?.zoomFactor ?? 1
+            browserSettings: localAccountSensitiveSettings
+            clearingBrowsingData: _internal.currentWebView?.clearing ?? false
+            clearSiteDataSupported: _internal.currentWebView?.clearSiteDataSupported ?? true
+            onForceReload: webViewContext.forceReloadCurrent()
+            onClearSiteData: webViewContext.clearSiteDataCurrent()
+            onClearBrowsingData: root.clearBrowsingDataOnCurrentTab()
+            onAddNewTab: _internal.addNewEmptyTab()
+            onOpenDownloads: _internal.openDownloadsOverview()
+            onOpenSupportedFormats: _internal.openSupportedFormats()
+            onGoIncognito: (checked) => root.applyIncognitoMode(checked)
+            onZoomIn: webViewContext.changeZoomCurrent(0.1)
+            onZoomOut: webViewContext.changeZoomCurrent(-0.1)
+            onResetZoomFactor: webViewContext.resetZoomCurrent()
+            onLaunchFindBar: _internal.showFindBar()
+            onLaunchBrowserSettings: {
+                Global.changeAppSectionBySectionType(Constants.appSection.profile, Constants.settingsSubsection.browserSettings);
+            }
         }
     }
 
-    MobileSettingsMenu {
-        id: mobileSettingsMenu
+    Loader {
+        id: mobileSettingsMenuLoader
+        active: false
+        sourceComponent: MobileSettingsMenu {
+            id: mobileSettingsMenu
 
-        supportsIncognito: _internal.currentWebView?.supportsIncognito ?? false
-        incognitoMode: _internal.currentTabIncognito
+            supportsIncognito: _internal.currentWebView?.supportsIncognito ?? false
+            incognitoMode: _internal.currentTabIncognito
 
-        supportsZoom: _internal.currentWebView?.supportsZoom ?? false
-        zoomFactor: _internal.currentWebView?.zoomFactor ?? 1
-        onZoomIn: webViewContext.changeZoomCurrent(0.1)
-        onZoomOut: webViewContext.changeZoomCurrent(-0.1)
-        onResetZoomFactor: webViewContext.resetZoomCurrent()
+            supportsZoom: _internal.currentWebView?.supportsZoom ?? false
+            zoomFactor: _internal.currentWebView?.zoomFactor ?? 1
+            onZoomIn: webViewContext.changeZoomCurrent(0.1)
+            onZoomOut: webViewContext.changeZoomCurrent(-0.1)
+            onResetZoomFactor: webViewContext.resetZoomCurrent()
 
-        supportsFind: _internal.currentTabSupportsFindInPage
-        onLaunchFindBar: _internal.showFindBar()
+            supportsFind: _internal.currentTabSupportsFindInPage
+            onLaunchFindBar: _internal.showFindBar()
 
-        clearSiteDataSupported: _internal.currentWebView?.clearSiteDataSupported ?? false
-        clearing: _internal.currentWebView?.clearing ?? false
-        onForceReload: webViewContext.forceReloadCurrent()
-        onClearSiteData: webViewContext.clearSiteDataCurrent()
-        onClearBrowsingData: root.clearBrowsingDataOnCurrentTab()
+            clearSiteDataSupported: _internal.currentWebView?.clearSiteDataSupported ?? false
+            clearing: _internal.currentWebView?.clearing ?? false
+            onForceReload: webViewContext.forceReloadCurrent()
+            onClearSiteData: webViewContext.clearSiteDataCurrent()
+            onClearBrowsingData: root.clearBrowsingDataOnCurrentTab()
 
-        onGoIncognito: checked => root.applyIncognitoMode(checked)
-        onSupportedFormatsRequested: _internal.openSupportedFormats()
-        onSettingsRequested: Global.changeAppSectionBySectionType(Constants.appSection.profile, Constants.settingsSubsection.browserSettings)
+            onGoIncognito: checked => root.applyIncognitoMode(checked)
+            onSupportedFormatsRequested: _internal.openSupportedFormats()
+            onSettingsRequested: Global.changeAppSectionBySectionType(Constants.appSection.profile, Constants.settingsSubsection.browserSettings)
+        }
     }
 
     Component {
@@ -925,8 +939,8 @@ StatusSectionLayout {
             }
             // The menu needs its host: navigating actions close the overview.
             onDownloadOptionsClicked: (record, anchor) =>
-                downloadRecordMenuInst.openAt(record, anchor, { hostPopup: overviewModal })
-            onDownloadsScrolled: downloadRecordMenuInst.close()
+                _internal.lazy(downloadRecordMenuLoader).openAt(record, anchor, { hostPopup: overviewModal })
+            onDownloadsScrolled: downloadRecordMenuLoader.item?.close()
         }
     }
 
@@ -941,65 +955,77 @@ StatusSectionLayout {
         }
     }
 
-    StatusMessageDialog {
-        id: sslDialog
+    Loader {
+        id: sslDialogLoader
+        active: false
+        sourceComponent: StatusMessageDialog {
+            id: sslDialog
 
-        property var certErrors: []
-        icon: StatusMessageDialog.StandardIcon.Warning
-        standardButtons: Dialog.No | Dialog.Yes
-        title: qsTr("Server's certificate not trusted")
-        text: qsTr("Do you wish to continue?")
-        detailedText: qsTr("If you wish so, you may continue with an unverified certificate. Accepting an unverified certificate means you may not be connected with the host you tried to connect to.\nDo you wish to override the security check and continue?")
-        onAccepted: {
-            certErrors.shift().acceptCertificate();
-            presentError();
-        }
-        onRejected: {
-            certErrors.shift().rejectCertificate();
-            presentError();
-        }
-        function enqueue(error){
-            certErrors.push(error);
-            presentError();
-        }
-        function presentError(){
-            visible = certErrors.length > 0
+            property var certErrors: []
+            icon: StatusMessageDialog.StandardIcon.Warning
+            standardButtons: Dialog.No | Dialog.Yes
+            title: qsTr("Server's certificate not trusted")
+            text: qsTr("Do you wish to continue?")
+            detailedText: qsTr("If you wish so, you may continue with an unverified certificate. Accepting an unverified certificate means you may not be connected with the host you tried to connect to.\nDo you wish to override the security check and continue?")
+            onAccepted: {
+                certErrors.shift().acceptCertificate();
+                presentError();
+            }
+            onRejected: {
+                certErrors.shift().rejectCertificate();
+                presentError();
+            }
+            function enqueue(error){
+                certErrors.push(error);
+                presentError();
+            }
+            function presentError(){
+                visible = certErrors.length > 0
+            }
         }
     }
 
-    BrowserLinkContextMenu {
-        id: linkContextMenuInst
+    Loader {
+        id: linkContextMenuLoader
+        active: false
+        sourceComponent: BrowserLinkContextMenu {
+            id: linkContextMenuInst
 
-        canShareLink: root.downloadsStore.canShareUrlString(linkUrl)
+            canShareLink: root.downloadsStore.canShareUrlString(linkUrl)
 
-        onOpenInNewTabRequested: targetUrl => root.openUrlInNewTab(targetUrl)
-        onShareUrlRequested: targetUrl => root.downloadsStore.shareUrlString(targetUrl)
-        onDownloadRequested: function (targetUrl) {
-            // downloadUrl (not navigation): renderable media would play in the tab
-            // instead of saving; the Backend path always raises downloadRequested.
-            const view = hostView || _internal.currentWebView
-            if (view && view.downloadUrl)
-                view.downloadUrl(targetUrl, "")
+            onOpenInNewTabRequested: targetUrl => root.openUrlInNewTab(targetUrl)
+            onShareUrlRequested: targetUrl => root.downloadsStore.shareUrlString(targetUrl)
+            onDownloadRequested: function (targetUrl) {
+                // downloadUrl (not navigation): renderable media would play in the tab
+                // instead of saving; the Backend path always raises downloadRequested.
+                const view = hostView || _internal.currentWebView
+                if (view && view.downloadUrl)
+                    view.downloadUrl(targetUrl, "")
+            }
         }
     }
 
     /// The one Download Record menu, shared by Downloads List and Pill strip.
     /// Open sites call `openAt(record, anchor, options)` —
     /// `capabilities` is a binding, so it can never go stale.
-    DownloadRecordMenu {
-        id: downloadRecordMenuInst
+    Loader {
+        id: downloadRecordMenuLoader
+        active: false
+        sourceComponent: DownloadRecordMenu {
+            id: downloadRecordMenuInst
 
-        capabilities: downloadsContext.capabilitiesFor(
-                          record, { showDismiss: forStrip, showDownloadsEntry: forStrip })
+            capabilities: downloadsContext.capabilitiesFor(
+                              record, { showDismiss: forStrip, showDownloadsEntry: forStrip })
 
-        onDismissRequested: root.downloadsStore.dismissRecordFromStrip(record)
-        onDownloadsRequested: _internal.openDownloadsOverview()
-        onShowInFolderRequested: root.downloadsStore.openDirectoryForRecord(record)
-        onShareFileRequested: downloadsContext.shareFileRecord(record)
-        onShareUrlRequested: downloadsContext.shareUrlRecord(record)
-        onOpenInBrowserRequested: downloadsContext.openInBrowserRecord(record)
-        onRetryRequested: downloadsContext.retryRecord(record)
-        // stripVisible observes strip-model emptiness — no visibility sync call.
+            onDismissRequested: root.downloadsStore.dismissRecordFromStrip(record)
+            onDownloadsRequested: _internal.openDownloadsOverview()
+            onShowInFolderRequested: root.downloadsStore.openDirectoryForRecord(record)
+            onShareFileRequested: downloadsContext.shareFileRecord(record)
+            onShareUrlRequested: downloadsContext.shareUrlRecord(record)
+            onOpenInBrowserRequested: downloadsContext.openInBrowserRecord(record)
+            onRetryRequested: downloadsContext.retryRecord(record)
+            // stripVisible observes strip-model emptiness — no visibility sync call.
+        }
     }
 
     Component {
@@ -1034,8 +1060,8 @@ StatusSectionLayout {
                 downloadsContext.handlePillClicked(record)
             }
             onOptionsClicked: (record, anchor) =>
-                downloadRecordMenuInst.openAt(record, anchor, { forStrip: true })
-            onScrolled: downloadRecordMenuInst.close()
+                _internal.lazy(downloadRecordMenuLoader).openAt(record, anchor, { forStrip: true })
+            onScrolled: downloadRecordMenuLoader.item?.close()
             onClose: {
                 // Hide strip only — in-progress pills stay in the session model.
                 // Reappears when the next download starts (handleDownloadRequest
