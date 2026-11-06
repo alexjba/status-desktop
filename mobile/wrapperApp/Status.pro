@@ -22,6 +22,19 @@ SHIM_RESULT = $$system(bash $$PWD/../scripts/gen_controls_shim.sh $$[QT_INSTALL_
 !isEmpty(SHIM_RESULT): warning("gen_controls_shim: $$SHIM_RESULT")
 QMLCACHE_FLAGS += -I $$QMLSHIM_DIR
 
+# [spike] code layout experiments, all off unless set in the build environment
+STATUS_QMLCACHE_MODE = $$(STATUS_QMLCACHE_MODE)
+equals(STATUS_QMLCACHE_MODE, bytecode): QMLCACHE_FLAGS += --only-bytecode
+STATUS_LIB_SECTIONS = $$(STATUS_LIB_SECTIONS)
+!isEmpty(STATUS_LIB_SECTIONS) {
+    QMAKE_CFLAGS += -ffunction-sections -fdata-sections
+    QMAKE_CXXFLAGS += -ffunction-sections -fdata-sections
+}
+STATUS_LIB_ORDER = $$(STATUS_LIB_ORDER)
+!isEmpty(STATUS_LIB_ORDER): QMAKE_LFLAGS += -Wl,--symbol-ordering-file=$$STATUS_LIB_ORDER -Wl,--no-warn-symbol-ordering
+STATUS_LIB_GC = $$(STATUS_LIB_GC)
+!isEmpty(STATUS_LIB_GC): QMAKE_LFLAGS += -Wl,--gc-sections
+
 BUILD_VARIANT = $$(BUILD_VARIANT)
 TARGET = Status
 equals(BUILD_VARIANT, "pr"): TARGET = StatusPR
