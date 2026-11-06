@@ -271,7 +271,7 @@ OnboardingStackView {
             isKeycardEnabled: root.isKeycardEnabled
 
             onCreateProfileWithPasswordRequested: {
-                root.push(createNewProfileFlow)
+                d.pushDeferred(createNewProfileFlow)
             }
             onCreateProfileWithSeedphraseRequested: {
                 d.flow = Onboarding.OnboardingFlow.CreateProfileWithSeedphrase
@@ -322,21 +322,24 @@ OnboardingStackView {
         }
     }
 
-    Component {
+    SQUtils.DeferredComponent {
         id: createNewProfileFlow
 
-        CreateNewProfileFlow {
-            passwordStrengthScoreFunction: root.passwordStrengthScoreFunction
-            stayLoggedInAvailable: root.stayLoggedInAvailable
-            biometricsAvailable: root.biometricsAvailable
+        source: Qt.resolvedUrl("CreateNewProfileFlow.qml")
+        properties: ({
+            passwordStrengthScoreFunction: root.passwordStrengthScoreFunction,
+            stayLoggedInAvailable: Qt.binding(() => root.stayLoggedInAvailable),
+            biometricsAvailable: Qt.binding(() => root.biometricsAvailable)
+        })
 
-            onStayLoggedInRequested: (enabled) => root.stayLoggedInRequested(enabled)
-            onEnableBiometricsRequested: (enable) => root.enableBiometricsRequested(enable)
-            onFinished: (password) => {
+        onCreated: flow => {
+            flow.stayLoggedInRequested.connect(enabled => root.stayLoggedInRequested(enabled))
+            flow.enableBiometricsRequested.connect(enable => root.enableBiometricsRequested(enable))
+            flow.finished.connect(password => {
                 root.setPasswordRequested(password)
                 d.flow = Onboarding.OnboardingFlow.CreateProfileWithPassword
                 d.finishCurrentFlow()
-            }
+            })
         }
     }
 
