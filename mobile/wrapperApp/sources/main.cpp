@@ -22,11 +22,15 @@ extern "C" {
 
 namespace {
 
+bool ownLibsOnly = false;
+
 struct PageRange { uintptr_t begin; uintptr_t end; };
 
 int collectReadOnlyLibRange(dl_phdr_info *info, size_t, void *data)
 {
     if (!info->dlpi_name || !strstr(info->dlpi_name, "/data/app/"))
+        return 0;
+    if (ownLibsOnly && !strcasestr(info->dlpi_name, "status") && !strstr(info->dlpi_name, "libnim"))
         return 0;
     auto ranges = static_cast<std::vector<PageRange> *>(data);
     const uintptr_t pageSize = getpagesize();
@@ -127,6 +131,7 @@ void applyFaultProbe()
     const QByteArray mode(env);
     const bool legacyRandom = mode == "random";
     const bool random = legacyRandom || mode == "random_keep" || mode.split(',').contains("random");
+    ownLibsOnly = mode.split(',').contains("own");
     const bool drop = legacyRandom || mode == "dontneed0" || mode.split(',').contains("drop");
     if (mode.split(',').contains("evict"))
         evictApkPageCache();
