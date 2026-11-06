@@ -293,50 +293,55 @@ StatusSectionLayout {
             anchors.leftMargin: root.Theme.xlPadding * 2
             anchors.rightMargin: root.Theme.xlPadding * 2
 
-        Component {
+        SQUtils.DeferredComponent {
             id: myProfileViewComp
-            MyProfileView {
-                ignoreDirty: root.isPortrait
 
-                profileStore: root.profileStore
-                contactsStore: root.contactsStore
-                communitiesStore: root.communitiesStore
-                utilsStore: root.utilsStore
-                networksStore: root.networksStore
+            source: Qt.resolvedUrl("views/MyProfileView.qml")
+            properties: ({
+                ignoreDirty: Qt.binding(() => root.isPortrait),
+                profileStore: root.profileStore,
+                contactsStore: root.contactsStore,
+                communitiesStore: root.communitiesStore,
+                utilsStore: root.utilsStore,
+                networksStore: root.networksStore,
+                sendToAccountEnabled: Qt.binding(() => root.networkConnectionStore.walletReadyForTransactionsEnabled),
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.profile)),
+                contentWidth: Qt.binding(() => d.contentWidth),
+                sideBySidePreview: Qt.binding(() => d.sideBySidePreviewAvailable),
+                toastClashesWithDirtyBubble: Qt.binding(() => d.toastClashesWithDirtyBubble),
+                communitiesShowcaseModel: Qt.binding(() => root.profileStore.ownShowcaseCommunitiesModel),
+                accountsShowcaseModel: Qt.binding(() => root.profileStore.ownShowcaseAccountsModel),
+                socialLinksShowcaseModel: Qt.binding(() => root.profileStore.ownShowcaseSocialLinksModel),
+                assetsModel: Qt.binding(() => root.globalStore.globalAssetsModel),
+                collectiblesModel: Qt.binding(() => root.globalStore.globalCollectiblesModel)
+            })
 
-                sendToAccountEnabled: root.networkConnectionStore.walletReadyForTransactionsEnabled
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.profile)
-                contentWidth: d.contentWidth
-                sideBySidePreview: d.sideBySidePreviewAvailable
-                toastClashesWithDirtyBubble: d.toastClashesWithDirtyBubble
+            onCreated: view => view.collectiblesShowcaseModel = collectiblesShowcaseModelComp.createObject(view)
+        }
 
-                communitiesShowcaseModel: root.profileStore.ownShowcaseCommunitiesModel
-                accountsShowcaseModel: root.profileStore.ownShowcaseAccountsModel
-                socialLinksShowcaseModel: root.profileStore.ownShowcaseSocialLinksModel
-                collectiblesShowcaseModel: SortFilterProxyModel {
-                    sourceModel: root.profileStore.ownShowcaseCollectiblesModel
-                    sorters: [
-                        FastExpressionSorter {
-                            expression: {
-                                root.collectiblesStore.collectiblesController.revision
-                                return root.collectiblesStore.collectiblesController.compareTokens(modelLeft.uid, modelRight.uid)
-                            }
-                            expectedRoles: ["uid"]
+        Component {
+            id: collectiblesShowcaseModelComp
+
+            SortFilterProxyModel {
+                sourceModel: root.profileStore.ownShowcaseCollectiblesModel
+                sorters: [
+                    FastExpressionSorter {
+                        expression: {
+                            root.collectiblesStore.collectiblesController.revision
+                            return root.collectiblesStore.collectiblesController.compareTokens(modelLeft.uid, modelRight.uid)
                         }
-                    ]
-                    filters: [
-                        FastExpressionFilter {
-                            expression: {
-                                root.collectiblesStore.collectiblesController.revision
-                                return root.collectiblesStore.collectiblesController.filterAcceptsKey(model.uid) // TODO: use token/group key
-                            }
-                            expectedRoles: ["uid"]
+                        expectedRoles: ["uid"]
+                    }
+                ]
+                filters: [
+                    FastExpressionFilter {
+                        expression: {
+                            root.collectiblesStore.collectiblesController.revision
+                            return root.collectiblesStore.collectiblesController.filterAcceptsKey(model.uid) // TODO: use token/group key
                         }
-                    ]
-                }
-
-                assetsModel: root.globalStore.globalAssetsModel
-                collectiblesModel: root.globalStore.globalCollectiblesModel
+                        expectedRoles: ["uid"]
+                    }
+                ]
             }
         }
 
@@ -447,36 +452,35 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: languageViewComp
-            LanguageView {
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.language)
-                contentWidth: d.contentWidth
 
-                // spellcheck
-                spellCheckEnabled: root.languageStore.spellCheckSettings.enabled
-                spellCheckSkipCapitalizedWords: root.languageStore.spellCheckSettings.skipCapitalizedWords
-                availableSpellcheckLanguages: root.languageStore.spellCheckSettings.availableLanguages
-                activeSpellcheckLanguages: root.languageStore.spellCheckSettings.activeLanguages
-                onSpellCheckEnabledChangeRequested: value => root.languageStore.spellCheckSettings.setEnabled(value)
-                onSpellCheckSkipCapitalizedWordsChangeRequested: value => root.languageStore.spellCheckSettings.setSkipCapitalizedWords(value)
-                onEnableSpellcheckLanguageRequested: (code, enabled) => root.languageStore.spellCheckSettings.toggleSpellcheckLanguage(code, enabled)
+            source: Qt.resolvedUrl("views/LanguageView.qml")
+            properties: ({
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.language)),
+                contentWidth: Qt.binding(() => d.contentWidth),
+                spellCheckEnabled: Qt.binding(() => root.languageStore.spellCheckSettings.enabled),
+                spellCheckSkipCapitalizedWords: Qt.binding(() => root.languageStore.spellCheckSettings.skipCapitalizedWords),
+                availableSpellcheckLanguages: Qt.binding(() => root.languageStore.spellCheckSettings.availableLanguages),
+                activeSpellcheckLanguages: Qt.binding(() => root.languageStore.spellCheckSettings.activeLanguages),
+                currentLanguage: Qt.binding(() => root.languageStore.currentLanguage),
+                availableLanguages: Qt.binding(() => root.languageStore.availableLanguages),
+                currentCurrency: Qt.binding(() => root.currencyStore.currentCurrency),
+                currenciesModel: Qt.binding(() => root.currencyStore.currenciesModel)
+            })
 
-                // language
-                currentLanguage: root.languageStore.currentLanguage
-                availableLanguages: root.languageStore.availableLanguages
-                onChangeLanguageRequested: function (newLanguageCode) {
+            onCreated: view => {
+                view.spellCheckEnabledChangeRequested.connect(value => root.languageStore.spellCheckSettings.setEnabled(value))
+                view.spellCheckSkipCapitalizedWordsChangeRequested.connect(value => root.languageStore.spellCheckSettings.setSkipCapitalizedWords(value))
+                view.enableSpellcheckLanguageRequested.connect((code, enabled) => root.languageStore.spellCheckSettings.toggleSpellcheckLanguage(code, enabled))
+                view.changeLanguageRequested.connect(newLanguageCode => {
                     const result = root.languageStore.changeLanguage(newLanguageCode, false /*shouldRetranslate*/)
                     if (result)
                         Qt.callLater(() => SystemUtils.restartApplication())
                     else
                         console.warn("Failed setting language to:", newLanguageCode)
-                }
-
-                //currencies
-                currentCurrency: root.currencyStore.currentCurrency
-                currenciesModel: root.currencyStore.currenciesModel
-                onChangeCurrencyRequested: shortName => root.currencyStore.updateCurrency(shortName)
+                })
+                view.changeCurrencyRequested.connect(shortName => root.currencyStore.updateCurrency(shortName))
             }
         }
 
@@ -492,23 +496,23 @@ StatusSectionLayout {
             })
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: syncingViewComp
-            SyncingView {
-                id: syncingView
-                profileStore: root.profileStore
-                devicesStore: root.devicesStore
-                privacyStore: root.privacyStore
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.syncingSettings)
-                contentWidth: d.contentWidth
 
-                onDeleteDeviceRequested: (installationId) => {
-                    const error = root.devicesStore.devicesModule.deleteDevice(installationId)
-                    if (error) {
-                        syncingView.errorDeletingDeviceMessage = error
-                    }
-                }
-            }
+            source: Qt.resolvedUrl("views/SyncingView.qml")
+            properties: ({
+                profileStore: root.profileStore,
+                devicesStore: root.devicesStore,
+                privacyStore: root.privacyStore,
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.syncingSettings)),
+                contentWidth: Qt.binding(() => d.contentWidth)
+            })
+
+            onCreated: view => view.deleteDeviceRequested.connect(installationId => {
+                const error = root.devicesStore.devicesModule.deleteDevice(installationId)
+                if (error)
+                    view.errorDeletingDeviceMessage = error
+            })
         }
 
         SQUtils.DeferredComponent {
@@ -560,52 +564,53 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: communitiesViewComp
-            CommunitiesView {
-                function getSpecificCommunityAccessStore(communityId: string) {
-                    const communityRootStore = root.messagingRootStore.createCommunityRootStore(this, communityId)
-                    return communityRootStore ? communityRootStore.communityAccessStore : null
+
+            function getSpecificCommunityAccessStore(owner, communityId: string) {
+                const communityRootStore = root.messagingRootStore.createCommunityRootStore(owner, communityId)
+                return communityRootStore ? communityRootStore.communityAccessStore : null
+            }
+
+            source: Qt.resolvedUrl("views/CommunitiesView.qml")
+            properties: ({
+                rootStore: root.globalStore,
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.communitiesSettings)),
+                contentWidth: Qt.binding(() => d.contentWidth),
+                communitiesList: Qt.binding(() => root.profileStore.communitiesList)
+            })
+
+            onCreated: view => {
+                view.fnIsMyCommunityRequestPending = communityId => {
+                    const communityAccessStore = communitiesViewComp.getSpecificCommunityAccessStore(view, communityId)
+                    return communityAccessStore ? communityAccessStore.isMyCommunityRequestPending : false
                 }
-
-                rootStore: root.globalStore
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.communitiesSettings)
-                contentWidth: d.contentWidth
-                communitiesList: root.profileStore.communitiesList
-                fnIsMyCommunityRequestPending: (communityId) => {
-                                                   const communityAccessStore = getSpecificCommunityAccessStore(communityId)
-                                                   if(communityAccessStore) {
-                                                       return communityAccessStore.isMyCommunityRequestPending
-                                                   }
-                                                   return false
-                                               }
-
-                onLeaveCommunityRequest: communityId => root.leaveCommunityRequest(communityId)
-                onSetCommunityMutedRequest: (communityId, mutedType) => root.setCommunityMutedRequest(communityId, mutedType)
-                onInviteFriends: communityData => root.inviteFriends(communityData)
-                onCancelPendingRequestRequested: (communityId) => {
-                                                     const communityAccessStore = getSpecificCommunityAccessStore(communityId)
-                                                     if(communityAccessStore) {
-                                                         communityAccessStore.cancelPendingRequest(communityId)
-                                                     }
-                                                 }
+                view.leaveCommunityRequest.connect(communityId => root.leaveCommunityRequest(communityId))
+                view.setCommunityMutedRequest.connect((communityId, mutedType) => root.setCommunityMutedRequest(communityId, mutedType))
+                view.inviteFriends.connect(communityData => root.inviteFriends(communityData))
+                view.cancelPendingRequestRequested.connect(communityId => {
+                    const communityAccessStore = communitiesViewComp.getSpecificCommunityAccessStore(view, communityId)
+                    if (communityAccessStore)
+                        communityAccessStore.cancelPendingRequest(communityId)
+                })
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: keycardViewNewComp
-            KeycardViewNew {
-                keycardNewStore: root.keycardNewStore
-                areTestNetworksEnabled: root.networksStore.areTestNetworksEnabled
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.keycardNew)
-                mainSectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.keycardNew)
-                contentWidth: d.contentWidth
 
-                onBackButtonNameRequested: function(name) {
-                    d.backButtonName = name
-                }
+            source: Qt.resolvedUrl("views/KeycardViewNew.qml")
+            properties: ({
+                keycardNewStore: root.keycardNewStore,
+                areTestNetworksEnabled: Qt.binding(() => root.networksStore.areTestNetworksEnabled),
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.keycardNew)),
+                mainSectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.keycardNew)),
+                contentWidth: Qt.binding(() => d.contentWidth)
+            })
 
-                Component.onCompleted: handleBackAction()
+            onCreated: view => {
+                view.backButtonNameRequested.connect(name => d.backButtonName = name)
+                view.handleBackAction()
             }
         }
 
@@ -641,27 +646,26 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: privacyAndSecurityViewComp
-            PrivacyAndSecurityView {
-                whitelistedDomainsModel: root.whitelistedDomainsModel
-                isStatusNewsViaRSSEnabled: root.privacyStore.isStatusNewsViaRSSEnabled
-                thirdpartyServicesEnabled: root.privacyStore.thirdpartyServicesEnabled
-                privacyModeFeatureEnabled: root.privacyModeFeatureEnabled
 
-                privacySectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.privacyAndSecurity)
-                contentWidth: d.contentWidth
+            source: Qt.resolvedUrl("views/PrivacyAndSecurityView.qml")
+            properties: ({
+                whitelistedDomainsModel: Qt.binding(() => root.whitelistedDomainsModel),
+                isStatusNewsViaRSSEnabled: Qt.binding(() => root.privacyStore.isStatusNewsViaRSSEnabled),
+                thirdpartyServicesEnabled: Qt.binding(() => root.privacyStore.thirdpartyServicesEnabled),
+                privacyModeFeatureEnabled: Qt.binding(() => root.privacyModeFeatureEnabled),
+                privacySectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.privacyAndSecurity)),
+                contentWidth: Qt.binding(() => d.contentWidth)
+            })
 
-                onSetNewsRSSEnabledRequested: function (isStatusNewsViaRSSEnabled) {
-                    root.privacyStore.setNewsRSSEnabled(isStatusNewsViaRSSEnabled)
-                }
-                onOpenThirdpartyServicesInfoPopupRequested: root.openThirdpartyServicesInfoPopupRequested()
-                onOpenDiscussPageRequested: root.openDiscussPageRequested()
-
-                onBackButtonTextChanged: d.backButtonName = backButtonText
-                onRemoveWhitelistedDomain: index => root.removeWhitelistedDomain(index)
-
-                Component.onCompleted: resetStack()
+            onCreated: view => {
+                view.setNewsRSSEnabledRequested.connect(enabled => root.privacyStore.setNewsRSSEnabled(enabled))
+                view.openThirdpartyServicesInfoPopupRequested.connect(() => root.openThirdpartyServicesInfoPopupRequested())
+                view.openDiscussPageRequested.connect(() => root.openDiscussPageRequested())
+                view.backButtonTextChanged.connect(() => d.backButtonName = view.backButtonText)
+                view.removeWhitelistedDomain.connect(index => root.removeWhitelistedDomain(index))
+                view.resetStack()
             }
         }
 
