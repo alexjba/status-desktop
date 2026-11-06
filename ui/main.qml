@@ -19,7 +19,6 @@ import StatusQ.Controls
 import StatusQ.Core
 import StatusQ.Core.Theme
 import StatusQ.Core.Utils as SQUtils
-import StatusQ.Core.Backpressure
 import StatusQ.Platform
 import StatusQ.Popups.Dialog
 
@@ -662,9 +661,6 @@ Window {
                 item.autoLoginEnabled = !localAppSettings.testEnvironment && !autoLoginSuppressed
                 splashScreenLoader.active = false
                 applicationWindow.contentLoaded()
-                Backpressure.debounce(applicationWindow, 750, () => {
-                    Qt.callLater(() => QmlCompiler.precompileAll()) // precompile all components after onboarding is loaded to speed up the login flow
-                })()
             }
         }
 
@@ -689,6 +685,10 @@ Window {
             }
             function onProfileSelected(keyUid: string) : void {
                 localAppSettings.selectedProfileKeyUid = keyUid
+            }
+            // precompile on login intent, so the idle login screen does not hold the app's compiled units
+            function onLoginIntent() : void {
+                Qt.callLater(() => QmlCompiler.precompileAll())
             }
         }
 
