@@ -21,3 +21,9 @@ libQt6Quick3DUtils
 qmldbg_quick3dprofiler
 libplugins_platforms_q(offscreen|minimal)_
 libplugins_imageformats_q(tiff|ico|tga|wbmp|icns)_
+
+# ffmpeg media backend (main.cpp selects the android one)
+ffmpegmediaplugin
+libav(codec|format|util|device|filter)
+libsw(scale|resample)
+libQt6FFmpegStub
