@@ -724,32 +724,9 @@ QtObject {
         },
 
         Component {
-            id: stickersPopupComponent
-            StatusStickersPopup {
-                objectName: "StatusStickersPopup"
-                height: 440
-                store: root.chatStore
-                isWalletEnabled: root.isWalletEnabled
-                thirdpartyServicesEnabled: root.rootStore.thirdpartyServicesEnabled
-
-                onBuyClicked: (packId, price) => root.buyStickerPackRequested(packId, price)
-                onEnableThirdpartyServicesRequested: root.enableThirdpartyServicesRequested()
-                onClosed: destroy()
-            }
-        },
-
-        Component {
             id: imagePopupComponent
             StatusImageModal {
                 id: imagePopup
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: videoPopupComponent
-            StatusVideoModal {
-                id: videoPopup
                 onClosed: destroy()
             }
         },
@@ -803,13 +780,6 @@ QtObject {
                                             communityAccessStore.isMyCommunityRequestPending)
                 }
                 onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: discordImportProgressDialog
-            DiscordImportProgressDialog {
-                store: root.communitiesStore
             }
         },
 
@@ -1203,6 +1173,41 @@ QtObject {
     ]
 
     readonly property list<QtObject> _deferredComponents: [
+        SQUtils.DeferredComponent {
+            id: stickersPopupComponent
+
+            module: "shared.status"
+            typeName: "StatusStickersPopup"
+            properties: ({
+                objectName: "StatusStickersPopup",
+                height: 440,
+                store: Qt.binding(() => root.chatStore),
+                isWalletEnabled: Qt.binding(() => root.isWalletEnabled),
+                thirdpartyServicesEnabled: Qt.binding(() => root.rootStore.thirdpartyServicesEnabled)
+            })
+            onCreated: popup => {
+                popup.buyClicked.connect((packId, price) => root.buyStickerPackRequested(packId, price))
+                popup.enableThirdpartyServicesRequested.connect(() => root.enableThirdpartyServicesRequested())
+                popup.closed.connect(() => popup.destroy())
+            }
+        },
+
+        SQUtils.DeferredComponent {
+            id: videoPopupComponent
+
+            module: "shared.status"
+            typeName: "StatusVideoModal"
+            onCreated: popup => popup.closed.connect(() => popup.destroy())
+        },
+
+        SQUtils.DeferredComponent {
+            id: discordImportProgressDialog
+
+            module: "AppLayouts.Communities.popups"
+            typeName: "DiscordImportProgressDialog"
+            properties: ({ store: Qt.binding(() => root.communitiesStore) })
+        },
+
         SQUtils.DeferredComponent {
             id: keycardManagementPopupComponent
 

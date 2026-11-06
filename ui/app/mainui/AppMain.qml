@@ -1683,8 +1683,37 @@ Item {
         function openSearchPopup(chatId = "", threadId = "") {
             if (homePageLoader.active)
                 return
-            if (!active)
+            if (!active) {
                 active = true
+                setSource(Qt.resolvedUrl("AppSearch.qml"), {
+                    personalChatsSectionId: Qt.binding(() => d.myPublicKey),
+                    threadsEnabled: Qt.binding(() => appMain.featureFlagsStore.threadsEnabled),
+                    threadLocationMenuModel: Qt.binding(() => appMain.appSearchStore.threadLocationMenuModel),
+                    threadLocationsLoading: Qt.binding(() => appMain.appSearchStore.threadLocationsLoading),
+                    threadLocationsError: Qt.binding(() => appMain.appSearchStore.threadLocationsError),
+                    prepareThreadLocationMenuModelFn: appMain.appSearchStore.prepareThreadLocationMenuModel,
+                    prepareThreadLocationsForSectionFn: appMain.appSearchStore.prepareThreadLocationsForSection,
+                    locationMenuModel: Qt.binding(() => appMain.appSearchStore.locationMenuModel),
+                    resultModel: Qt.binding(() => appMain.appSearchStore.resultModel),
+                    searchInProgress: Qt.binding(() => appMain.appSearchStore.searchInProgress),
+                    setSearchLocationFn: function(location, subLocation, threadId) {
+                        appMain.appSearchStore.setSearchLocation(location, subLocation, threadId)
+                    },
+                    prepareLocationMenuModelFn: function() {
+                        appMain.appSearchStore.prepareLocationMenuModel()
+                    },
+                    getSearchLocationObjectFn: function(chatId, threadId) {
+                        return appMain.appSearchStore.getSearchLocationObject(chatId, threadId)
+                    },
+                    isChatKeyFn: function(value) {
+                        return appMain.utilsStore.isChatKey(value)
+                    },
+                    openProfilePopupFn: function(publicKey, parentPopup) {
+                        Global.openProfilePopup(publicKey, parentPopup)
+                    },
+                    resolveMentionsFn: text => appMain.mentionResolver.resolveFor(text)
+                })
+            }
             item.openSearchPopup(chatId, threadId)
         }
 
@@ -1695,40 +1724,19 @@ Item {
             active = false
         }
 
-        sourceComponent: AppSearch {
-            personalChatsSectionId: d.myPublicKey
-            threadsEnabled: appMain.featureFlagsStore.threadsEnabled
-            threadLocationMenuModel: appMain.appSearchStore.threadLocationMenuModel
-            threadLocationsLoading: appMain.appSearchStore.threadLocationsLoading
-            threadLocationsError: appMain.appSearchStore.threadLocationsError
-            prepareThreadLocationMenuModelFn: appMain.appSearchStore.prepareThreadLocationMenuModel
-            prepareThreadLocationsForSectionFn: appMain.appSearchStore.prepareThreadLocationsForSection
-            locationMenuModel: appMain.appSearchStore.locationMenuModel
-            resultModel: appMain.appSearchStore.resultModel
-            searchInProgress: appMain.appSearchStore.searchInProgress
-            setSearchLocationFn: function(location, subLocation, threadId) {
-                appMain.appSearchStore.setSearchLocation(location, subLocation, threadId)
-            }
-            prepareLocationMenuModelFn: function() {
-                appMain.appSearchStore.prepareLocationMenuModel()
-            }
-            getSearchLocationObjectFn: function(chatId, threadId) {
-                return appMain.appSearchStore.getSearchLocationObject(chatId, threadId)
-            }
-            isChatKeyFn: function(value) {
-                return appMain.utilsStore.isChatKey(value)
-            }
-            openProfilePopupFn: function(publicKey, parentPopup) {
-                Global.openProfilePopup(publicKey, parentPopup)
-            }
-            onSearchMessages: (searchTerm) => {
+        Connections {
+            target: appSearch.item
+            ignoreUnknownSignals: true
+
+            function onSearchMessages(searchTerm) {
                 appMain.appSearchStore.searchMessages(searchTerm)
             }
-            onResultItemClicked: (itemId) => {
+            function onResultItemClicked(itemId) {
                 appMain.appSearchStore.resultItemClicked(itemId)
             }
-            resolveMentionsFn: text => appMain.mentionResolver.resolveFor(text)
-            onClosed: appSearch.active = false
+            function onClosed() {
+                appSearch.active = false
+            }
         }
     }
 
