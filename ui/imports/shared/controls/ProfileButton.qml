@@ -26,6 +26,7 @@ StatusIconTabButton {
     property var getEmojiHashFn: function(pubKey) { console.error("IMPLEMENT ME"); return "" }
 
     signal viewProfileRequested(string pubKey)
+    signal menuOpened()
     signal shareOwnProfileRequested
     signal settingsRequested
     signal setCurrentUserStatusRequested(int status)
@@ -83,6 +84,7 @@ StatusIconTabButton {
         }
         d.menu = userStatusContextMenuComponent.createObject(root)
         d.menu.open()
+        root.menuOpened()
     }
 
     QtObject {

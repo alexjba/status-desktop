@@ -224,6 +224,11 @@ StatusSectionLoader {
         loadSection()
     }
     onLoaded: {
+        if (root.source === d.realUrl)
+            Qt.callLater(() => {
+                QmlCompiler.precompile(QmlCompiler.sendModalUrl)
+                QmlCompiler.precompile(QmlCompiler.swapModalUrl)
+            })
         if (root.item.resetView)
             root.item.resetView()
         root.item.visible = true

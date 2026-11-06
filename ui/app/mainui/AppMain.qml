@@ -2815,6 +2815,7 @@ Item {
                 }
                 onSetCurrentUserStatusRequested: status => appMain.rootStore.setCurrentUserStatus(status)
                 onViewProfileRequested: pubKey => Global.openProfilePopup(pubKey)
+                onProfileMenuOpened: QmlCompiler.precompile(QmlCompiler.profileDialogUrl)
                 onShareOwnProfileRequested: Global.shareProfileDialogRequested(appMain.ownContactDetails.publicKey)
                 onSettingsRequested: d.openSettingsRoot()
                 onQuitRequested: Global.quitAppRequested()
