@@ -28,6 +28,11 @@ libqml_QtQml_StateMachine_
 libQt6LabsQmlModels
 libqml_Qt_labs_qmlmodels_
 
+# Dropped from Status.pro; stale copies survive incremental builds
+libQt6Core5Compat_
+libQt6WebView_
+libplugins_webview_
+
 # ffmpeg media backend (main.cpp selects the android one)
 ffmpegmediaplugin
 libav(codec|format|util|device|filter)
