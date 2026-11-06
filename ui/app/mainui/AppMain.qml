@@ -295,7 +295,8 @@ Item {
     readonly property DelegatePool messageRowPool: DelegatePool {
         DelegatePoolKind {
             kind: "message"
-            target: Math.ceil(appMain.height / 48) * 3
+            // nothing is built until a messaging section is first entered
+            target: d.messagingEntered ? Math.ceil(appMain.height / 48) * 3 : 0
 
             delegate: Component {
                 ChatViews.MessageView {
@@ -1130,6 +1131,9 @@ Item {
         })
         readonly property bool isMessagingRelatedSectionType: activeSectionType === Constants.appSection.chat ||
                                                               activeSectionType === Constants.appSection.community
+        // latches once a messaging section has been shown
+        property bool messagingEntered: false
+        onIsMessagingRelatedSectionTypeChanged: if (isMessagingRelatedSectionType) messagingEntered = true
         readonly property bool isWalletRelatedSectionType: activeSectionType === Constants.appSection.wallet ||
                                                            activeSectionType === Constants.appSection.swap || activeSectionType === Constants.appSection.market ||
                                                            activeSectionType === Constants.appSection.dApp
