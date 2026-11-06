@@ -3,6 +3,8 @@ TEMPLATE = app
 QT += quick gui qml webview svg widgets multimedia
 
 CONFIG += qtquickcompiler
+# AOT Storage classes are polymorphic; no RTTI user in this lib, so drop typeinfo
+CONFIG += rtti_off
 # Per-binding AOT stats, written next to each generated .cpp
 QMLCACHE_FLAGS += --dump-aot-stats --module-id=status
 # qtquickcompiler.prf passes no import paths; without these, in-repo modules don't AOT-compile
