@@ -30,7 +30,8 @@ cmake -S "${STATUSQ}" -B "${BUILD_DIR}" \
     -DSTATUSQ_BUILD_TESTS=OFF \
     -DSTATUSQ_STATIC_LIB=${STATIC_LIB} \
     -DSTATUSQ_BUNDLE_QML=OFF \
-    -DSTATUSQ_TESTMODE=$([[ "${STATUSQ_TESTMODE}" == "true" ]] && echo ON || echo OFF)
+    -DSTATUSQ_TESTMODE=$([[ "${STATUSQ_TESTMODE}" == "true" ]] && echo ON || echo OFF) \
+    ${STATUS_STATUSQ_ORDER:+"-DCMAKE_SHARED_LINKER_FLAGS=-Wl,--pack-dyn-relocs=android+relr -Wl,--use-android-relr-tags -Wl,--symbol-ordering-file=${STATUS_STATUSQ_ORDER} -Wl,--no-warn-symbol-ordering"}
 
 make -C "${BUILD_DIR}" StatusQ -j "$(nproc)"
 

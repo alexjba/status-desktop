@@ -37,6 +37,8 @@ else
         --passL="-L$LIB_DIR" --passL="-lstatus_stub" --passL="-lStatusQ$LIB_SUFFIX" --passL="-lqrcodegen" --passL="-lssl_3" --passL="-lcrypto_3" --passL="-lstatus-keycard-qt" -d:taskpool \
         --passL="-Wl,--pack-dyn-relocs=android+relr" --passL="-Wl,--use-android-relr-tags" \
         --passL="-Wl,--version-script=$SCRIPT_DIR/android/libnim.map")
+    # [spike] link order from a device run
+    [[ -n "${STATUS_NIM_ORDER}" ]] && PLATFORM_SPECIFIC+=(--passL="-Wl,--symbol-ordering-file=${STATUS_NIM_ORDER}" --passL="-Wl,--no-warn-symbol-ordering")
 fi
 
 if [ -n "$USE_QML_SERVER" ]; then
