@@ -81,7 +81,6 @@ Page {
     //    "data:var": contains "password" or "pin"
     signal loginRequested(string keyUid, int method, var data)
     signal profileSelected(string keyUid)
-    signal loginIntent()
 
     function restartFlow() : void {
         unload()
@@ -272,7 +271,6 @@ Page {
         onChangeLanguageRequested: (newLanguageCode) => root.changeLanguageRequested(newLanguageCode)
 
         onLoginRequested: (keyUid, method, data) => root.loginRequested(keyUid, method, data)
-        onLoginIntent: root.loginIntent()
         onProfileSelected: (keyUid) => root.profileSelected(keyUid)
 
         onSyncProceedWithConnectionString: (connectionString) =>

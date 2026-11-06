@@ -37,8 +37,6 @@ Item {
     signal biometricFlowStarted()
     signal skippedBiometricFlow(bool available)
     signal contentLoaded()
-    // time to warm up the app: the user is about to log in or to onboard
-    signal loginIntent()
 
     OnboardingStore {
         id: defaultOnboardingStore
@@ -183,10 +181,7 @@ Item {
 
         privacyModeFeatureEnabled: root.featureFlagsStore.privacyModeFeatureEnabled
 
-        onLoginIntent: root.loginIntent()
-
         onFinished: function(flow, data) {
-            root.loginIntent()
             const error = root.onboardingStore.finishOnboardingFlow(flow, data)
 
             if (error !== "") {
@@ -209,7 +204,6 @@ Item {
         }
 
         onLoginRequested: function (keyUid, method, data) {
-            root.loginIntent()
             let selectedProfile = SQUtils.ModelUtils.getByKey(root.onboardingStore.loginAccountsModel, "keyUid", keyUid)
             if (!selectedProfile) {
                 console.error("cannot resolve selected profile")
