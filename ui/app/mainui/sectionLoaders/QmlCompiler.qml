@@ -50,6 +50,8 @@ QtObject {
     }
 
     function precompileAll(async = true) {
+        if (!d.precompiledUrls.has(appMainUrl))
+            console.info("[precompile-start]", Date.now())
         precompile(appMainUrl, async)
         precompile(browserUrl, async)
         precompile(browserPrivacyWallUrl, async)
@@ -66,6 +68,7 @@ QtObject {
     }
 
     onPrecompileFinished: function(componentUrl, success) {
+        console.info("[precompile-done]", componentUrl.toString().split("/").pop(), Date.now())
         if (!success) {
             console.error("Failed to precompile", componentUrl)
             Qt.exit(-1)
