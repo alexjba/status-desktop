@@ -10,10 +10,10 @@ QMLCACHE_FLAGS += --dump-aot-stats --module-id=status
 # qtquickcompiler.prf passes no import paths; without these, in-repo modules don't AOT-compile
 QMLCACHE_FLAGS += -I $$PWD/../../ui -I $$PWD/../../ui/imports -I $$PWD/../../ui/app -I $$PWD/../../ui/StatusQ/src
 
-# qmlcachegen cannot follow QtQuick.Controls' optional style imports; expose the Universal
+# qmlcachegen cannot follow QtQuick.Controls' optional style imports; expose the Basic
 # style under the plain Controls module name so Control-derived types AOT-compile
 QMLSHIM_DIR = $$OUT_PWD/qmlcontrols-shim
-SHIM_RESULT = $$system(bash $$PWD/../scripts/gen_controls_shim.sh $$[QT_INSTALL_QML] $$system_quote($$QMLSHIM_DIR) Universal 2>&1)
+SHIM_RESULT = $$system(bash $$PWD/../scripts/gen_controls_shim.sh $$[QT_INSTALL_QML] $$system_quote($$QMLSHIM_DIR) Basic 2>&1)
 !isEmpty(SHIM_RESULT): warning("gen_controls_shim: $$SHIM_RESULT")
 QMLCACHE_FLAGS += -I $$QMLSHIM_DIR
 

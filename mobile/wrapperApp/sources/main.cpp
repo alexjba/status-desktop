@@ -11,6 +11,10 @@ int main(int argc, char* argv[])
 {
     Q_INIT_RESOURCE(resources);
 
+    // Must match the qmlcachegen shim style in Status.pro
+    if (!qEnvironmentVariableIsSet("QT_QUICK_CONTROLS_STYLE"))
+        qputenv("QT_QUICK_CONTROLS_STYLE", "Basic");
+
 #ifdef Q_OS_ANDROID
     // MediaCodec backend; the ffmpeg one and its libav* libs are not packaged
     if (!qEnvironmentVariableIsSet("QT_MEDIA_BACKEND"))
