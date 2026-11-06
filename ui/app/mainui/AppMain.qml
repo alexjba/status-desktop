@@ -2756,24 +2756,20 @@ Item {
                     anchors.right: parent.right
                     anchors.left: appMain.isPortraitMode ? parent.left : undefined
 
-                    sourceComponent: CreateChatView {
-                        width: Math.min(Math.max(implicitWidth, createChatView.defaultWidth), createChatView.parent.width)
-                        utilsStore: appMain.utilsStore
-                        rootStore: ChatStores.RootStore {
-                            contactsStore: appMain.contactsStore
-                            currencyStore: appMain.currencyStore
-                            communityTokensStore: appMain.communityTokensStore
-                            openCreateChat: createChatView.opened
-                            isChatSectionModule: true
-                        }
-                        createChatPropertiesStore: appMain.createChatPropertiesStore
-
-                        mutualContactsModel: contactsModelAdaptor?.mutualContacts ?? null
-                        allContactsModel: appMain.contactsStore.contactsModel
-
-                        onOpenGifPopupRequest: (params, cbOnGifSelected, cbOnClose) =>
-                            popupRequestsHandler.openGifs(params, cbOnGifSelected, cbOnClose)
-                    }
+                    Component.onCompleted: setSource(Qt.resolvedUrl("CreateChatViewInstance.qml"), {
+                        defaultWidth: Qt.binding(() => createChatView.defaultWidth),
+                        maxWidth: Qt.binding(() => createChatView.parent.width),
+                        utilsStore: appMain.utilsStore,
+                        chatContactsStore: appMain.contactsStore,
+                        chatCurrencyStore: appMain.currencyStore,
+                        chatCommunityTokensStore: appMain.communityTokensStore,
+                        openCreateChat: Qt.binding(() => createChatView.opened),
+                        createChatPropertiesStore: appMain.createChatPropertiesStore,
+                        mutualContactsModel: Qt.binding(() => contactsModelAdaptor?.mutualContacts ?? null),
+                        allContactsModel: Qt.binding(() => appMain.contactsStore.contactsModel)
+                    })
+                    onLoaded: item.openGifPopupRequest.connect((params, cbOnGifSelected, cbOnClose) =>
+                        popupRequestsHandler.openGifs(params, cbOnGifSelected, cbOnClose))
                 }
             }
 
