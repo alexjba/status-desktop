@@ -57,8 +57,27 @@ int collectReadOnlyLibRange(dl_phdr_info *info, size_t, void *data)
 // drop: MADV_DONTNEED them too, so residency afterwards ~= pages touched after main
 // evict: POSIX_FADV_DONTNEED the unmapped page cache of base.apk (cold-cache proxy)
 // again: re-apply random 8 s later (libs dlopen'ed after main)
+// split: give every page its own VMA (MADV_RANDOM on every other page). Fault-around never
+//        crosses a VMA, so from here on residency == pages actually touched (4 KB granular).
 // Legacy: random = random,drop; random_keep = random; dontneed0 = drop.
 QElapsedTimer probeClock;
+
+void splitLibraryVmas()
+{
+    std::vector<PageRange> ranges;
+    dl_iterate_phdr(collectReadOnlyLibRange, &ranges);
+    size_t pages = 0;
+    int failures = 0;
+    for (const auto &r : ranges) {
+        for (uintptr_t p = r.begin + 4096; p < r.end; p += 2 * 4096) {
+            if (madvise(reinterpret_cast<void *>(p), 4096, MADV_RANDOM) != 0)
+                ++failures;
+            else
+                ++pages;
+        }
+    }
+    qInfo("fault-probe: split %zu ranges, %zu odd pages, %d failed", ranges.size(), pages, failures);
+}
 
 void adviseLibraries(bool random, bool drop, const char *what)
 {
@@ -113,6 +132,8 @@ void applyFaultProbe()
         evictApkPageCache();
     if (random || drop)
         adviseLibraries(random, drop, env);
+    if (mode.split(',').contains("split"))
+        splitLibraryVmas();
     if (random && mode.split(',').contains("again")) {
         std::thread([] {
             std::this_thread::sleep_for(std::chrono::seconds(8));
