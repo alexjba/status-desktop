@@ -340,60 +340,65 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: changePasswordViewComp
-            ChangePasswordView {
-                privacyStore: root.privacyStore
-                keychain: root.keychain
-                secureStorage: root.secureStorage
-                passwordStrengthScoreFunction: root.sharedRootStore.getPasswordStrengthScore
-                contentWidth: d.contentWidth
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.password)
-            }
+
+            source: Qt.resolvedUrl("views/ChangePasswordView.qml")
+            properties: ({
+                privacyStore: root.privacyStore,
+                keychain: root.keychain,
+                secureStorage: root.secureStorage,
+                passwordStrengthScoreFunction: root.sharedRootStore.getPasswordStrengthScore,
+                contentWidth: Qt.binding(() => d.contentWidth),
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.password))
+            })
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: contactsViewComp
-            ContactsView {
-                contactsStore: root.contactsStore
-                utilsStore: root.utilsStore
-                sectionTitle: qsTr("Contacts")
-                contentWidth: d.contentWidth
 
-                mutualContactsModel: root.mutualContactsModel
-                blockedContactsModel: root.blockedContactsModel
-                pendingContactsModel: root.pendingContactsModel
-                pendingReceivedContactsCount: root.pendingReceivedContactsCount
-                dismissedReceivedRequestContactsModel: root.dismissedReceivedRequestContactsModel
-            }
+            source: Qt.resolvedUrl("views/ContactsView.qml")
+            properties: ({
+                contactsStore: root.contactsStore,
+                utilsStore: root.utilsStore,
+                sectionTitle: qsTr("Contacts"),
+                contentWidth: Qt.binding(() => d.contentWidth),
+                mutualContactsModel: Qt.binding(() => root.mutualContactsModel),
+                blockedContactsModel: Qt.binding(() => root.blockedContactsModel),
+                pendingContactsModel: Qt.binding(() => root.pendingContactsModel),
+                pendingReceivedContactsCount: Qt.binding(() => root.pendingReceivedContactsCount),
+                dismissedReceivedRequestContactsModel: Qt.binding(() => root.dismissedReceivedRequestContactsModel)
+            })
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: ensViewComp
-            EnsView {
-                // TODO: we need to align structure for the entire this part using `SettingsContentBase` as root component
-                // TODO: handle structure for this subsection to match style used in onther sections
-                // using `SettingsContentBase` component as base.
 
-                ensUsernamesStore: root.ensUsernamesStore
-                walletAssetsStore: root.walletAssetsStore
-                networkConnectionStore: root.networkConnectionStore
-                profileContentWidth: d.contentWidth
-                onConnectUsernameRequested: (ensName, ownerAddress) => root.connectUsernameRequested(ensName, ownerAddress)
-                onRegisterUsernameRequested: (ensName, chainId) => root.registerUsernameRequested(ensName, chainId)
-                onReleaseUsernameRequested: (ensName, senderAddress, chainId) => root.releaseUsernameRequested(ensName, senderAddress, chainId)
+            source: Qt.resolvedUrl("views/EnsView.qml")
+            properties: ({
+                ensUsernamesStore: root.ensUsernamesStore,
+                walletAssetsStore: root.walletAssetsStore,
+                networkConnectionStore: root.networkConnectionStore,
+                profileContentWidth: Qt.binding(() => d.contentWidth)
+            })
+
+            onCreated: view => {
+                view.connectUsernameRequested.connect((ensName, ownerAddress) => root.connectUsernameRequested(ensName, ownerAddress))
+                view.registerUsernameRequested.connect((ensName, chainId) => root.registerUsernameRequested(ensName, chainId))
+                view.releaseUsernameRequested.connect((ensName, senderAddress, chainId) => root.releaseUsernameRequested(ensName, senderAddress, chainId))
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: messagingViewComp
-            MessagingView {
-                contentWidth: d.contentWidth
 
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.messaging)
-                requestsCount: root.pendingReceivedContactsCount
+            source: Qt.resolvedUrl("views/MessagingView.qml")
+            properties: ({
+                contentWidth: Qt.binding(() => d.contentWidth),
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.messaging)),
+                requestsCount: Qt.binding(() => root.pendingReceivedContactsCount),
                 messagingSettingsStore: root.messagingSettingsStore
-            }
+            })
         }
 
         SQUtils.DeferredComponent {
@@ -424,16 +429,21 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: appearanceViewComp
-            AppearanceView {
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.appearance)
-                contentWidth: d.contentWidth
-                nativeWindowDpr: root.nativeWindowDpr
-                theme: root.theme
-                uiScaleFile: uiScaleFilePath
-                onThemeChangeRequested: (theme) => root.themeChangeRequested(theme)
-                onRestartRequested: Qt.callLater(() => SystemUtils.restartApplication())
+
+            source: Qt.resolvedUrl("views/AppearanceView.qml")
+            properties: ({
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.appearance)),
+                contentWidth: Qt.binding(() => d.contentWidth),
+                nativeWindowDpr: Qt.binding(() => root.nativeWindowDpr),
+                theme: Qt.binding(() => root.theme),
+                uiScaleFile: Qt.binding(() => uiScaleFilePath)
+            })
+
+            onCreated: view => {
+                view.themeChangeRequested.connect((theme) => root.themeChangeRequested(theme))
+                view.restartRequested.connect(() => Qt.callLater(() => SystemUtils.restartApplication()))
             }
         }
 
@@ -470,14 +480,16 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: notificationsViewComp
-            NotificationsView {
-                privacyStore: root.privacyStore
-                notificationsStore: root.notificationsStore
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.notifications)
-                contentWidth: d.contentWidth
-            }
+
+            source: Qt.resolvedUrl("views/NotificationsView.qml")
+            properties: ({
+                privacyStore: root.privacyStore,
+                notificationsStore: root.notificationsStore,
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.notifications)),
+                contentWidth: Qt.binding(() => d.contentWidth)
+            })
         }
 
         Component {
@@ -499,15 +511,17 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: browserViewComp
-            BrowserView {
-                userUID: root.userUID
-                accountSettings: localAccountSensitiveSettings
-                browserPreferencesStore: root.browserPreferencesStore
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.browserSettings)
-                contentWidth: d.contentWidth
-            }
+
+            source: Qt.resolvedUrl("views/BrowserView.qml")
+            properties: ({
+                userUID: Qt.binding(() => root.userUID),
+                accountSettings: Qt.binding(() => localAccountSensitiveSettings),
+                browserPreferencesStore: root.browserPreferencesStore,
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.browserSettings)),
+                contentWidth: Qt.binding(() => d.contentWidth)
+            })
         }
 
         SQUtils.DeferredComponent {
@@ -526,19 +540,23 @@ StatusSectionLayout {
             })
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: aboutViewComp
-            AboutView {
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.about)
-                contentWidth: d.contentWidth
-                isProduction: root.isProduction
-                currentVersion: root.aboutStore.getCurrentVersion()
-                gitCommit: root.aboutStore.getGitCommit()
-                statusGoVersion: root.aboutStore.getStatusGoVersion()
-                qtRuntimeVersion: SystemUtils.qtRuntimeVersion()
 
-                onCheckForUpdates: root.aboutStore.checkForUpdates()
-                onOpenLink: (url) => Global.requestOpenLink(url)
+            source: Qt.resolvedUrl("views/AboutView.qml")
+            properties: ({
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.about)),
+                contentWidth: Qt.binding(() => d.contentWidth),
+                isProduction: Qt.binding(() => root.isProduction),
+                currentVersion: Qt.binding(() => root.aboutStore.getCurrentVersion()),
+                gitCommit: Qt.binding(() => root.aboutStore.getGitCommit()),
+                statusGoVersion: Qt.binding(() => root.aboutStore.getStatusGoVersion()),
+                qtRuntimeVersion: Qt.binding(() => SystemUtils.qtRuntimeVersion())
+            })
+
+            onCreated: view => {
+                view.checkForUpdates.connect(() => root.aboutStore.checkForUpdates())
+                view.openLink.connect((url) => Global.requestOpenLink(url))
             }
         }
 
@@ -647,24 +665,26 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: backupViewComp
-            BackupView {
-                contentWidth: d.contentWidth
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.backupSettings)
 
-                backupDataState: root.devicesStore.backupDataState
-                backupDataError: root.devicesStore.backupDataError
+            source: Qt.resolvedUrl("views/BackupView.qml")
+            properties: ({
+                contentWidth: Qt.binding(() => d.contentWidth),
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.backupSettings)),
+                backupDataState: Qt.binding(() => root.devicesStore.backupDataState),
+                backupDataError: Qt.binding(() => root.devicesStore.backupDataError),
+                backupImportState: Qt.binding(() => root.devicesStore.backupImportState),
+                backupImportError: Qt.binding(() => root.devicesStore.backupImportError),
+                backupPath: Qt.binding(() => root.devicesStore.backupPath),
+                messagesBackupEnabled: Qt.binding(() => root.devicesStore.messagesBackupEnabled)
+            })
 
-                backupImportState: root.devicesStore.backupImportState
-                backupImportError: root.devicesStore.backupImportError
-
-                backupPath: root.devicesStore.backupPath
-                messagesBackupEnabled: root.devicesStore.messagesBackupEnabled
-                onBackupPathSet: path => root.devicesStore.setBackupPath(path)
-                onBackupMessagesEnabledToggled: enabled => root.devicesStore.setMessagesBackupEnabled(enabled)
-                onPerformLocalBackupRequested: root.devicesStore.performLocalBackup()
-                onImportLocalBackupFileRequested: selectedFile => root.devicesStore.importLocalBackupFile(selectedFile)
+            onCreated: view => {
+                view.backupPathSet.connect(path => root.devicesStore.setBackupPath(path))
+                view.backupMessagesEnabledToggled.connect(enabled => root.devicesStore.setMessagesBackupEnabled(enabled))
+                view.performLocalBackupRequested.connect(() => root.devicesStore.performLocalBackup())
+                view.importLocalBackupFileRequested.connect(selectedFile => root.devicesStore.importLocalBackupFile(selectedFile))
             }
         }
 

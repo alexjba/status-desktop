@@ -703,103 +703,6 @@ QtObject {
     }
 
     readonly property list<Component> _components: [
-        Component {
-            id: removeContactConfirmationDialog
-
-            RemoveContactPopup {
-                onAccepted: {
-                    root.contactsStore.removeContact(publicKey)
-                    if (removeIDVerification)
-                        root.contactsStore.removeTrustStatus(publicKey)
-                    if (markAsUntrusted) {
-                        root.contactsStore.markUntrustworthy(publicKey)
-                        Global.displaySuccessToastMessage(qsTr("%1 removed from contacts and marked as untrusted").arg(mainDisplayName))
-                    }
-                    close()
-                }
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: markAsIDVerifiedPopupComponent
-            MarkAsIDVerifiedDialog {
-                onAccepted: {
-                    root.contactsStore.markAsTrusted(publicKey)
-                    Global.displaySuccessToastMessage(qsTr("%1 marked as trusted").arg(mainDisplayName))
-                    close()
-                }
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: removeIDVerificationPopupComponent
-            RemoveIDVerificationDialog {
-                onAccepted: {
-                    if (markAsUntrusted && removeContact) {
-                        root.contactsStore.markUntrustworthy(publicKey)
-                        root.contactsStore.removeContact(publicKey)
-                        Global.displaySuccessToastMessage(qsTr("%1 trust mark removed, removed from contacts and marked as untrusted").arg(mainDisplayName))
-                    } else if (markAsUntrusted) {
-                        root.contactsStore.markUntrustworthy(publicKey)
-                        Global.displaySuccessToastMessage(qsTr("%1 trust mark removed and marked as untrusted").arg(mainDisplayName))
-                    } else if (removeContact) {
-                        root.contactsStore.removeContact(publicKey)
-                        Global.displaySuccessToastMessage(qsTr("%1 trust mark removed and removed from contacts").arg(mainDisplayName))
-                    } else {
-                        root.contactsStore.removeTrustStatus(publicKey)
-                    }
-                    close()
-                }
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: inviteFriendsToCommunityPopup
-
-            InviteFriendsToCommunityPopup {
-                id: invitePopup
-
-                contactsModel: root.mutualContactsModel
-
-                // marks the friends who are already members
-                readonly property RosterHolder rosterHolder: RosterHolder {
-                    communitiesStore: root.communitiesStore
-                    communityId: invitePopup.community?.id ?? ""
-                }
-
-                onClosed: destroy()
-            }
-        },
-        Component {
-            id: sendContactRequestPopupComponent
-
-            SendContactRequestModal {
-                contactsStore: root.contactsStore
-
-                onAccepted: root.contactsStore.sendContactRequest(publicKey, message)
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: reviewContactRequestPopupComponent
-            ReviewContactRequestPopup {
-                onAccepted: {
-                    root.contactsStore.acceptContactRequest(publicKey, contactRequestId)
-                    Global.displaySuccessToastMessage(qsTr("Contact request accepted"))
-                    close()
-                }
-                onRejected: {
-                    root.contactsStore.dismissContactRequest(publicKey, contactRequestId)
-                    Global.displaySuccessToastMessage(qsTr("Contact request ignored"))
-                    close()
-                }
-                onClosed: destroy()
-            }
-        },
 
         Component {
             id: downloadPageComponent
@@ -852,37 +755,9 @@ QtObject {
         },
 
         Component {
-            id: changeProfilePicComponent
-            ImageCropWorkflow {
-                title: qsTr("Profile Picture")
-                acceptButtonText: qsTr("Make this my Profile Pic")
-                onImageCropped: (image, cropRect) => {
-                    if (!callback) {
-                        console.error("ImageCropWorkflow: no callback provided")
-                        return
-                    }
-                    callback(image,
-                             cropRect.x.toFixed(),
-                             cropRect.y.toFixed(),
-                             (cropRect.x + cropRect.width).toFixed(),
-                             (cropRect.y + cropRect.height).toFixed())
-                }
-                onDone: destroy()
-            }
-        },
-
-        Component {
             id: communityProfilePopup
 
             CommunityProfilePopup {
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: communityRulesPopup
-
-            CommunityRulesPopup {
                 onClosed: destroy()
             }
         },
@@ -904,71 +779,6 @@ QtObject {
                 onPinMessageRequested: messageId => messageStore.pinMessage(messageId)
                 onUnpinMessageRequested: messageId => messageStore.unpinMessage(messageId)
                 onJumpToMessageRequested: messageId => messageStore.messageModule.jumpToMessage(messageId)
-            }
-        },
-
-        Component {
-            id: nicknamePopupComponent
-
-            NicknamePopup {
-                utilsStore: root.utilsStore
-
-                onEditDone: {
-                    if (nickname !== newNickname) {
-                        root.contactsStore.changeContactNickname(publicKey, newNickname, optionalDisplayName, !!nickname)
-                    }
-                    close()
-                }
-                onRemoveNicknameRequested: {
-                    root.contactsStore.changeContactNickname(publicKey, "", optionalDisplayName, true)
-                    close()
-                }
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: markAsUntrustedComponent
-            MarkAsUntrustedPopup {
-                onAccepted: {
-                    root.contactsStore.markUntrustworthy(publicKey)
-                    if (removeContact) {
-                        root.contactsStore.removeContact(publicKey)
-                        Global.displaySuccessToastMessage(qsTr("%1 removed from contacts and marked as untrusted").arg(mainDisplayName))
-                    } else {
-                        Global.displaySuccessToastMessage(qsTr("%1 marked as untrusted").arg(mainDisplayName))
-                    }
-                    close()
-                }
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: unblockContactConfirmationComponent
-            UnblockContactConfirmationDialog {
-                onAccepted: {
-                    root.contactsStore.unblockContact(publicKey)
-                    Global.displaySuccessToastMessage(qsTr("%1 unblocked").arg(mainDisplayName))
-                    close()
-                }
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: blockContactConfirmationComponent
-            BlockContactConfirmationDialog {
-                onAccepted: {
-                    root.contactsStore.blockContact(publicKey)
-                    if (removeIDVerification)
-                        root.contactsStore.removeTrustStatus(publicKey)
-                    if (removeContact)
-                        root.contactsStore.removeContact(publicKey)
-                    Global.displaySuccessToastMessage(qsTr("%1 blocked").arg(mainDisplayName))
-                    close()
-                }
-                onClosed: destroy()
             }
         },
 
@@ -1304,20 +1114,6 @@ QtObject {
         },
 
         Component {
-            id: newsMessageComponent
-
-            NewsMessagePopup {
-                activityCenterNotifications: root.activityCenterStore.activityCenterNotifications
-                onLinkClicked: (link) => {
-                                   if (Utils.isStatusDeepLink(link))
-                                       Global.activateDeepLink(link)
-                                   else
-                                       Global.requestOpenLink(link)
-                                   close()
-                               }
-            }
-        },
-        Component {
             id: quitConfirmPopupComponent
 
             SignOutConfirmationDialog {
@@ -1505,6 +1301,97 @@ QtObject {
             id: authenticationPopupComponent
 
             source: Qt.resolvedUrl("AuthenticationPopupInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: newsMessageComponent
+
+            source: Qt.resolvedUrl("NewsMessagePopupInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: sendContactRequestPopupComponent
+
+            source: Qt.resolvedUrl("SendContactRequestModalInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: nicknamePopupComponent
+
+            source: Qt.resolvedUrl("NicknamePopupInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: blockContactConfirmationComponent
+
+            source: Qt.resolvedUrl("BlockContactConfirmationDialogInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: removeIDVerificationPopupComponent
+
+            source: Qt.resolvedUrl("RemoveIDVerificationDialogInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: removeContactConfirmationDialog
+
+            source: Qt.resolvedUrl("RemoveContactPopupInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: markAsUntrustedComponent
+
+            source: Qt.resolvedUrl("MarkAsUntrustedPopupInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: reviewContactRequestPopupComponent
+
+            source: Qt.resolvedUrl("ReviewContactRequestPopupInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: unblockContactConfirmationComponent
+
+            source: Qt.resolvedUrl("UnblockContactConfirmationDialogInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: markAsIDVerifiedPopupComponent
+
+            source: Qt.resolvedUrl("MarkAsIDVerifiedDialogInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: communityRulesPopup
+
+            source: Qt.resolvedUrl("CommunityRulesPopupInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: changeProfilePicComponent
+
+            source: Qt.resolvedUrl("ImageCropWorkflowInstance.qml")
+            properties: ({ host: root })
+        },
+
+        SQUtils.DeferredComponent {
+            id: inviteFriendsToCommunityPopup
+
+            source: Qt.resolvedUrl("InviteFriendsToCommunityPopupInstance.qml")
             properties: ({ host: root })
         }
     ]
