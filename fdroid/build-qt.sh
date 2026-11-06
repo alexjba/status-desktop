@@ -74,6 +74,8 @@ cd "$BUILD_DIR"
 rm -rf build_qt_host
 
 # Build Qt for Android arm64-v8a
+# The NDK's legacy toolchain file caches empty CMAKE_<LANG>_FLAGS before project(), so
+# CMAKE_*_FLAGS_INIT never reach the compiler here. Pass the cache variables directly.
 mkdir -p build_qt_android && cd build_qt_android
 
 : "${FFMPEG_DIR:?FFMPEG_DIR must point to the staged FFmpeg build (lib/, include/)}"
@@ -96,8 +98,8 @@ mkdir -p build_qt_android && cd build_qt_android
     -DFFMPEG_DIR="$FFMPEG_DIR" \
     -DFEATURE_ffmpeg=ON \
     -DQT_DEFAULT_MEDIA_BACKEND=ffmpeg \
-    -DCMAKE_C_FLAGS_INIT="$QT_REPRO_CFLAGS" \
-    -DCMAKE_CXX_FLAGS_INIT="$QT_REPRO_CFLAGS" \
+    -DCMAKE_C_FLAGS="$QT_REPRO_CFLAGS" \
+    -DCMAKE_CXX_FLAGS="$QT_REPRO_CFLAGS" \
     -DCMAKE_UNITY_BUILD=OFF \
     -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF \
     -DCMAKE_MESSAGE_LOG_LEVEL=WARNING \
