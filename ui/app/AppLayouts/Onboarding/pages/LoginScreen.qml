@@ -94,6 +94,8 @@ OnboardingPage {
     // -> "keyUid:string": User ID to login; "method:int": password or keycard (cf Onboarding.LoginMethod.*) enum;
     //    "data:var": contains "password" or "pin"
     signal loginRequested(string keyUid, int method, var data)
+    // the user started typing the password or the PIN
+    signal loginIntent()
 
     // "internal" onboarding signals, starting other flows
     signal onboardingCreateProfileFlowRequested()
@@ -282,6 +284,7 @@ OnboardingPage {
                     // reset state when typing the pass manually; not to break the bindings inside the component
                     validationError = ""
                     d.resetBiometricsResult()
+                    root.loginIntent()
                 }
                 onDetailedErrorPopupRequested: detailedErrorPopupComp.createObject(root, {detailedError}).open()
                 onBiometricsRequested: root.biometricsRequested(loginUserSelector.selectedProfileKeyId)
@@ -305,6 +308,7 @@ OnboardingPage {
                     // reset state when typing the PIN manually; not to break the bindings inside the component
                     loginError = ""
                     d.resetBiometricsResult()
+                    root.loginIntent()
                 }
                 onDetailedErrorPopupRequested: detailedErrorPopupComp.createObject(root, {detailedError: loginError}).open()
                 onBiometricsRequested: root.biometricsRequested(loginUserSelector.selectedProfileKeyId)
