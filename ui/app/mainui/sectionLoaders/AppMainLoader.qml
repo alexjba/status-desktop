@@ -45,6 +45,4 @@ Loader {
     }
 
     onMainReadyChanged: loadSection()
-
-    Component.onCompleted: QmlCompiler.precompile(QmlCompiler.appMainUrl, false)
 }
