@@ -771,42 +771,31 @@ StatusSectionLayout {
         }
     }
 
-    Component  {
+    SQUtils.DeferredComponent {
         id: browserWalletMenu
-        BrowserWalletMenu {
-            parent: root.invertedLayout ? mobileAddressBar : browserToolbarLoader
-            x: parent.width - width - Theme.halfPadding
-            y: parent.height + 4
 
-            incognitoMode: _internal.currentTabIncognito
-            accounts: root.browserWalletStore.accounts
-            currentAccount: root.browserWalletStore.dappBrowserAccount
-            activityStore: root.browserActivityStore
-            currencyStore: root.currencyStore
+        source: Qt.resolvedUrl("BrowserWalletMenuInstance.qml")
+        properties: ({
+            anchorItem: Qt.binding(() => root.invertedLayout ? mobileAddressBar : browserToolbarLoader),
+            incognitoMode: Qt.binding(() => _internal.currentTabIncognito),
+            accounts: Qt.binding(() => root.browserWalletStore.accounts),
+            currentAccount: Qt.binding(() => root.browserWalletStore.dappBrowserAccount),
+            activityStore: root.browserActivityStore,
+            currencyStore: root.currencyStore,
             networksStore: root.networksStore
+        })
 
-            onSendTriggered: (address) => root.sendToRecipientRequested(address)
-            onAccountChanged: (newAddress) => webViewContext.changeAccountForCurrentDapp(newAddress)
-            onReload: {
+        onCreated: menu => {
+            menu.sendTriggered.connect(address => root.sendToRecipientRequested(address))
+            menu.accountChanged.connect(newAddress => webViewContext.changeAccountForCurrentDapp(newAddress))
+            menu.reload.connect(() => {
                 for (let i = 0; i < tabs.count; ++i){
                     webViewContext.getWebView(i).reload();
                 }
-            }
-
-            onAccountSwitchRequested: address => root.browserWalletStore.switchAccountByAddress(address)
-            onFilterAddressesChangeRequested: addressesJson => root.browserActivityStore.activityController.setFilterAddressesJson(addressesJson)
-
-            Connections {
-                target: root.browserActivityStore.transactionActivityStatus
-                enabled: visible
-                function onIsFilterDirtyChanged() {
-                    root.browserActivityStore.updateTransactionFilterIfDirty()
-                }
-                function onFilterChainsChanged() {
-                    root.browserActivityStore.currentActivityFiltersStore.updateCollectiblesModel()
-                    root.browserActivityStore.currentActivityFiltersStore.updateRecipientsModel()
-                }
-            }
+            })
+            menu.accountSwitchRequested.connect(address => root.browserWalletStore.switchAccountByAddress(address))
+            menu.filterAddressesChangeRequested.connect(
+                addressesJson => root.browserActivityStore.activityController.setFilterAddressesJson(addressesJson))
         }
     }
 
