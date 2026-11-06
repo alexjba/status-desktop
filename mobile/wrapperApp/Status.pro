@@ -63,6 +63,8 @@ android {
 
     QMAKE_LFLAGS += -Wl,-z,max-page-size=16384
     QMAKE_LFLAGS_SHLIB += -Wl,-z,max-page-size=16384
+    # Packed relative relocations (Android tags: minSdk 28 < 30)
+    QMAKE_LFLAGS += -Wl,--pack-dyn-relocs=android+relr -Wl,--use-android-relr-tags
 
     ANDROID_VERSION_NAME = $$VERSION
 
