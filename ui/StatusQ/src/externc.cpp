@@ -12,6 +12,10 @@
 #include <QQmlApplicationEngine>
 #include <QQmlIncubator>
 #include <QTimerEvent>
+#include <QQuickWindow>
+#include <QTimer>
+#include <QFile>
+#include <malloc.h>
 
 #include <StatusQ/backgroundgraphicsrelease.h>
 #include <StatusQ/networkaccessfactory.h>
@@ -49,6 +53,53 @@ static void statusq_messageOutput(QtMsgType type, const QMessageLogContext &cont
     g_statusqMessageHandler(int(type), message, category, file, function, context.line);
 }
 
+
+// [not for merge] spike/floor-plat probe: env-gated platform memory levers.
+namespace {
+QString platRss() {
+    QFile f(QStringLiteral("/proc/self/statm"));
+    if (!f.open(QIODevice::ReadOnly)) return {};
+    const auto parts = f.readAll().split(' ');
+    const auto mi = mallinfo();
+    return QStringLiteral("rss=%1KB heapAlloc=%2KB heapMapped=%3KB")
+        .arg(parts.value(1).toLongLong() * 4).arg(qint64(mi.uordblks) / 1024)
+        .arg(qint64(mi.hblkhd) / 1024);
+}
+
+void installPlatProbe(QQmlEngine* engine) {
+    const auto text = qgetenv("STATUS_PLAT_TEXT");
+    if (text == "native")
+        QQuickWindow::setTextRenderType(QQuickWindow::NativeTextRendering);
+    else if (text == "curve")
+        QQuickWindow::setTextRenderType(QQuickWindow::CurveTextRendering);
+    if (!text.isEmpty())
+        qInfo() << "[plat] text render type" << text;
+
+    const auto at = qgetenv("STATUS_PLAT_RELEASE_AT");
+    const bool trim = qEnvironmentVariableIsSet("STATUS_PLAT_TRIM");
+    const bool purge = qEnvironmentVariableIsSet("STATUS_PLAT_PURGE");
+    for (const auto& ms : at.split(',')) {
+        bool ok = false;
+        const int delay = ms.toInt(&ok);
+        if (!ok) continue;
+        QTimer::singleShot(delay, engine, [engine, trim, purge, delay] {
+            const auto before = platRss();
+            QElapsedTimer t;
+            t.start();
+            engine->collectGarbage();
+            const auto gcMs = t.nsecsElapsed() / 1e6;
+            if (trim) engine->trimComponentCache();
+            const auto trimMs = t.nsecsElapsed() / 1e6 - gcMs;
+#ifdef M_PURGE_ALL
+            if (purge) mallopt(M_PURGE_ALL, 0);
+#endif
+            qInfo().noquote() << "[plat] release at" << delay << "gc" << gcMs << "ms trim" << trimMs
+                              << "ms total" << t.nsecsElapsed() / 1e6 << "ms |" << before << "->" << platRss();
+        });
+    }
+}
+}
+
 extern "C" {
 
 Q_DECL_EXPORT void statusq_registerQmlTypes() {
@@ -69,6 +120,7 @@ Q_DECL_EXPORT void statusq_setupNetworkAccessManagerFactory(void* engine, const 
                                                             qint64 maxCacheSize) {
     Status::setupNetworkAccessManagerFactory(static_cast<QQmlApplicationEngine*>(engine),
                                              QString::fromUtf8(tmpPath), maxCacheSize);
+    installPlatProbe(static_cast<QQmlApplicationEngine*>(engine));
 }
 
 Q_DECL_EXPORT void statusq_initializeWebEngine() {
