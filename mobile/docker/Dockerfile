@@ -12,11 +12,15 @@ ARG GOLANG_VERSION="1.24.7"
 ARG NIM_VERSION="2.2.10"
 ARG NIMBLE_VERSION="0.26.1"
 ARG NIX_VERSION="2.24.11"
+# Android Qt modules built from source, in dependency order.
+ARG QT_ANDROID_MODULES="qtshadertools qtsvg qtimageformats qtdeclarative qt5compat qtmultimedia qtwebsockets qtwebchannel qtpositioning qtwebview qtconnectivity qtlottie qtscxml"
+ARG FFMPEG_VERSION="7.1.3"
+ARG OPENSSL_VERSION="3.0.15"
 
 # =============================================================================
-# Stage 1: Qt Installation using aqtinstall
+# Stage 1: host Qt (gcc_64) using aqtinstall
 # =============================================================================
-FROM ubuntu:noble AS qt-install
+FROM ubuntu:noble AS qt-host
 
 ARG QT_VERSION QT_MODULES
 
@@ -26,12 +30,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN chmod -R 777 /opt
 
-# Install Qt for Android using aqtinstall 
-# --autodesktop installs host Qt (gcc_64) needed for cross-compilation
-# FIXME: Only installing arm64_v8a as the primary architecture (think about other architectures : armv7, x86, x86_64)
+# The host Qt provides the build tools (moc, qmlcachegen, qsb, qscxmlc, androiddeployqt...)
+# for the Android Qt built from source in the next stage.
 RUN python3 -m venv /tmp/aqt-venv \
  && /tmp/aqt-venv/bin/pip install -U pip setuptools aqtinstall \
- && /tmp/aqt-venv/bin/aqt install-qt linux android ${QT_VERSION} android_arm64_v8a -m ${QT_MODULES} -O /opt/qt --autodesktop --timeout 3000 \
+ && /tmp/aqt-venv/bin/aqt install-qt linux desktop ${QT_VERSION} linux_gcc_64 -m ${QT_MODULES} -O /opt/qt --timeout 3000 \
  && rm -rf /tmp/aqt-venv
 
 RUN rm -rf /opt/qt/${QT_VERSION}/gcc_64/qml/QtWebEngine \
@@ -40,20 +43,98 @@ RUN rm -rf /opt/qt/${QT_VERSION}/gcc_64/qml/QtWebEngine \
  && rm -rf /opt/qt/${QT_VERSION}/gcc_64/libexec/QtWebEngineProcess \
  && rm -rf /opt/qt/${QT_VERSION}/gcc_64/modules/WebEngine*.json \
  # Remove QtWebEngine dependency from QtWebView qmldir (aqtinstall's QtWebView was built with WebEngine support)
- && sed -i '/depends QtWebEngine/d' /opt/qt/${QT_VERSION}/gcc_64/qml/QtWebView/qmldir \
- && sed -i '/depends QtWebEngine/d' /opt/qt/${QT_VERSION}/android_arm64_v8a/qml/QtWebView/qmldir 2>/dev/null || true
+ && sed -i '/depends QtWebEngine/d' /opt/qt/${QT_VERSION}/gcc_64/qml/QtWebView/qmldir 2>/dev/null || true
 
 # Clean up unnecessary Qt files to reduce image size (docs, examples)
 # Note: Do NOT delete .a files - Qt CMake configs reference them and builds will fail
 RUN rm -rf /opt/qt/${QT_VERSION}/gcc_64/doc \
  && rm -rf /opt/qt/${QT_VERSION}/gcc_64/examples \
- && rm -rf /opt/qt/${QT_VERSION}/android_arm64_v8a/doc \
- && rm -rf /opt/qt/${QT_VERSION}/android_arm64_v8a/examples \
  # Remove debug symbols from Qt libraries
  && find /opt/qt/${QT_VERSION} -name "*.debug" -type f -delete 2>/dev/null || true
 
 # =============================================================================
-# Stage 2: Final Build Image
+# Stage 2: Android Qt (arm64-v8a) built from source
+# =============================================================================
+FROM ubuntu:noble AS qt-android
+
+ARG QT_VERSION QT_ANDROID_MODULES JAVA_VERSION ANDROID_API_LEVEL ANDROID_NDK_VERSION
+ARG FFMPEG_VERSION OPENSSL_VERSION
+# Parallel jobs for the Qt build; LTO links need about 2 GB each.
+ARG QT_BUILD_JOBS
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    ANDROID_SDK_ROOT=/opt/android-sdk \
+    ANDROID_NDK_ROOT=/opt/android-sdk/ndk/${ANDROID_NDK_VERSION} \
+    JAVA_HOME=/usr/lib/jvm/java-${JAVA_VERSION}-openjdk-amd64
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake ninja-build perl python3 pkg-config curl wget ca-certificates xz-utils unzip \
+    openjdk-${JAVA_VERSION}-jdk google-android-cmdline-tools-13.0-installer \
+    # Runtime libraries of the host Qt tools (qsb links QtGui)
+    libgl1 libegl1 libglib2.0-0t64 libxkbcommon0 libfontconfig1 libfreetype6 libdbus-1-3 \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN yes | sdkmanager --sdk_root=/opt/android-sdk \
+    "platforms;android-${ANDROID_API_LEVEL}" \
+    "build-tools;${ANDROID_API_LEVEL}.0.0" \
+    "ndk;${ANDROID_NDK_VERSION}" > /dev/null
+
+COPY --from=qt-host /opt/qt/${QT_VERSION}/gcc_64 /opt/qt/${QT_VERSION}/gcc_64
+
+# Fail early if a host tool the Android build runs cannot load.
+RUN for t in bin/qsb bin/qmake libexec/moc libexec/rcc libexec/qmlcachegen libexec/qmltyperegistrar libexec/qscxmlc; do \
+      ! ldd /opt/qt/${QT_VERSION}/gcc_64/$t | grep 'not found' || exit 1; \
+    done
+
+# Sources, pinned by SHA-256.
+# FFmpeg 7.1.3 matches the FFmpeg that Qt ${QT_VERSION}'s prebuilt Android binaries use.
+WORKDIR /src
+RUN set -e; \
+    QT_URL="https://download.qt.io/official_releases/qt/${QT_VERSION%.*}/${QT_VERSION}/submodules"; \
+    mkdir qt; \
+    for entry in \
+      qtbase=231ad85979864d914dc9568a1b71c91d6cf20d7b2021d059103bf0eb51cb755e \
+      qtshadertools=e43cb1ae8809b2a858281ee269f98da59d0fc1bcf958ca5510c81f7ad3d2e14a \
+      qtdeclarative=4eece569431ddf8324e7d322fa27001916570b23df535f8fb28aba445eedfde9 \
+      qtsvg=dfa8d653be07087d9407ed4a4ebae847f8953e0b7abd829f089803ab652a30e6 \
+      qtimageformats=d3adb02ac5e2fe24068dbdaee0d7cc68cc3fa8553291c1bfce77c9fe8e940cc8 \
+      qt5compat=e62954646b2749723aa5c7db32faab407358734075590058a01e793382d4c63e \
+      qtmultimedia=90c4cac0a7a983b68d1b0873d0714e7873b9a493403fa8593e8a4eea3ea26040 \
+      qtwebsockets=569f10d1fb35195869576004f5b5ff09735d2f0319e2e8f0dd0f40c7ec31d032 \
+      qtwebchannel=e946143a8b015e2c9d5cc6110515f43618b441799da546138d0b05d8afa9fb24 \
+      qtpositioning=d61fd0985ede513ec34d2d1c1e92f383eb8eb46678ca9da805cf795cccb796e9 \
+      qtwebview=cb0eaed94a12d5f650863d346c423e9f4383dbce1d05866869c40118c6e8c4b3 \
+      qtconnectivity=c0f0c124c849ef811a873bf1a0123e3feabac6e9ca3ea7e7ac7a40543ec6193a \
+      qtlottie=2f23ae6879bc652e194f3a7ba5972d13ec04f8f48226e8c00a002f3227bdcd0a \
+      qtscxml=6c383a53c0c3668fcc80d89f00193f0e928a784199c591213cbed1bf2f64d4e7; do \
+      f="${entry%%=*}-everywhere-src-${QT_VERSION}.tar.xz"; \
+      curl -sSfL -o "qt/$f" "$QT_URL/$f"; \
+      echo "${entry#*=}  qt/$f" | sha256sum -c -; \
+    done; \
+    curl -sSfL -o ffmpeg.tar.xz "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz"; \
+    echo "f0bf043299db9e3caacb435a712fc541fbb07df613c4b893e8b77e67baf3adbe  ffmpeg.tar.xz" | sha256sum -c -; \
+    tar -xf ffmpeg.tar.xz && rm ffmpeg.tar.xz; \
+    curl -sSfL -o openssl.tar.gz "https://github.com/openssl/openssl/releases/download/openssl-${OPENSSL_VERSION}/openssl-${OPENSSL_VERSION}.tar.gz"; \
+    echo "23c666d0edf20f14249b3d8f0368acaee9ab585b09e1de82107c66e1f3ec9533  openssl.tar.gz" | sha256sum -c -; \
+    tar -xzf openssl.tar.gz && rm openssl.tar.gz
+
+# Qt loads OpenSSL at runtime (the app ships libcrypto_3/libssl_3); it only needs the generated headers.
+RUN cd openssl-${OPENSSL_VERSION} \
+ && PATH=${ANDROID_NDK_ROOT}/toolchains/llvm/prebuilt/linux-x86_64/bin:$PATH \
+    ./Configure android-arm64 -D__ANDROID_API__=28 no-shared no-tests > /dev/null \
+ && make build_generated > /dev/null
+
+COPY build-ffmpeg-android.sh build-qt-android.sh /src/
+
+RUN FFMPEG_SRC_DIR=/src/ffmpeg-${FFMPEG_VERSION} FFMPEG_DIR=/opt/ffmpeg ./build-ffmpeg-android.sh
+
+RUN QT_SRC_DIR=/src/qt QT_HOST_PATH=/opt/qt/${QT_VERSION}/gcc_64 FFMPEG_DIR=/opt/ffmpeg \
+    OPENSSL_INCLUDE_DIR=/src/openssl-${OPENSSL_VERSION}/include QT_MODULES="${QT_ANDROID_MODULES}" \
+    QT_BUILD_JOBS="${QT_BUILD_JOBS:-$(nproc)}" \
+    ./build-qt-android.sh
+
+# =============================================================================
+# Stage 3: Final Build Image
 # =============================================================================
 FROM ubuntu:noble
 
@@ -146,7 +227,8 @@ RUN yes | sdkmanager --sdk_root=/opt/android-sdk \
 # Copy Qt from install stage
 # =============================================================================
 RUN chmod -R 777 /opt && mkdir -p /opt/qt/${QT_VERSION}
-COPY --from=qt-install /opt/qt/${QT_VERSION} /opt/qt/${QT_VERSION}/
+COPY --from=qt-host /opt/qt/${QT_VERSION}/gcc_64 /opt/qt/${QT_VERSION}/gcc_64/
+COPY --from=qt-android /opt/qt/${QT_VERSION}/android_arm64_v8a /opt/qt/${QT_VERSION}/android_arm64_v8a/
 
 # Configure Qt library path
 RUN echo "/opt/qt/${QT_VERSION}/gcc_64/lib" > /etc/ld.so.conf.d/qt.conf && ldconfig
