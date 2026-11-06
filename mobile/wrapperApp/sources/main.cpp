@@ -12,6 +12,13 @@ extern "C" {
 #include <link.h>
 #include <sys/mman.h>
 #include <vector>
+#include <chrono>
+#include <fcntl.h>
+#include <thread>
+#include <QElapsedTimer>
+#include <QGuiApplication>
+#include <QQuickWindow>
+#include <QTimer>
 
 namespace {
 
@@ -45,16 +52,16 @@ int collectReadOnlyLibRange(dl_phdr_info *info, size_t, void *data)
     return 0;
 }
 
-// [not for merge] probe: STATUS_FAULT=random|random_keep|dontneed0, applied at main() entry.
-// random: no fault-around/read-around from here on, and drop what the loader mapped, so
-// residency afterwards ~= the pages actually touched (the floor a perfect code layout reaches).
-void applyFaultProbe()
+// [not for merge] probe: STATUS_FAULT=<flag>[,<flag>...], applied at main() entry.
+// random: MADV_RANDOM on our read-only lib segments (no fault-around/read-around from here on)
+// drop: MADV_DONTNEED them too, so residency afterwards ~= pages touched after main
+// evict: POSIX_FADV_DONTNEED the unmapped page cache of base.apk (cold-cache proxy)
+// again: re-apply random 8 s later (libs dlopen'ed after main)
+// Legacy: random = random,drop; random_keep = random; dontneed0 = drop.
+QElapsedTimer probeClock;
+
+void adviseLibraries(bool random, bool drop, const char *what)
 {
-    const char *mode = getenv("STATUS_FAULT");
-    if (!mode)
-        return;
-    const bool random = !strncmp(mode, "random", 6);
-    const bool drop = strcmp(mode, "random_keep") != 0;
     std::vector<PageRange> ranges;
     dl_iterate_phdr(collectReadOnlyLibRange, &ranges);
     size_t bytes = 0;
@@ -67,7 +74,74 @@ void applyFaultProbe()
         else
             bytes += len;
     }
-    qInfo("fault-probe: %s on %zu ranges, %zu MB, %d failed", mode, ranges.size(), bytes >> 20, failures);
+    qInfo("fault-probe: %s on %zu ranges, %zu MB, %d failed", what, ranges.size(), bytes >> 20, failures);
+}
+
+void evictApkPageCache()
+{
+    char path[512] = {};
+    FILE *maps = fopen("/proc/self/maps", "r");
+    char line[1024];
+    while (maps && fgets(line, sizeof line, maps)) {
+        if (const char *p = strstr(line, "/data/app/")) {
+            if (const char *e = strstr(p, "base.apk")) {
+                snprintf(path, sizeof path, "%.*s", int(e - p + 8), p);
+                break;
+            }
+        }
+    }
+    if (maps)
+        fclose(maps);
+    const int fd = path[0] ? open(path, O_RDONLY) : -1;
+    const int rc = fd >= 0 ? posix_fadvise(fd, 0, 0, POSIX_FADV_DONTNEED) : -1;
+    if (fd >= 0)
+        close(fd);
+    qInfo("fault-probe: evict %s rc %d", path, rc);
+}
+
+void applyFaultProbe()
+{
+    probeClock.start();
+    const char *env = getenv("STATUS_FAULT");
+    if (!env)
+        return;
+    const QByteArray mode(env);
+    const bool legacyRandom = mode == "random";
+    const bool random = legacyRandom || mode == "random_keep" || mode.split(',').contains("random");
+    const bool drop = legacyRandom || mode == "dontneed0" || mode.split(',').contains("drop");
+    if (mode.split(',').contains("evict"))
+        evictApkPageCache();
+    if (random || drop)
+        adviseLibraries(random, drop, env);
+    if (random && mode.split(',').contains("again")) {
+        std::thread([] {
+            std::this_thread::sleep_for(std::chrono::seconds(8));
+            adviseLibraries(true, false, "again");
+        }).detach();
+    }
+    // first frame after main(), to compare start-up latency between modes
+    std::thread([] {
+        while (!QCoreApplication::instance())
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
+        QMetaObject::invokeMethod(QCoreApplication::instance(), [] {
+            auto *poll = new QTimer(QCoreApplication::instance());
+            QObject::connect(poll, &QTimer::timeout, poll, [poll] {
+                for (QWindow *w : QGuiApplication::topLevelWindows()) {
+                    if (auto *qw = qobject_cast<QQuickWindow *>(w)) {
+                        poll->stop();
+                        QObject::connect(qw, &QQuickWindow::frameSwapped, qw, [] {
+                            static int frames = 0;
+                            if (++frames == 1 || frames == 30)
+                                qInfo("fault-probe: frame %d at %lld ms after main", frames,
+                                      static_cast<long long>(probeClock.elapsed()));
+                        });
+                        return;
+                    }
+                }
+            });
+            poll->start(10);
+        }, Qt::QueuedConnection);
+    }).detach();
 }
 
 } // namespace
