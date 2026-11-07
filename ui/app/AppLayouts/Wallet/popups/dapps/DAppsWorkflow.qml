@@ -189,12 +189,12 @@ SQUtils.QObject {
         active: false
         parent: root.visualParent
 
-        sourceComponent: Component {
-            DAppsUriCopyInstructionsPopup{
-                visible: true
-                destroyOnClose: false
-                onClosed: pairInstructionsLoader.active = false
-            }
+        source: Qt.resolvedUrl("../../../../../imports/shared/popups/walletconnect/DAppsUriCopyInstructionsPopup.qml")
+
+        onLoaded: {
+            item.destroyOnClose = false
+            item.closed.connect(() => pairInstructionsLoader.active = false)
+            item.open()
         }
     }
 
@@ -278,74 +278,8 @@ SQUtils.QObject {
             }
         }
 
-        sourceComponent: ConnectDAppModal {
-            visible: true
-
-            Component.onCompleted: {
-                console.log("[StatusConnect] ConnectDAppModal shown",
-                             "url=" + connectDappLoader.dappUrl,
-                             "key=" + connectDappLoader.key)
-            }
-
-            onClosed: {
-                if (!connectDappLoader.connectRequestHandled && connectDappLoader.key) {
-                    root.connectionDeclined(connectDappLoader.key)
-                }
-                connectDappLoader.connectRequestHandled = false
-                connectDappLoader.active = false
-            }
-            accounts: root.accountsModel
-            flatNetworks: SortFilterProxyModel {
-                sourceModel: root.networksModel
-                filters: [
-                    FastExpressionFilter {
-                        inverted: true
-                        expression: connectDappLoader.dappChains.indexOf(chainId) === -1
-                        expectedRoles: ["chainId"]
-                    }
-                ]
-            }
-            selectedAccountAddress: root.selectedAccountAddress
-
-            dAppUrl: connectDappLoader.dappUrl
-            dAppName: connectDappLoader.dappName
-            dAppIconUrl: connectDappLoader.dappIcon
-            dAppConnectorBadge: connectDappLoader.connectorIcon
-            connectButtonEnabled: root.enabled
-
-            onConnect: {
-                if (!selectedAccount || !selectedAccount.address) {
-                    console.error("Missing account selection")
-                    return
-                }
-                if (!selectedChains || selectedChains.length === 0) {
-                    console.error("Missing chain selection")
-                    return
-                }
-
-                connectDappLoader.resolve(() => root.connectionAccepted(connectDappLoader.key, selectedChains, selectedAccount.address))
-            }
-
-            onDecline: connectDappLoader.resolve(() => {
-                root.connectionDeclined(connectDappLoader.key)
-                close()
-            })
-
-            onDisconnect: connectDappLoader.resolve(() => {
-                const connectorId = connectDappLoader.dappConnectorId
-                const isStatusConnect = connectorId === Constants.DAppConnectors.StatusConnect
-                const clientId = isStatusConnect
-                        ? ConnectorConstants.clientIdFor(false)
-                        : "walletconnect"
-                const topic = connectDappLoader.topic || connectDappLoader.dappUrl
-                console.log("[StatusConnect] ConnectDAppModal disconnect",
-                             "url=" + connectDappLoader.dappUrl,
-                             "connectorId=" + connectorId,
-                             "clientId=" + clientId)
-                root.disconnectRequested(topic, connectDappLoader.dappUrl, connectorId, clientId)
-                close()
-            })
-        }
+        Component.onCompleted: setSource(Qt.resolvedUrl("ConnectDAppModalInstance.qml"),
+                                         { workflow: root, loader: connectDappLoader })
     }
 
     Instantiator {

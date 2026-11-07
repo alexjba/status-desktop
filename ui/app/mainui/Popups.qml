@@ -709,134 +709,9 @@ QtObject {
     readonly property list<Component> _components: [
 
         Component {
-            id: emojiPopupComponent
-            StatusEmojiPopup {
-                objectName: "StatusEmojiPopup"
-                height: 440
-                emojiModel: SQUtils.Emoji.emojiModel
-                skinColor: root.emojiSkinColor
-                onSkinColorSelected: skinColor => root.emojiSkinColorSelected(skinColor)
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: imagePopupComponent
-            StatusImageModal {
-                id: imagePopup
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: importCommunitiesPopupComponent
-            ImportCommunityPopup {
-                id: importPopup
-
-                property CommunityStores.CommunityRootStore communityRootStore: root.messagingRootStore.createCommunityRootStore(this, importPopup.communityId)
-                readonly property CommunityStores.CommunityAccessStore communityAccessStore: communityRootStore ?
-                                                                                                 communityRootStore.communityAccessStore : null
-
-                store: root.communitiesStore
-                utilsStore: root.utilsStore
-                onJoinCommunityRequested: function(communityId, communityDetails) {
-                    close()
-                    communityAccessStore.spectateCommunity(communityId)
-                    openCommunityIntroPopup(communityId,
-                                            communityDetails.name,
-                                            communityDetails.introMessage,
-                                            communityDetails.image,
-                                            communityAccessStore.isMyCommunityRequestPending)
-                }
-                onClosed: destroy()
-            }
-        },
-
-        Component {
             id: deleteMessageConfirmationDialogComponent
             DeleteMessageConfirmationPopup {
                 onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: downloadImageDialogComponent
-
-            StatusFolderDialog {
-                property string imageSource
-
-                title: qsTr("Please choose a directory")
-                currentFolder: StandardPaths.writableLocation(StandardPaths.PicturesLocation)
-
-                onAccepted: {
-                    SystemUtils.downloadImageByUrl(imageSource, selectedFolder)
-                    destroy()
-                }
-                onRejected: {
-                    destroy()
-                }
-            }
-        },
-
-        Component {
-            id: leaveCommunityPopupComponent
-            StatusModal {
-                id: leavePopup
-
-                property string community
-                property string communityId
-                property string outroMessage
-
-                headerSettings.title: qsTr("Are you sure want to leave '%1'?").arg(community)
-                padding: 16
-                width: 640
-                contentItem: ColumnLayout {
-                    spacing: 16
-                    StatusBaseText {
-                        id: outroMessage
-                        Layout.fillWidth: true
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        text: leavePopup.outroMessage
-                        visible: !!text
-                    }
-                    StatusMenuSeparator {
-                        Layout.fillWidth: true
-                        visible: outroMessage.visible
-                    }
-                    StatusBaseText {
-                        Layout.fillWidth: true
-                        wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        font.pixelSize: Theme.additionalTextSize
-                        text: qsTr("You will need to request to join if you want to become a member again in the future. If you joined the Community via public key ensure you have a copy of it before you go.")
-                    }
-                }
-
-                rightButtons: [
-                    StatusFlatButton {
-                        text: qsTr("Cancel")
-                        onClicked: leavePopup.close()
-                    },
-                    StatusButton {
-                        objectName: "CommunitiesListPanel_leaveCommunityButtonInPopup"
-                        type: StatusBaseButton.Type.Danger
-                        text: qsTr("Leave %1").arg(leavePopup.community)
-                        onClicked: {
-                            leavePopup.close()
-                            root.communitiesStore.leaveCommunity(leavePopup.communityId)
-                        }
-                    }
-                ]
-
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: confirmExternalLinkPopup
-            ConfirmExternalLinkPopup {
-                destroyOnClose: true
-                onOpenExternalLink: (link) => root.openExternalLink(link)
-                onSaveDomainToUnfurledWhitelist: (domain) => root.saveDomainToUnfurledWhitelist(domain)
             }
         },
 
@@ -885,14 +760,6 @@ QtObject {
 
         // Components related to transfer community ownership flow:
 
-        Component {
-            id: declineOwnershipPopup
-            FinaliseOwnershipDeclinePopup {
-                destroyOnClose: true
-
-                onDeclineClicked: root.ownershipDeclined(communityId, communityName)
-            }
-        },
         // End of components related to transfer community ownership flow.
 
         Component {
@@ -980,18 +847,6 @@ QtObject {
         },
 
         Component {
-            id: quitConfirmPopupComponent
-
-            SignOutConfirmationDialog {
-                id: confirmDialog
-                secureStorage: root.secureStorage
-                privacyStore: root.privacyStore
-                keyUid: root.privacyStore.keyUid
-                onSignOutRequested: mainModule.signOutAndQuit()
-            }
-        },
-
-        Component {
             id: infoComponent
 
             StatusDialog {
@@ -1061,6 +916,103 @@ QtObject {
     ]
 
     readonly property list<QtObject> _deferredComponents: [
+        SQUtils.DeferredComponent {
+            id: emojiPopupComponent
+
+            module: "shared.status"
+            typeName: "StatusEmojiPopup"
+            properties: ({
+                objectName: "StatusEmojiPopup",
+                height: 440,
+                emojiModel: SQUtils.Emoji.emojiModel,
+                skinColor: Qt.binding(() => root.emojiSkinColor)
+            })
+            onCreated: popup => {
+                popup.skinColorSelected.connect(skinColor => root.emojiSkinColorSelected(skinColor))
+                popup.closed.connect(() => popup.destroy())
+            }
+        },
+
+        SQUtils.DeferredComponent {
+            id: imagePopupComponent
+
+            module: "shared.status"
+            typeName: "StatusImageModal"
+            onCreated: popup => popup.closed.connect(() => popup.destroy())
+        },
+
+        SQUtils.DeferredComponent {
+            id: importCommunitiesPopupComponent
+
+            source: Qt.resolvedUrl("ImportCommunityPopupInstance.qml")
+            properties: ({
+                messagingRootStore: root.messagingRootStore,
+                store: root.communitiesStore,
+                utilsStore: root.utilsStore
+            })
+            onCreated: popup => {
+                popup.joinCommunityRequested.connect((communityId, communityDetails) => {
+                    popup.close()
+                    popup.communityAccessStore.spectateCommunity(communityId)
+                    root.openCommunityIntroPopup(communityId,
+                                                 communityDetails.name,
+                                                 communityDetails.introMessage,
+                                                 communityDetails.image,
+                                                 popup.communityAccessStore.isMyCommunityRequestPending)
+                })
+                popup.closed.connect(() => popup.destroy())
+            }
+        },
+
+        SQUtils.DeferredComponent {
+            id: downloadImageDialogComponent
+
+            source: Qt.resolvedUrl("DownloadImageDialogInstance.qml")
+        },
+
+        SQUtils.DeferredComponent {
+            id: leaveCommunityPopupComponent
+
+            source: Qt.resolvedUrl("LeaveCommunityPopupInstance.qml")
+            onCreated: popup => {
+                popup.leaveRequested.connect(communityId => root.communitiesStore.leaveCommunity(communityId))
+                popup.closed.connect(() => popup.destroy())
+            }
+        },
+
+        SQUtils.DeferredComponent {
+            id: confirmExternalLinkPopup
+
+            module: "shared.popups"
+            typeName: "ConfirmExternalLinkPopup"
+            properties: ({ destroyOnClose: true })
+            onCreated: popup => {
+                popup.openExternalLink.connect(link => root.openExternalLink(link))
+                popup.saveDomainToUnfurledWhitelist.connect(domain => root.saveDomainToUnfurledWhitelist(domain))
+            }
+        },
+
+        SQUtils.DeferredComponent {
+            id: declineOwnershipPopup
+
+            module: "AppLayouts.Communities.popups"
+            typeName: "FinaliseOwnershipDeclinePopup"
+            properties: ({ destroyOnClose: true })
+            onCreated: popup => popup.declineClicked.connect(() => root.ownershipDeclined(popup.communityId, popup.communityName))
+        },
+
+        SQUtils.DeferredComponent {
+            id: quitConfirmPopupComponent
+
+            source: Qt.resolvedUrl("SignOutConfirmationDialog.qml")
+            properties: ({
+                secureStorage: root.secureStorage,
+                privacyStore: root.privacyStore,
+                keyUid: root.privacyStore.keyUid
+            })
+            onCreated: popup => popup.signOutRequested.connect(() => mainModule.signOutAndQuit())
+        },
+
         SQUtils.DeferredComponent {
             id: downloadPageComponent
 
