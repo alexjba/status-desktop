@@ -15,6 +15,12 @@ Item {
     readonly property string statusString: d.status
 
     function play() {
+        if (NativeSound.available) {
+            if (!root.muted)
+                NativeSound.play(root.source, root.volume)
+            return
+        }
+
         if (!d.soundEffect) {
             MediaBackend.ensureLoaded()
             d.soundEffect = soundEffectComponent.createObject(root)
@@ -24,6 +30,11 @@ Item {
     }
 
     function stop() {
+        if (NativeSound.available) {
+            NativeSound.stop(root.source)
+            return
+        }
+
         if (d.soundEffect)
             d.soundEffect.stop()
     }

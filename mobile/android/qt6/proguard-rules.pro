@@ -29,6 +29,9 @@
 -keep class app.status.mobile.DensityListener { *; }
 -keep class app.status.mobile.ShakeDetector { *; }
 
+# ui/StatusQ/src/mediabackend.cpp: callStaticMethod on SoundPlayer (play, stop).
+-keep class app.status.mobile.SoundPlayer { *; }
+
 # ui/StatusQ/src/safutils_android.cpp: callStaticMethod on SafHelper
 # (takePersistablePermission, getReadableTreePath, copyFromPathToTree).
 -keep class app.status.mobile.SafHelper { *; }
