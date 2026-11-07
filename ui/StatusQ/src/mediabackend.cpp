@@ -1,5 +1,8 @@
 #include "StatusQ/mediabackend.h"
 
+#include <QFile>
+#include <QStringList>
+
 #ifdef Q_OS_ANDROID
 #include <QDir>
 #include <QElapsedTimer>
@@ -133,6 +136,22 @@ MediaBackendUtils::MediaBackendUtils(QObject* parent)
 void MediaBackendUtils::ensureLoaded() const
 {
     MediaBackend::ensureLoaded();
+}
+
+void MediaBackendUtils::logMappedMedia(const QString& tag) const
+{
+    QFile maps(QStringLiteral("/proc/self/maps"));
+    if (!maps.open(QIODevice::ReadOnly))
+        return;
+    QStringList libs;
+    for (const QByteArray& line : maps.readAll().split('\n')) {
+        const QByteArray name = line.mid(line.lastIndexOf('/') + 1);
+        if ((name.startsWith("libav") || name.startsWith("libsw") || name.contains("ultimedia")
+             || name.contains("FFmpeg") || name.contains("image_processing"))
+                && !libs.contains(QString::fromLatin1(name)))
+            libs.append(QString::fromLatin1(name));
+    }
+    qInfo().noquote() << "QRSPIKE maps" << tag << ":" << libs.join(QLatin1Char(' '));
 }
 
 MediaHost::MediaHost(QQuickItem* parent)

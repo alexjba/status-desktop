@@ -20,6 +20,8 @@ public:
     explicit MediaBackendUtils(QObject* parent = nullptr);
 
     Q_INVOKABLE void ensureLoaded() const;
+    // Test hook: logs the mapped media libraries (FFmpeg, QtMultimedia, its plugins).
+    Q_INVOKABLE void logMappedMedia(const QString& tag) const;
 };
 
 // Root item for components that declare QtMultimedia objects: the root is constructed

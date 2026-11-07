@@ -1,6 +1,8 @@
 #include "StatusQ/nativeqrcodecapture.h"
 
 #include <QDateTime>
+#include <QFile>
+#include <QPainter>
 #include <QHash>
 #include <QLoggingCategory>
 #include <QMutexLocker>
@@ -263,8 +265,39 @@ void NativeQrCodeCapture::applyCamera()
 #endif
 }
 
-void NativeQrCodeCapture::onFrame(const uchar* rgba, int rowStride, int width, int height)
+// Test hook (not for merge): with <external files>/qr-inject.png present, every camera frame
+// is replaced by that image centered on a gray frame of the same size, so the decode path
+// (crop, luma, Nim QrScanner/ZXing) runs on the device without a QR in front of the lens.
+static const QImage& injectImage()
 {
+    static const QImage image = [] {
+        QFile cmdline(QStringLiteral("/proc/self/cmdline"));
+        cmdline.open(QIODevice::ReadOnly);
+        const QString pkg = QString::fromLatin1(cmdline.readAll().split('\0').value(0));
+        const QString path = QStringLiteral("/sdcard/Android/data/%1/files/qr-inject.png").arg(pkg);
+        QImage img(path);
+        qInfo() << "QRSPIKE inject image" << path << (img.isNull() ? "absent" : "loaded");
+        return img.convertToFormat(QImage::Format_RGBA8888);
+    }();
+    return image;
+}
+
+void NativeQrCodeCapture::onFrame(const uchar* cameraRgba, int cameraStride, int width, int height)
+{
+    const uchar* rgba = cameraRgba;
+    int rowStride = cameraStride;
+    static QImage injected;
+    if (!injectImage().isNull()) {
+        if (injected.size() != QSize(width, height)) {
+            injected = QImage(width, height, QImage::Format_RGBA8888);
+            injected.fill(QColor(128, 128, 128));
+            const QImage qr = injectImage().scaled(QSize(width, height) * 0.45, Qt::KeepAspectRatio);
+            QPainter painter(&injected);
+            painter.drawImage((width - qr.width()) / 2, (height - qr.height()) / 2, qr);
+        }
+        rgba = injected.constBits();
+        rowStride = int(injected.bytesPerLine());
+    }
     QByteArray gray;
     QRect roi;
     {

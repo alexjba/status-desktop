@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
 
+import StatusQ
 import StatusQ.Components
 import StatusQ.Controls
 import StatusQ.Controls.Validators
@@ -156,6 +157,7 @@ ColumnLayout {
                     return false
                 }
             }
+            console.info("QRSPIKE valid tag", tag)
             d.errorMessage = ""
             // before the signal: a handler may move on and tear the scanner down
             MobileUI.vibrate()
@@ -239,6 +241,7 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
+        console.info("QRSPIKE scanner created")
         // Wait before requesting the permission, so the view comes up after
         // the animation before the OS popup freezes the UI. canRequest: also
         // after an ordinary denial on Android, where the OS may ask again.
@@ -348,6 +351,10 @@ ColumnLayout {
             id: scanner
 
             objectName: "statusQrCodeScanner"
+            onCameraAvailableChanged: {
+                console.info("QRSPIKE camera available", cameraAvailable)
+                MediaBackend.logMappedMedia("camera " + cameraAvailable)
+            }
             state: root.state
             anchors.fill: parent
 
@@ -383,10 +390,13 @@ ColumnLayout {
             onCaptureAreaChanged: tap.applyRoi()
 
             QrScanner {
+                id: qrScannerHook
                 frameSource: scanner.frameSource || tap.handle
                 scanning: scanner.decoding
                 // One code per scan: a frame can hold several.
                 onTagFound: tag => {
+                    console.info("QRSPIKE decoded", tag, "zxing ms", qrScannerHook.lastDecodeMs)
+                    MediaBackend.logMappedMedia("decoded")
                     if (root.state !== StatusQrCodeScanner.State.None)
                         return
                     const now = Date.now()
