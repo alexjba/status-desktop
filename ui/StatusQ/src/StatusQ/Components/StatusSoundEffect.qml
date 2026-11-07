@@ -15,8 +15,10 @@ Item {
     readonly property string statusString: d.status
 
     function play() {
-        if (!d.soundEffect)
+        if (!d.soundEffect) {
+            MediaBackend.ensureLoaded()
             d.soundEffect = soundEffectComponent.createObject(root)
+        }
 
         d.soundEffect.play()
     }
