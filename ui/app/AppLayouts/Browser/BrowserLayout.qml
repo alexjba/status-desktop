@@ -201,7 +201,7 @@ StatusSectionLayout {
             _internal.scrolledUp = true
         }
 
-        property Component jsDialogComponent: JSDialogWindow {}
+        property Component jsDialogComponent: Qt.createComponent("popups/JSDialogWindow.qml")
 
         readonly property bool currentTabSupportsFindInPage: currentWebView?.supportsFindInPage ?? false
         readonly property bool hasNativeFindPanel: currentWebView?.hasNativeFindPanel ?? false
@@ -271,7 +271,7 @@ StatusSectionLayout {
         }
 
         function openDownloadsOverview() {
-            onOpenTabsBookmarksOverviewRequested(TabsBookmarksOverviewModal.Mode.Downloads)
+            onOpenTabsBookmarksOverviewRequested(2 /* TabsBookmarksOverviewModal.Mode.Downloads */)
         }
 
         function openSupportedFormats() {
@@ -548,7 +548,7 @@ StatusSectionLayout {
                     dialogsContext.openWalletMenu(browserWalletMenu)
                 }
                 function onRequestAllOpenTabsView() {
-                    _internal.onOpenTabsBookmarksOverviewRequested(TabsBookmarksOverviewModal.Mode.OpenTabs)
+                    _internal.onOpenTabsBookmarksOverviewRequested(0 /* TabsBookmarksOverviewModal.Mode.OpenTabs */)
                 }
                 function onOpenSettingMenu(target, pos) {
                     if (root.isMobile)
@@ -867,24 +867,28 @@ StatusSectionLayout {
         }
     }
 
-    Component {
+    SQUtils.DeferredComponent {
         id: supportedFormatsModal
-        SupportedFormatsModal {
-            sections: formatSupportContext.sections
-            engineChecked: formatSupportContext.engineChecked
+
+        module: "AppLayouts.Browser.popups"
+        typeName: "SupportedFormatsModal"
+        properties: ({
+            sections: Qt.binding(() => formatSupportContext.sections),
+            engineChecked: Qt.binding(() => formatSupportContext.engineChecked),
             destroyOnClose: true
-        }
+        })
     }
 
-    Component {
+    SQUtils.DeferredComponent {
         id: tabsBookmarksOverviewComp
-        TabsBookmarksOverviewModal {
-            id: overviewModal
 
+        module: "AppLayouts.Browser.popups"
+        typeName: "TabsBookmarksOverviewModal"
+        properties: ({
             getTitleFn: function(tabIndex) {
                 const webView = webViewContext.getWebView(tabIndex)
                 return savedSessionContext.displayTitle(webView, false)
-            }
+            },
             getFaviconFn: function(tabIndex) {
                 const webView = webViewContext.getWebView(tabIndex)
                 if (!webView)
@@ -892,8 +896,12 @@ StatusSectionLayout {
 
                 const icon = savedSessionContext.displayIcon(webView)
                 return root.browserRootStore.determineRealURL(icon || Assets.svg("globe"))
-            }
-            getWebViewScreenshot: function (tabIndex, targetImage) {
+            },
+            bookmarksModel: Qt.binding(() => root.bookmarksStore.bookmarksModel)
+        })
+
+        onCreated: overviewModal => {
+            overviewModal.getWebViewScreenshot = function (tabIndex, targetImage) {
                 const webView = webViewContext.getWebView(tabIndex)
                 if (!webView)
                     return ""
@@ -910,7 +918,7 @@ StatusSectionLayout {
                         grabImage()
                 }
 
-                const isCurrentTab = tabIndex === currentTabIndex
+                const isCurrentTab = tabIndex === overviewModal.currentTabIndex
                 if (!isCurrentTab) {
                     const cached = browserPreferencesStore.getSnapshot(webView.uid)
                     if (cached) {
@@ -924,34 +932,38 @@ StatusSectionLayout {
                 else
                     webView.htmlPageLoadedChanged.connect(grabImageWhenLoaded)
             }
-            bookmarksModel: root.bookmarksStore.bookmarksModel
 
-            onActivateTabRequested: tabIndex => tabs.activateTab(tabIndex)
-            onAddTabRequested: _internal.addNewEmptyTab()
-            onAddBookmarkRequested: _internal.openFavoriteModal()
-            onEditBookmarkRequested: (url, name) => _internal.openFavoriteModal(true, url, name)
-            onDeleteBookmarkRequested: url => root.bookmarksStore.deleteBookmark(url)
-            onBookmarkClicked: url => root.openUrlInNewTab(url)
-
-            onDownloadClicked: function (record) {
+            overviewModal.activateTabRequested.connect(tabIndex => tabs.activateTab(tabIndex))
+            overviewModal.addTabRequested.connect(() => _internal.addNewEmptyTab())
+            overviewModal.addBookmarkRequested.connect(() => _internal.openFavoriteModal())
+            overviewModal.editBookmarkRequested.connect((url, name) => _internal.openFavoriteModal(true, url, name))
+            overviewModal.deleteBookmarkRequested.connect(url => root.bookmarksStore.deleteBookmark(url))
+            overviewModal.bookmarkClicked.connect(url => root.openUrlInNewTab(url))
+            overviewModal.downloadClicked.connect(record => {
                 if (downloadsContext.openDownloadFromList(record))
-                    close()
-            }
+                    overviewModal.close()
+            })
             // The menu needs its host: navigating actions close the overview.
-            onDownloadOptionsClicked: (record, anchor) =>
-                _internal.lazy(downloadRecordMenuLoader).openAt(record, anchor, { hostPopup: overviewModal })
-            onDownloadsScrolled: downloadRecordMenuLoader.item?.close()
+            overviewModal.downloadOptionsClicked.connect((record, anchor) =>
+                _internal.lazy(downloadRecordMenuLoader).openAt(record, anchor, { hostPopup: overviewModal }))
+            overviewModal.downloadsScrolled.connect(() => downloadRecordMenuLoader.item?.close())
         }
     }
 
-    Component {
+    SQUtils.DeferredComponent {
         id: addFavoriteModal
-        AddFavoriteModal {
-            incognitoMode: _internal.currentTabIncognito
-            onAddBookmarkRequested: (url, name) => root.bookmarksStore.addBookmark(url, name)
-            onEditBookmarkRequested: (oldUrl, newUrl, newName) => root.bookmarksStore.updateBookmark(oldUrl, newUrl, newName)
-            onDeleteBookmarkRequested: url => root.bookmarksStore.deleteBookmark(url)
+
+        module: "AppLayouts.Browser.popups"
+        typeName: "AddFavoriteModal"
+        properties: ({
+            incognitoMode: Qt.binding(() => _internal.currentTabIncognito),
             destroyOnClose: true
+        })
+
+        onCreated: popup => {
+            popup.addBookmarkRequested.connect((url, name) => root.bookmarksStore.addBookmark(url, name))
+            popup.editBookmarkRequested.connect((oldUrl, newUrl, newName) => root.bookmarksStore.updateBookmark(oldUrl, newUrl, newName))
+            popup.deleteBookmarkRequested.connect(url => root.bookmarksStore.deleteBookmark(url))
         }
     }
 
