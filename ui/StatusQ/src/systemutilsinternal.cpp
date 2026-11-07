@@ -22,9 +22,12 @@
 #include <QMetaObject>
 #include <QPointer>
 #include <atomic>
+#include <functional>
 #include <mutex>
 #include <QQuickWindow>
 #include <QQmlEngine>
+#include <QRawFont>
+#include <QQuickItem>
 #include <QtQml/private/qv4engine_p.h>
 #include <QtQml/private/qv4executablecompilationunit_p.h>
 #include <qpa/qplatformscreen.h>
@@ -856,6 +859,34 @@ QStringList SystemUtilsInternal::checkSourceCompiledQmlUnits(QObject *context) c
         if (data && !(data->flags & QV4::CompiledData::Unit::StaticData))
             urls.append(it.key().toString());
     }
+    // DIAG (spike, remove): texts with characters the item's own font lacks
+    if (qEnvironmentVariableIntValue("STATUS_DIAG_TEXT_SCAN") == 1) {
+        std::function<void(QQuickItem*)> scan = [&](QQuickItem* item) {
+            const auto text = item->property("text");
+            const auto font = item->property("font");
+            if (text.isValid() && font.isValid()) {
+                const auto str = text.toString();
+                const auto raw = QRawFont::fromFont(font.value<QFont>());
+                for (const auto ucs4: str.toUcs4()) {
+                    if (ucs4 > 0x20 && !raw.supportsCharacter(ucs4)) {
+                        QStringList chain;
+                        for (QObject* o = item; o && chain.size() < 8; o = o->parent())
+                            chain << QString::fromLatin1(o->metaObject()->className()) + QLatin1Char(':') + o->objectName();
+                        qWarning().noquote() << "[diag-text]" << QString::number(ucs4, 16) << font.value<QFont>().family()
+                                             << font.value<QFont>().pixelSize() << font.value<QFont>().weight()
+                                             << item->isVisible() << str.left(80) << chain.join(QLatin1String(" < "));
+                        break;
+                    }
+                }
+            }
+            for (auto child: item->childItems())
+                scan(child);
+        };
+        for (auto window: QGuiApplication::topLevelWindows())
+            if (auto quickWindow = qobject_cast<QQuickWindow*>(window))
+                scan(quickWindow->contentItem());
+    }
+
     if (urls.isEmpty())
         return urls;
 
