@@ -4,13 +4,11 @@ import QtQuick.Controls
 
 import StatusQ.Core
 import StatusQ.Core.Utils as SQUtils
-import StatusQ.Popups.Dialog
 
 import AppLayouts.stores as AppStores
 import AppLayouts.Chat.stores as ChatStores
 
 import mainui
-import mainui.adaptors
 
 import utils
 
@@ -48,9 +46,18 @@ Loader {
         root.rootChatStore.clearSharePaymentRequests()
         d.sharedText = text
         d.sharedImagePaths = imagePaths
-        if (!root.active)
+        if (!root.active) {
+            root.setSource(Qt.resolvedUrl("ShareFlowDialog.qml"), {
+                rootStore: root.rootStore,
+                rootChatStore: root.rootChatStore,
+                excludedChatId: Qt.binding(() => root.excludedChatId),
+                paymentRequestFeatureEnabled: Qt.binding(() => root.paymentRequestFeatureEnabled),
+                areTestNetworksEnabled: Qt.binding(() => root.areTestNetworksEnabled),
+                sharedText: Qt.binding(() => d.sharedText),
+                sharedImagePaths: Qt.binding(() => d.sharedImagePaths)
+            })
             root.active = true
-        else
+        } else
             root.item.restart()
         root.item.open()
     }
@@ -100,65 +107,17 @@ Loader {
         }
     }
 
-    sourceComponent: StatusDialog {
-        id: shareFlowPopup
+    Connections {
+        target: root.item
 
-        // Portrait/mobile: the dialog's own bottom-sheet handling makes it
-        // fullscreen; otherwise ~480x640 centered (the content's implicit
-        // height, capped by the dialog to 80% of the window).
-        width: 480
-        fullScreenSheet: true
-        closePolicy: Popup.NoAutoClose
-        standardButtons: Dialog.NoButton
-        padding: 0
-
-        // The picker carries its own header row, so the fullscreen sheet is
-        // header-less: keep that row out of the notch/status-bar area
-        // (StatusDialog only safe-area-pads the bottom).
-        Binding on topPadding {
-            when: shareFlowPopup.bottomSheet
-            value: shareFlowPopup.parent.SafeArea.margins.top
+        function onClosed() {
+            root.active = false
         }
-
-        onClosed: root.active = false
-
-        function restart() {
-            sharePicker.reset()
+        function onSendRequested(destinations, text, imagePaths) {
+            d.complete(destinations, text, imagePaths)
         }
-
-        // Only once the sections are loaded: the chat search model builds
-        // itself on the first rowCount, so wiring it before the bulk chat
-        // load would pull an empty build.
-        RecentPostableDestinationsAdaptor {
-            id: shareDestinationsAdaptor
-            sourceModel: root.rootStore.sectionsLoaded ? root.rootStore.chatSearchModel : null
-            excludedChatId: root.excludedChatId
-        }
-
-        contentItem: ShareDestinationPickerPanel {
-            id: sharePicker
-            objectName: "shareFlowPicker"
-
-            implicitHeight: 640 - shareFlowPopup.topPadding - shareFlowPopup.bottomPadding
-
-            model: shareDestinationsAdaptor.model
-            text: d.sharedText
-            imagePaths: d.sharedImagePaths
-            keyboardVisible: SystemUtils.androidKeyboardVisible || SystemUtils.iosKeyboardVisible
-                             || Qt.inputMethod.visible
-            paymentRequestModel: root.rootChatStore?.sharePaymentRequestModel ?? null
-            formatBalance: (amount, tokenKey) => root.rootChatStore.formatTokenAmount(amount, tokenKey)
-            paymentRequestFeatureEnabled: root.paymentRequestFeatureEnabled
-            areTestNetworksEnabled: root.areTestNetworksEnabled
-
-            onPaymentRequestModalRequested: callback => Global.openPaymentRequestModalRequested(
-                                                (receiver, amount, tokenKey, symbol, logoUri) =>
-                                                root.rootChatStore.addSharePaymentRequest(
-                                                    receiver, amount, tokenKey, symbol, logoUri),
-                                                callback)
-            onPaymentRequestRemoveRequested: index => root.rootChatStore.removeSharePaymentRequest(index)
-            onSendRequested: (destinations, text, imagePaths) => d.complete(destinations, text, imagePaths)
-            onCancelRequested: d.cancel()
+        function onCancelRequested() {
+            d.cancel()
         }
     }
 }

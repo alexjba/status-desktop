@@ -201,7 +201,10 @@ StatusSectionLayout {
             _internal.scrolledUp = true
         }
 
-        property Component jsDialogComponent: JSDialogWindow {}
+        readonly property SQUtils.DeferredComponent jsDialogComponent: SQUtils.DeferredComponent {
+            module: "AppLayouts.Browser.popups"
+            typeName: "JSDialogWindow"
+        }
 
         readonly property bool currentTabSupportsFindInPage: currentWebView?.supportsFindInPage ?? false
         readonly property bool hasNativeFindPanel: currentWebView?.hasNativeFindPanel ?? false

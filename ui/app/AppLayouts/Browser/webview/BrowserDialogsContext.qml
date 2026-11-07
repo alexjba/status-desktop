@@ -7,7 +7,8 @@ QtObject {
     required property var networksStore
     required property var browserActivityStore
     required property var browserWalletStore
-    required property Component jsDialogComponent
+    // a Component or a DeferredComponent
+    required property QtObject jsDialogComponent
     required property Item dialogParent
 
     function openWalletMenu(browserWalletMenu) {

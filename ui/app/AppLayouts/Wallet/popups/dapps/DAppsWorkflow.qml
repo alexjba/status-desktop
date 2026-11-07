@@ -183,13 +183,25 @@ SQUtils.QObject {
             root.pairWCReady()
         }
 
-        sourceComponent: PairWCModal {
-            visible: true
+        // by module and type name, so the modal stays out of this type's closure
+        sourceComponent: active ? Qt.createComponent("shared.popups.walletconnect", "PairWCModal")
+                                : null
 
-            onClosed: pairWCLoader.active = false
-            onPair: (uri) => root.pairingRequested(uri)
-            onPairUriChanged: (uri) => root.pairingValidationRequested(uri)
-            onPairInstructionsRequested: pairInstructionsLoader.active = true
+        Connections {
+            target: pairWCLoader.item
+
+            function onClosed() {
+                pairWCLoader.active = false
+            }
+            function onPair(uri) {
+                root.pairingRequested(uri)
+            }
+            function onPairUriChanged(uri) {
+                root.pairingValidationRequested(uri)
+            }
+            function onPairInstructionsRequested() {
+                pairInstructionsLoader.active = true
+            }
         }
     }
 
@@ -233,7 +245,23 @@ SQUtils.QObject {
 
         property var connectionQueue: []
         onActiveChanged: {
-            if (!active && connectionQueue.length > 0) {
+            // by URL, so the modal stays out of this type's closure
+            if (active) {
+                setSource(Qt.createComponent("shared.popups.walletconnect", "ConnectDAppModal").url, {
+                    accounts: Qt.binding(() => root.accountsModel),
+                    flatNetworks: connectDappNetworks,
+                    selectedAccountAddress: Qt.binding(() => root.selectedAccountAddress),
+                    dAppUrl: Qt.binding(() => connectDappLoader.dappUrl),
+                    dAppName: Qt.binding(() => connectDappLoader.dappName),
+                    dAppIconUrl: Qt.binding(() => connectDappLoader.dappIcon),
+                    dAppConnectorBadge: Qt.binding(() => connectDappLoader.connectorIcon),
+                    connectButtonEnabled: Qt.binding(() => root.enabled),
+                    visible: true
+                })
+                return
+            }
+            source = ""
+            if (connectionQueue.length > 0) {
                 connect(connectionQueue[0].dappChains,
                         connectionQueue[0].dappUrl,
                         connectionQueue[0].dappName,
@@ -288,73 +316,75 @@ SQUtils.QObject {
             }
         }
 
-        sourceComponent: ConnectDAppModal {
-            visible: true
+        SortFilterProxyModel {
+            id: connectDappNetworks
 
-            Component.onCompleted: {
-                console.log("[StatusConnect] ConnectDAppModal shown",
-                             "url=" + connectDappLoader.dappUrl,
-                             "key=" + connectDappLoader.key)
-            }
+            sourceModel: connectDappLoader.active ? root.networksModel : null
+            filters: [
+                FastExpressionFilter {
+                    inverted: true
+                    expression: connectDappLoader.dappChains.indexOf(chainId) === -1
+                    expectedRoles: ["chainId"]
+                }
+            ]
+        }
 
-            onClosed: {
+        Connections {
+            target: connectDappLoader.item
+
+            function onClosed() {
                 if (!connectDappLoader.connectRequestHandled && connectDappLoader.key) {
                     root.connectionDeclined(connectDappLoader.key)
                 }
                 connectDappLoader.connectRequestHandled = false
                 connectDappLoader.active = false
             }
-            accounts: root.accountsModel
-            flatNetworks: SortFilterProxyModel {
-                sourceModel: root.networksModel
-                filters: [
-                    FastExpressionFilter {
-                        inverted: true
-                        expression: connectDappLoader.dappChains.indexOf(chainId) === -1
-                        expectedRoles: ["chainId"]
-                    }
-                ]
-            }
-            selectedAccountAddress: root.selectedAccountAddress
 
-            dAppUrl: connectDappLoader.dappUrl
-            dAppName: connectDappLoader.dappName
-            dAppIconUrl: connectDappLoader.dappIcon
-            dAppConnectorBadge: connectDappLoader.connectorIcon
-            connectButtonEnabled: root.enabled
-
-            onConnect: {
-                if (!selectedAccount || !selectedAccount.address) {
+            function onConnect() {
+                const modal = connectDappLoader.item
+                if (!modal.selectedAccount || !modal.selectedAccount.address) {
                     console.error("Missing account selection")
                     return
                 }
-                if (!selectedChains || selectedChains.length === 0) {
+                if (!modal.selectedChains || modal.selectedChains.length === 0) {
                     console.error("Missing chain selection")
                     return
                 }
 
-                connectDappLoader.resolve(() => root.connectionAccepted(connectDappLoader.key, selectedChains, selectedAccount.address))
+                connectDappLoader.resolve(() => root.connectionAccepted(connectDappLoader.key, modal.selectedChains, modal.selectedAccount.address))
             }
 
-            onDecline: connectDappLoader.resolve(() => {
-                root.connectionDeclined(connectDappLoader.key)
-                close()
-            })
+            function onDecline() {
+                const modal = connectDappLoader.item
+                connectDappLoader.resolve(() => {
+                    root.connectionDeclined(connectDappLoader.key)
+                    modal.close()
+                })
+            }
 
-            onDisconnect: connectDappLoader.resolve(() => {
-                const connectorId = connectDappLoader.dappConnectorId
-                const isStatusConnect = connectorId === Constants.DAppConnectors.StatusConnect
-                const clientId = isStatusConnect
-                        ? ConnectorConstants.clientIdFor(false)
-                        : "walletconnect"
-                const topic = connectDappLoader.topic || connectDappLoader.dappUrl
-                console.log("[StatusConnect] ConnectDAppModal disconnect",
-                             "url=" + connectDappLoader.dappUrl,
-                             "connectorId=" + connectorId,
-                             "clientId=" + clientId)
-                root.disconnectRequested(topic, connectDappLoader.dappUrl, connectorId, clientId)
-                close()
-            })
+            function onDisconnect() {
+                const modal = connectDappLoader.item
+                connectDappLoader.resolve(() => {
+                    const connectorId = connectDappLoader.dappConnectorId
+                    const isStatusConnect = connectorId === Constants.DAppConnectors.StatusConnect
+                    const clientId = isStatusConnect
+                            ? ConnectorConstants.clientIdFor(false)
+                            : "walletconnect"
+                    const topic = connectDappLoader.topic || connectDappLoader.dappUrl
+                    console.log("[StatusConnect] ConnectDAppModal disconnect",
+                                 "url=" + connectDappLoader.dappUrl,
+                                 "connectorId=" + connectorId,
+                                 "clientId=" + clientId)
+                    root.disconnectRequested(topic, connectDappLoader.dappUrl, connectorId, clientId)
+                    modal.close()
+                })
+            }
+        }
+
+        onLoaded: {
+            console.log("[StatusConnect] ConnectDAppModal shown",
+                         "url=" + connectDappLoader.dappUrl,
+                         "key=" + connectDappLoader.key)
         }
     }
 
