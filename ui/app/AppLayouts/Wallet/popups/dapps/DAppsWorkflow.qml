@@ -155,21 +155,14 @@ SQUtils.QObject {
                 dAppClientId = dApp.clientId || "";
             }
 
+            item.closed.connect(() => disconnectdAppDialogLoader.active = false)
+            item.accepted.connect(() => {
+                root.disconnectRequested(disconnectdAppDialogLoader.dAppTopic, disconnectdAppDialogLoader.dAppUrl, disconnectdAppDialogLoader.dAppConnectorId, disconnectdAppDialogLoader.dAppClientId)
+            })
             item.open();
         }
 
-        sourceComponent: DAppConfirmDisconnectPopup {
-
-            visible: true
-
-            onClosed: {
-                disconnectdAppDialogLoader.active = false
-            }
-
-            onAccepted: {
-                root.disconnectRequested(disconnectdAppDialogLoader.dAppTopic, disconnectdAppDialogLoader.dAppUrl, disconnectdAppDialogLoader.dAppConnectorId, disconnectdAppDialogLoader.dAppClientId)
-            }
-        }
+        source: Qt.resolvedUrl("../../../../../imports/shared/popups/walletconnect/DAppConfirmDisconnectPopup.qml")
     }
 
     Loader {
@@ -179,18 +172,15 @@ SQUtils.QObject {
         parent: root.visualParent
 
         onLoaded: {
+            item.closed.connect(() => pairWCLoader.active = false)
+            item.pair.connect(uri => root.pairingRequested(uri))
+            item.pairUriChanged.connect(uri => root.pairingValidationRequested(uri))
+            item.pairInstructionsRequested.connect(() => pairInstructionsLoader.active = true)
             item.open()
             root.pairWCReady()
         }
 
-        sourceComponent: PairWCModal {
-            visible: true
-
-            onClosed: pairWCLoader.active = false
-            onPair: (uri) => root.pairingRequested(uri)
-            onPairUriChanged: (uri) => root.pairingValidationRequested(uri)
-            onPairInstructionsRequested: pairInstructionsLoader.active = true
-        }
+        source: Qt.resolvedUrl("../../../../../imports/shared/popups/walletconnect/PairWCModal.qml")
     }
 
     Loader {
