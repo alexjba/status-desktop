@@ -30,7 +30,7 @@ const uintptr_t kPage = sysconf(_SC_PAGESIZE);
 
 int collect(dl_phdr_info *info, size_t, void *data)
 {
-    if (!info->dlpi_name || !strstr(info->dlpi_name, "/data/app/"))
+    if (!info->dlpi_name || !strstr(info->dlpi_name, "/data/app/") || !strstr(info->dlpi_name, "app.status."))
         return 0;
     auto ranges = static_cast<std::vector<Range> *>(data);
     uintptr_t relroBegin = 0, relroEnd = 0;
