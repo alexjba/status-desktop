@@ -76,6 +76,14 @@ Item {
         languageStore.setUserUID(d.myPublicKey)
     }
 
+    // Reports QML compiled from source at runtime (AOT builds should have none), once the
+    // first section and the post-login precompile have settled
+    Timer {
+        interval: 60000
+        running: true
+        onTriggered: SystemUtils.checkSourceCompiledQmlUnits(appMain)
+    }
+
     // Primary store container — all additional stores should be initialized under this root
     readonly property AppStores.RootStore rootStore: AppStores.RootStore {
         localBackupEnabled: appMain.featureFlagsStore.localBackupEnabled
