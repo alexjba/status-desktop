@@ -35,6 +35,7 @@ final class PlatformHttps {
     static void fetch(long id, String url, String accept) {
         EXECUTOR.execute(() -> {
             HttpURLConnection connection = null;
+            final long start = System.nanoTime();
             try {
                 connection = (HttpURLConnection) new URL(url).openConnection();
                 connection.setConnectTimeout(15000);
@@ -43,7 +44,10 @@ final class PlatformHttps {
                     connection.setRequestProperty("Accept", accept);
                 final int status = connection.getResponseCode();
                 final InputStream in = status >= 400 ? connection.getErrorStream() : connection.getInputStream();
-                nativeFinished(id, status, connection.getContentType(), in != null ? readAll(in) : new byte[0], null);
+                final byte[] body = in != null ? readAll(in) : new byte[0];
+                if (BuildFlags.PROFILING)
+                    Log.d(TAG, "fetch " + status + " " + body.length + " B " + (System.nanoTime() - start) / 1000000 + " ms " + url);
+                nativeFinished(id, status, connection.getContentType(), body, null);
             } catch (Exception e) {
                 nativeFinished(id, 0, null, null, e.toString());
             } finally {
