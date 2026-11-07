@@ -77,6 +77,7 @@ android {
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/../android/qt$$QT_MAJOR_VERSION
 
     LIBS += -L$$PWD/../lib/$$LIB_PREFIX -lnim_status_client
+    LIBS += -llog
     ANDROID_EXTRA_LIBS += \
                         $$PWD/../lib/$$LIB_PREFIX/libssl_3.so \
                         $$PWD/../lib/$$LIB_PREFIX/libcrypto_3.so \
