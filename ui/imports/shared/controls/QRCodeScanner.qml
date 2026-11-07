@@ -156,6 +156,7 @@ ColumnLayout {
                     return false
                 }
             }
+            console.info("QRSPIKE valid tag", tag)
             d.errorMessage = ""
             // before the signal: a handler may move on and tear the scanner down
             MobileUI.vibrate()
@@ -239,6 +240,7 @@ ColumnLayout {
     }
 
     Component.onCompleted: {
+        console.info("QRSPIKE scanner created")
         // Wait before requesting the permission, so the view comes up after
         // the animation before the OS popup freezes the UI. canRequest: also
         // after an ordinary denial on Android, where the OS may ask again.
@@ -348,6 +350,7 @@ ColumnLayout {
             id: scanner
 
             objectName: "statusQrCodeScanner"
+            onCameraAvailableChanged: console.info("QRSPIKE camera available", cameraAvailable)
             state: root.state
             anchors.fill: parent
 
@@ -383,6 +386,7 @@ ColumnLayout {
                 scanning: tap.enabled
                 // One code per scan: a frame can hold several.
                 onTagFound: tag => {
+                    console.info("QRSPIKE decoded", tag)
                     if (root.state !== StatusQrCodeScanner.State.None)
                         return
                     const now = Date.now()
