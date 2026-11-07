@@ -148,6 +148,9 @@ void registerStatusQTypes() {
         return new MediaBackendUtils(engine);
     });
     qmlRegisterType<MediaHost>("StatusQ", 0, 1, "MediaHost");
+    qmlRegisterSingletonType<NativeSound>("StatusQ", 0, 1, "NativeSound", [](QQmlEngine* engine, QJSEngine*) {
+        return new NativeSound(engine);
+    });
 
     qmlRegisterType<Keychain>("StatusQ", 0, 1, "Keychain");
     qRegisterMetaType<Keychain::Status>();
