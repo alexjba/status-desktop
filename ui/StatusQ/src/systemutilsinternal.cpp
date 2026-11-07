@@ -853,6 +853,8 @@ QStringList SystemUtilsInternal::checkSourceCompiledQmlUnits(QObject *context) c
     // a file left out of qmlcachegen, or a Qt.createQmlObject() string
     const auto units = engine->handle()->compilationUnits();
     for (const auto& url: units.uniqueKeys()) {
+        if (url.isEmpty()) // evaluated script snippets, not documents
+            continue;
         QQmlMetaType::CachedUnitLookupError status;
         if (!QQmlMetaType::findCachedCompilationUnit(url, QQmlMetaType::AcceptUntyped, &status))
             urls.append(url.toString());
