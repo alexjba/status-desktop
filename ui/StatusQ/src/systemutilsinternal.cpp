@@ -26,7 +26,7 @@
 #include <QQuickWindow>
 #include <QQmlEngine>
 #include <QtQml/private/qv4engine_p.h>
-#include <QtQml/private/qv4executablecompilationunit_p.h>
+#include <QtQml/private/qqmlmetatype_p.h>
 #include <qpa/qplatformscreen.h>
 
 #ifdef Q_OS_ANDROID
@@ -849,20 +849,19 @@ QStringList SystemUtilsInternal::checkSourceCompiledQmlUnits(QObject *context) c
     if (!engine)
         return urls;
 
-    // ahead-of-time units are embedded in the binary, units compiled at runtime are not
+    // A unit without an ahead-of-time cached counterpart was compiled from its source text:
+    // a file left out of qmlcachegen, or a Qt.createQmlObject() string
     const auto units = engine->handle()->compilationUnits();
-    for (auto it = units.cbegin(); it != units.cend(); ++it) {
-        const auto data = it.value()->unitData();
-        if (data && !(data->flags & QV4::CompiledData::Unit::StaticData))
-            urls.append(it.key().toString());
+    for (const auto& url: units.uniqueKeys()) {
+        QQmlMetaType::CachedUnitLookupError status;
+        if (!QQmlMetaType::findCachedCompilationUnit(url, QQmlMetaType::AcceptUntyped, &status))
+            urls.append(url.toString());
     }
-    if (urls.isEmpty())
-        return urls;
 
-    qWarning().noquote() << "[qml-source-compiled]" << urls.size() << "units compiled from source:"
-                         << urls.join(QLatin1Char(' '));
-    if (qEnvironmentVariableIntValue("STATUS_FAIL_ON_QML_SOURCE_COMPILE") == 1)
-        qFatal("QML units compiled from source at runtime: %s", qPrintable(urls.join(QLatin1Char(' '))));
+    for (const auto& url: std::as_const(urls))
+        qWarning().noquote() << "[qml-source-compiled]" << url;
+    if (!urls.isEmpty() && qEnvironmentVariableIntValue("STATUS_FAIL_ON_QML_SOURCE_COMPILE") == 1)
+        qFatal("%lld QML units compiled from source at runtime", qlonglong(urls.size()));
     return urls;
 }
 
