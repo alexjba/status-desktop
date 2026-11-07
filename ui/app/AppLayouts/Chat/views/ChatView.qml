@@ -1007,12 +1007,15 @@ Item {
         })
     }
 
-    Component {
+    DeferredComponent {
         id: statusStickerPackClickPopup
-        StatusStickerPackClickPopup {
-            store: root.rootStore
-            onBuyClicked: root.buyStickerPackRequested(packId, price)
-            onClosed: destroy()
+
+        module: "shared.status"
+        typeName: "StatusStickerPackClickPopup"
+        properties: ({ store: Qt.binding(() => root.rootStore) })
+        onCreated: popup => {
+            popup.buyClicked.connect(() => root.buyStickerPackRequested(popup.packId, popup.price))
+            popup.closed.connect(() => popup.destroy())
         }
     }
 }

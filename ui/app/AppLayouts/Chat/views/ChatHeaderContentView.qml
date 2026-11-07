@@ -81,8 +81,13 @@ RowLayout {
 
         Layout.fillWidth: true
 
-        sourceComponent: d.selectingMembers ? membersSelector
+        sourceComponent: d.selectingMembers ? membersSelector.component()
                         : messageStore.threadId ? threadHeader : statusChatInfoButton
+
+        onLoaded: {
+            if (d.selectingMembers)
+                membersSelector.adopt(item)
+        }
     }
 
     RowLayout {
@@ -355,19 +360,17 @@ RowLayout {
     }
 
     // Chat toolbar content option 2:
-    Component {
+    SQUtils.DeferredComponent {
         id: membersSelector
 
-        MembersEditSelectorView {
-            contactsModel: root.mutualContactsModel
-            usersModel: root.usersModel
-
-            amIChatAdmin: root.amIChatAdmin
-
-            onConfirmed: root.state = d.stateInfoButtonContent
-            onRejected: root.state = d.stateInfoButtonContent
-
-            onGroupMembersUpdateRequested: root.groupMembersUpdateRequested(membersPubKeysList)
+        source: Qt.resolvedUrl("MembersEditSelectorView.qml")
+        onCreated: view => {
+            view.contactsModel = Qt.binding(() => root.mutualContactsModel)
+            view.usersModel = Qt.binding(() => root.usersModel)
+            view.amIChatAdmin = Qt.binding(() => root.amIChatAdmin)
+            view.confirmed.connect(() => root.state = d.stateInfoButtonContent)
+            view.rejected.connect(() => root.state = d.stateInfoButtonContent)
+            view.groupMembersUpdateRequested.connect(membersPubKeysList => root.groupMembersUpdateRequested(membersPubKeysList))
         }
     }
 }

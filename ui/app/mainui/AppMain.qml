@@ -3113,6 +3113,14 @@ Item {
 
         function open(params = {}) {
             addEditSavedAddress.params = params
+            addEditSavedAddress.setSource(Qt.resolvedUrl("../AppLayouts/Wallet/popups/AddEditSavedAddressPopup.qml"), {
+                contactsModel: Qt.binding(() => appMain.contactsStore.contactsModel),
+                isChecksumValidForAddress: (address) => appMain.walletRootStore.isChecksumValidForAddress(address),
+                getWalletAccount: (address) => appMain.walletRootStore.getWalletAccount(address),
+                getSavedAddress: (address) => appMain.walletRootStore.getSavedAddress(address),
+                remainingCapacityForSavedAddresses: () => appMain.walletRootStore.remainingCapacityForSavedAddresses(),
+                savedAddressNameExists: (name) => appMain.walletRootStore.savedAddressNameExists(name)
+            })
             addEditSavedAddress.active = true
         }
 
@@ -3121,28 +3129,17 @@ Item {
         }
 
         onLoaded: {
-            addEditSavedAddress.item.initWithParams(addEditSavedAddress.params)
-            addEditSavedAddress.item.open()
-        }
-
-        sourceComponent: WalletPopups.AddEditSavedAddressPopup {
-            contactsModel: appMain.contactsStore.contactsModel
-            isChecksumValidForAddress: (address) => appMain.walletRootStore.isChecksumValidForAddress(address)
-            getWalletAccount: (address) => appMain.walletRootStore.getWalletAccount(address)
-            getSavedAddress: (address) => appMain.walletRootStore.getSavedAddress(address)
-            remainingCapacityForSavedAddresses: () => appMain.walletRootStore.remainingCapacityForSavedAddresses()
-            savedAddressNameExists: (name) => appMain.walletRootStore.savedAddressNameExists(name)
-
-            onPopulateContactDetails: (publicKey) => appMain.contactsStore.populateContactDetails(publicKey)
-            onFetchProfileShowcaseAccountsByAddressRequested: (address) => {
+            const popup = addEditSavedAddress.item
+            popup.populateContactDetails.connect(publicKey => appMain.contactsStore.populateContactDetails(publicKey))
+            popup.fetchProfileShowcaseAccountsByAddressRequested.connect(address => {
                 appMain.contactsStore.fetchProfileShowcaseAccountsByAddress(address)
-            }
-            onCreateOrUpdateSavedAddressRequested: (name, address, ens, colorId) => {
+            })
+            popup.createOrUpdateSavedAddressRequested.connect((name, address, ens, colorId) => {
                 appMain.walletRootStore.createOrUpdateSavedAddress(name, address, ens, colorId)
-            }
-            onClosed: {
-                addEditSavedAddress.close()
-            }
+            })
+            popup.closed.connect(addEditSavedAddress.close)
+            popup.initWithParams(addEditSavedAddress.params)
+            popup.open()
         }
     }
 
@@ -3205,6 +3202,12 @@ Item {
 
         function open(params = {}) {
             deleteSavedAddress.params = params
+            deleteSavedAddress.setSource(Qt.resolvedUrl("../AppLayouts/Wallet/popups/RemoveSavedAddressPopup.qml"), {
+                name: params.name ?? "",
+                address: params.address ?? "",
+                ens: params.ens ?? "",
+                colorId: params.colorId ?? "blue"
+            })
             deleteSavedAddress.active = true
         }
 
@@ -3213,23 +3216,13 @@ Item {
         }
 
         onLoaded: {
-            deleteSavedAddress.item.open()
-        }
-
-        sourceComponent: WalletPopups.RemoveSavedAddressPopup {
-            name: deleteSavedAddress.params.name ?? ""
-            address: deleteSavedAddress.params.address ?? ""
-            ens: deleteSavedAddress.params.ens ?? ""
-            colorId: deleteSavedAddress.params.colorId ?? "blue"
-
-            onClosed: {
-                deleteSavedAddress.close()
-            }
-
-            onRemoveSavedAddress: {
-                appMain.walletRootStore.deleteSavedAddress(address)
-                close()
-            }
+            const popup = deleteSavedAddress.item
+            popup.closed.connect(deleteSavedAddress.close)
+            popup.removeSavedAddress.connect(() => {
+                appMain.walletRootStore.deleteSavedAddress(popup.address)
+                popup.close()
+            })
+            popup.open()
         }
     }
 
@@ -3350,6 +3343,11 @@ Item {
 
         function open(params = {}) {
             savedAddressActivity.params = params
+            savedAddressActivity.setSource(Qt.resolvedUrl("../AppLayouts/Wallet/popups/SavedAddressActivityPopup.qml"), {
+                networkConnectionStore: appMain.networkConnectionStore,
+                networksStore: appMain.networksStore,
+                walletRootStore: appMain.walletRootStore
+            })
             savedAddressActivity.active = true
         }
 
@@ -3358,21 +3356,11 @@ Item {
         }
 
         onLoaded: {
-            savedAddressActivity.item.initWithParams(savedAddressActivity.params)
-            savedAddressActivity.item.open()
-        }
-
-        sourceComponent: WalletPopups.SavedAddressActivityPopup {
-            networkConnectionStore: appMain.networkConnectionStore
-            networksStore: appMain.networksStore
-            walletRootStore: appMain.walletRootStore
-
-            onSendToAddressRequested: {
-                Global.sendToRecipientRequested(address)
-            }
-            onClosed: {
-                savedAddressActivity.close()
-            }
+            const popup = savedAddressActivity.item
+            popup.sendToAddressRequested.connect(address => Global.sendToRecipientRequested(address))
+            popup.closed.connect(savedAddressActivity.close)
+            popup.initWithParams(savedAddressActivity.params)
+            popup.open()
         }
     }
 
