@@ -76,11 +76,11 @@ Item {
         languageStore.setUserUID(d.myPublicKey)
     }
 
-    // Reports QML compiled from source at runtime (AOT builds should have none), once the
-    // first section and the post-login precompile have settled
+    // Reports QML compiled from source at runtime (mobile builds are ahead-of-time compiled
+    // and should have none), once the first section and the post-login precompile settled
     Timer {
         interval: 60000
-        running: true
+        running: SQUtils.Utils.isMobile
         onTriggered: SystemUtils.checkSourceCompiledQmlUnits(appMain)
     }
 
