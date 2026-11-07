@@ -60,14 +60,15 @@ QObject {
             if (!dialog) {
                 const props = {
                     title: Qt.binding(() => root.title),
-                    nameFilters: Qt.binding(() => root.nameFilters),
-                    modality: Qt.binding(() => root.modality),
-                    fileMode: Qt.binding(() => root.selectMultiple ? 1 /* FileDialog.OpenFiles */
-                                                                   : 0 /* FileDialog.OpenFile */)
+                    nameFilters: Qt.binding(() => root.nameFilters)
                 }
                 if (root.currentFolder.toString() !== "")
                     props.currentFolder = root.currentFolder
                 dialog = Qt.createComponent(Qt.resolvedUrl("impl/FileDialogImpl.qml")).createObject(root, props)
+                // enum properties reject Qt.binding() as an initial property
+                dialog.modality = Qt.binding(() => root.modality)
+                dialog.fileMode = Qt.binding(() => root.selectMultiple ? 1 /* FileDialog.OpenFiles */
+                                                                       : 0 /* FileDialog.OpenFile */)
                 dialog.accepted.connect(root.accepted)
                 dialog.rejected.connect(root.rejected)
                 dialog.currentFolderChanged.connect(() => root.currentFolder = dialog.currentFolder)

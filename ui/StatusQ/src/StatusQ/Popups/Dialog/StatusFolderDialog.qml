@@ -34,12 +34,13 @@ QObject {
         function ensureDialog() {
             if (!dialog) {
                 const props = {
-                    title: Qt.binding(() => root.title),
-                    modality: Qt.binding(() => root.modality)
+                    title: Qt.binding(() => root.title)
                 }
                 if (root.currentFolder.toString() !== "")
                     props.currentFolder = root.currentFolder
                 dialog = Qt.createComponent(Qt.resolvedUrl("impl/FolderDialogImpl.qml")).createObject(root, props)
+                // enum properties reject Qt.binding() as an initial property
+                dialog.modality = Qt.binding(() => root.modality)
                 dialog.accepted.connect(root.accepted)
                 dialog.rejected.connect(root.rejected)
                 dialog.currentFolderChanged.connect(() => root.currentFolder = dialog.currentFolder)

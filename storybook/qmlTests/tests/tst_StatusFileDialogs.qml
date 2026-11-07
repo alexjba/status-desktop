@@ -64,7 +64,7 @@ Item {
             wrapper.selectMultiple = false
             compare(dialog.fileMode, 0) // FileDialog.OpenFile
 
-            const rejectedSpy = signalSpy.createObject(wrapper, { target: wrapper, signalName: "rejected" })
+            const rejectedSpy = signalSpy.createObject(root, { target: wrapper, signalName: "rejected" })
             dialog.reject()
             compare(rejectedSpy.count, 1)
             tryCompare(wrapper, "visible", false)
@@ -81,7 +81,7 @@ Item {
             const dialog = dialogOf(wrapper)
             verify(!!dialog)
             compare(dialog.title, "Folder")
-            const acceptedSpy = signalSpy.createObject(wrapper, { target: wrapper, signalName: "accepted" })
+            const acceptedSpy = signalSpy.createObject(root, { target: wrapper, signalName: "accepted" })
             dialog.accept()
             compare(acceptedSpy.count, 1)
         }
