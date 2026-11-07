@@ -182,8 +182,8 @@ OnboardingStackView {
             privacyModeFeatureEnabled: root.privacyModeFeatureEnabled
             thirdpartyServicesEnabled: root.thirdpartyServicesEnabled
 
-            onCreateProfileRequested: root.push(createProfilePage)
-            onLoginRequested: root.push(loginPage)
+            onCreateProfileRequested: d.pushDeferred(createProfilePage)
+            onLoginRequested: d.pushDeferred(loginPage)
 
             onPrivacyPolicyRequested: d.openPrivacyPolicyPopup()
             onTermsOfUseRequested: d.openTermsOfUsePopup()
@@ -220,11 +220,11 @@ OnboardingStackView {
             }
             onDismissBiometricsRequested: root.dismissBiometricsRequested()
             onLoginRequested: (keyUid, method, data) => root.loginRequested(keyUid, method, data)
-            onOnboardingCreateProfileFlowRequested: root.push(createProfilePage)
-            onOnboardingLoginFlowRequested: root.push(loginPage)
+            onOnboardingCreateProfileFlowRequested: d.pushDeferred(createProfilePage)
+            onOnboardingLoginFlowRequested: d.pushDeferred(loginPage)
             onLostKeycardFlowRequested: {
                 root.keyUidSubmitted(loginScreen.selectedProfileKeyId)
-                root.push(keycardLostPage)
+                d.pushDeferred(keycardLostPage)
             }
             onOnboardingManageProfilesFlowRequested: d.openManageProfilesPopup()
 
@@ -232,7 +232,7 @@ OnboardingStackView {
                 const stateStr = root.keycardState === Onboarding.KeycardState.BlockedPIN
                                  ? Constants.keycard.state.blockedPIN
                                  : Constants.keycard.state.blockedPUK
-                root.push(keycardDetailsComponent, {
+                d.pushDeferred(keycardDetailsComponent, {
                     keycardState: stateStr,
                     keycardUid: root.keycardUID,
                     keycardInitialized: root.keycardInitialized,
@@ -264,61 +264,97 @@ OnboardingStackView {
         }
     }
 
-    Component {
-        id: createProfilePage
-
-        CreateProfilePage {
-            isKeycardEnabled: root.isKeycardEnabled
-
-            onCreateProfileWithPasswordRequested: {
-                d.pushDeferred(createNewProfileFlow)
-            }
-            onCreateProfileWithSeedphraseRequested: {
-                d.flow = Onboarding.OnboardingFlow.CreateProfileWithSeedphrase
-                d.pushDeferred(useRecoveryPhraseFlow,
-                          { type: RecoveryPhraseFlowType.Type.NewProfile })
-            }
-            onCreateProfileWithEmptyKeycardRequested: {
-                root.openKeycardPopup(Constants.keycard.flow.readKeycard, "", "", "", "[]", false)
-            }
-        }
-    }
-
-    Component {
-        id: loginPage
-
-        NewAccountLoginPage {
-            networkChecksEnabled: root.networkChecksEnabled
-            isKeycardEnabled: root.isKeycardEnabled
-            thirdpartyServicesEnabled: root.thirdpartyServicesEnabled
-
-            onLoginWithSyncingRequested: d.pushDeferred(logInBySyncingFlow)
-            onLoginWithKeycardRequested: {
-                root.openKeycardPopup(Constants.keycard.flow.readKeycard, "", "", "", "[]", false)
-            }
-
-            onLoginWithSeedphraseRequested: {
-                d.flow = Onboarding.OnboardingFlow.LoginWithSeedphrase
-                d.pushDeferred(useRecoveryPhraseFlow,
-                          { type: RecoveryPhraseFlowType.Type.Login })
-            }
-        }
-    }
-
-    Component {
+    SQUtils.DeferredComponent {
         id: keycardLostPage
 
-        KeycardLostPage {
+        module: "AppLayouts.Onboarding.pages"
+        typeName: "KeycardLostPage"
 
-            onReadSpareKeycardRequested: {
-                const keyUid = root.loginScreen ? root.loginScreen.selectedProfileKeyId : ""
-                root.openKeycardPopup(Constants.keycard.flow.readKeycard, keyUid, "", "", "[]", false)
-            }
+        onCreated: page => {
+            const keyUid = () => root.loginScreen ? root.loginScreen.selectedProfileKeyId : ""
+            page.readSpareKeycardRequested.connect(() => {
+                root.openKeycardPopup(Constants.keycard.flow.readKeycard, keyUid(), "", "", "[]", false)
+            })
+            page.stopUsingKeycardForProfileRequested.connect(() => {
+                root.openKeycardPopup(Constants.keycard.flow.startUsingProfileWithoutKeycard, keyUid(), "", "", "[]", false)
+            })
+        }
+    }
 
-            onStopUsingKeycardForProfileRequested: {
-                const keyUid = root.loginScreen ? root.loginScreen.selectedProfileKeyId : ""
-                root.openKeycardPopup(Constants.keycard.flow.startUsingProfileWithoutKeycard, keyUid, "", "", "[]", false)
-            }
+    SQUtils.DeferredComponent {
+        id: createProfilePage
+
+        module: "AppLayouts.Onboarding.pages"
+        typeName: "CreateProfilePage"
+        properties: ({ isKeycardEnabled: Qt.binding(() => root.isKeycardEnabled) })
+
+        onCreated: page => {
+            page.createProfileWithPasswordRequested.connect(() => d.pushDeferred(createNewProfileFlow))
+            page.createProfileWithSeedphraseRequested.connect(() => {
+                d.flow = Onboarding.OnboardingFlow.CreateProfileWithSeedphrase
+                d.pushDeferred(useRecoveryPhraseFlow,
+                               { type: RecoveryPhraseFlowType.Type.NewProfile })
+            })
+            page.createProfileWithEmptyKeycardRequested.connect(() => {
+                root.openKeycardPopup(Constants.keycard.flow.readKeycard, "", "", "", "[]", false)
+            })
+        }
+    }
+
+    SQUtils.DeferredComponent {
+        id: loginPage
+
+        module: "AppLayouts.Onboarding.pages"
+        typeName: "NewAccountLoginPage"
+        properties: ({
+            networkChecksEnabled: Qt.binding(() => root.networkChecksEnabled),
+            isKeycardEnabled: Qt.binding(() => root.isKeycardEnabled),
+            thirdpartyServicesEnabled: Qt.binding(() => root.thirdpartyServicesEnabled)
+        })
+
+        onCreated: page => {
+            page.loginWithSyncingRequested.connect(() => d.pushDeferred(logInBySyncingFlow))
+            page.loginWithKeycardRequested.connect(() => {
+                root.openKeycardPopup(Constants.keycard.flow.readKeycard, "", "", "", "[]", false)
+            })
+            page.loginWithSeedphraseRequested.connect(() => {
+                d.flow = Onboarding.OnboardingFlow.LoginWithSeedphrase
+                d.pushDeferred(useRecoveryPhraseFlow,
+                               { type: RecoveryPhraseFlowType.Type.Login })
+            })
+        }
+    }
+
+    SQUtils.DeferredComponent {
+        id: keycardDetailsComponent
+
+        module: "AppLayouts.Onboarding.pages"
+        typeName: "KeycardDetailsPage"
+        properties: ({
+            objectName: "keycardDetailsPage",
+            loginAccountsModel: Qt.binding(() => root.loginAccountsModel)
+        })
+
+        onCreated: page => {
+            // the page's own keycardInitialized, not root.keycardInitialized
+            const openPopup = flow => root.openKeycardPopup(flow, page.keyUid, page.keycardUid, page.cardMetadataName,
+                                                            page.cardMetadataWalletAccountsJson, page.keycardInitialized)
+            page.loginWithThisKeycardRequested.connect(() => {
+                const matched = SQUtils.ModelUtils.getByKey(
+                    root.loginAccountsModel, "keyUid", page.keyUid)
+                if (matched) {
+                    root.profileSelected(matched.keyUid)
+                    root.pop(null)
+                    return
+                }
+                openPopup(Constants.keycard.flow.onboardingLoginWithKeycard)
+            })
+            page.importNewKeyPairAndCreateProfileRequested.connect(() => openPopup(Constants.keycard.flow.onboardingImportNewKeyPair))
+            page.importFromRecoveryPhraseRequested.connect(() => openPopup(Constants.keycard.flow.onboardingImportSeedPhrase))
+            page.unblockWithRecoveryPhraseRequested.connect(() => openPopup(Constants.keycard.flow.unblockWithRecoveryPhrase))
+            page.unblockWithPukRequested.connect(() => openPopup(Constants.keycard.flow.unblockWithPuk))
+            page.factoryResetRequested.connect(() => openPopup(Constants.keycard.flow.factoryReset))
+            page.goBackToLoginRequested.connect(() => root.pop(null))
         }
     }
 
@@ -429,7 +465,7 @@ OnboardingStackView {
                     for (const k in keycardInfo)
                         top[k] = keycardInfo[k]
                 } else {
-                    root.push(keycardDetailsComponent, keycardInfo)
+                    d.pushDeferred(keycardDetailsComponent, keycardInfo)
                 }
             })
 
@@ -478,50 +514,6 @@ OnboardingStackView {
                     root.pop()
                 }
             })
-        }
-    }
-
-    Component {
-        id: keycardDetailsComponent
-
-        KeycardDetailsPage {
-            id: keycardDetailsPage
-            objectName: "keycardDetailsPage"
-
-            loginAccountsModel: root.loginAccountsModel
-
-            onLoginWithThisKeycardRequested: {
-                const matched = SQUtils.ModelUtils.getByKey(
-                    root.loginAccountsModel, "keyUid", keyUid)
-                if (matched) {
-                    root.profileSelected(matched.keyUid)
-                    root.pop(null)
-                    return
-                }
-                root.openKeycardPopup(Constants.keycard.flow.onboardingLoginWithKeycard, keyUid, keycardUid, cardMetadataName, cardMetadataWalletAccountsJson,
-                                      keycardDetailsPage.keycardInitialized) // not root.keycardInitialized
-            }
-            onImportNewKeyPairAndCreateProfileRequested: {
-                root.openKeycardPopup(Constants.keycard.flow.onboardingImportNewKeyPair, keyUid, keycardUid, cardMetadataName, cardMetadataWalletAccountsJson,
-                                      keycardDetailsPage.keycardInitialized) // not root.keycardInitialized
-            }
-            onImportFromRecoveryPhraseRequested: {
-                root.openKeycardPopup(Constants.keycard.flow.onboardingImportSeedPhrase, keyUid, keycardUid, cardMetadataName, cardMetadataWalletAccountsJson,
-                                      keycardDetailsPage.keycardInitialized) // not root.keycardInitialized
-            }
-            onUnblockWithRecoveryPhraseRequested: {
-                root.openKeycardPopup(Constants.keycard.flow.unblockWithRecoveryPhrase, keyUid, keycardUid, cardMetadataName, cardMetadataWalletAccountsJson,
-                                      keycardDetailsPage.keycardInitialized) // not root.keycardInitialized
-            }
-            onUnblockWithPukRequested: {
-                root.openKeycardPopup(Constants.keycard.flow.unblockWithPuk, keyUid, keycardUid, cardMetadataName, cardMetadataWalletAccountsJson,
-                                      keycardDetailsPage.keycardInitialized) // not root.keycardInitialized
-            }
-            onFactoryResetRequested: {
-                root.openKeycardPopup(Constants.keycard.flow.factoryReset, keyUid, keycardUid, cardMetadataName, cardMetadataWalletAccountsJson,
-                                      keycardDetailsPage.keycardInitialized) // not root.keycardInitialized
-            }
-            onGoBackToLoginRequested: root.pop(null)
         }
     }
 
