@@ -24,6 +24,9 @@
 #include <atomic>
 #include <mutex>
 #include <QQuickWindow>
+#include <QQmlEngine>
+#include <QtQml/private/qv4engine_p.h>
+#include <QtQml/private/qv4executablecompilationunit_p.h>
 #include <qpa/qplatformscreen.h>
 
 #ifdef Q_OS_ANDROID
@@ -837,6 +840,30 @@ void SystemUtilsInternal::sharePaths(const QStringList& filePaths) const
 void SystemUtilsInternal::debugLog(const QString& message) const
 {
     qInfo() << "[QML]" << message;
+}
+
+QStringList SystemUtilsInternal::checkSourceCompiledQmlUnits(QObject *context) const
+{
+    QStringList urls;
+    const auto engine = qmlEngine(context);
+    if (!engine)
+        return urls;
+
+    // ahead-of-time units are embedded in the binary, units compiled at runtime are not
+    const auto units = engine->handle()->compilationUnits();
+    for (auto it = units.cbegin(); it != units.cend(); ++it) {
+        const auto data = it.value()->unitData();
+        if (data && !(data->flags & QV4::CompiledData::Unit::StaticData))
+            urls.append(it.key().toString());
+    }
+    if (urls.isEmpty())
+        return urls;
+
+    qWarning().noquote() << "[qml-source-compiled]" << urls.size() << "units compiled from source:"
+                         << urls.join(QLatin1Char(' '));
+    if (qEnvironmentVariableIntValue("STATUS_FAIL_ON_QML_SOURCE_COMPILE") == 1)
+        qFatal("QML units compiled from source at runtime: %s", qPrintable(urls.join(QLatin1Char(' '))));
+    return urls;
 }
 
 void SystemUtilsInternal::startShakeDetection()
