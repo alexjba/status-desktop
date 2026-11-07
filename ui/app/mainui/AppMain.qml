@@ -3032,17 +3032,21 @@ Item {
     Loader {
         id: channelPickerLoader
         active: false
-        sourceComponent: StatusSearchListPopup {
-            directParent: appMain
-            relativeX: appMain.width/2 - width/2
-            relativeY: appMain.height/2 - height/2
-            searchBoxPlaceholder: qsTr("Where do you want to go?")
-            model: rootStore.chatSearchModel
 
-            onSelected: function (sectionId, chatId) {
+        Component.onCompleted: setSource(Qt.resolvedUrl("../../imports/shared/status/StatusSearchListPopup.qml"), {
+            directParent: appMain,
+            searchBoxPlaceholder: qsTr("Where do you want to go?")
+        })
+
+        onLoaded: {
+            const popup = item
+            popup.relativeX = Qt.binding(() => appMain.width/2 - popup.width/2)
+            popup.relativeY = Qt.binding(() => appMain.height/2 - popup.height/2)
+            popup.model = Qt.binding(() => rootStore.chatSearchModel)
+            popup.selected.connect((sectionId, chatId) => {
                 rootStore.setActiveSectionChat(sectionId, chatId)
-                close()
-            }
+                popup.close()
+            })
         }
     }
 
