@@ -1623,6 +1623,24 @@ Item {
         })
     }
 
+    // TEST ONLY (s-media spike): play the notification sound 20 s after AppMain loads
+    Timer {
+        interval: 20000
+        running: SystemUtils.fileExists("/sdcard/Android/data/app.status.fmediar/files/sound-test")
+        onTriggered: {
+            const t0 = Date.now()
+            notificationSound.play()
+            console.info("SOUNDTEST play() returned in", Date.now() - t0, "ms, playing:", notificationSound.playing)
+            soundCheck.start()
+        }
+    }
+    Timer {
+        id: soundCheck
+        interval: 1500
+        onTriggered: console.info("SOUNDTEST after 1.5 s playing:", notificationSound.playing,
+                                  "error:", notificationSound.isError, "status:", notificationSound.statusString)
+    }
+
     StatusSoundEffect {
         id: sendMessageSound
 
