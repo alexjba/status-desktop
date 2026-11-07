@@ -189,12 +189,12 @@ SQUtils.QObject {
         active: false
         parent: root.visualParent
 
-        sourceComponent: Component {
-            DAppsUriCopyInstructionsPopup{
-                visible: true
-                destroyOnClose: false
-                onClosed: pairInstructionsLoader.active = false
-            }
+        source: Qt.resolvedUrl("../../../../../imports/shared/popups/walletconnect/DAppsUriCopyInstructionsPopup.qml")
+
+        onLoaded: {
+            item.destroyOnClose = false
+            item.closed.connect(() => pairInstructionsLoader.active = false)
+            item.open()
         }
     }
 
