@@ -127,8 +127,8 @@ private slots:
             QTest::newRow(qPrintable(path)) << path;
             ++count;
         }
-        // Inter x2, Roboto Mono x2, and the generated emoji font
-        QCOMPARE(count, 5);
+        // Inter x2, Roboto Mono x2, the generated emoji font, and the price-change triangles
+        QCOMPARE(count, 6);
     }
 
     void registeredFonts()
