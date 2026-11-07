@@ -5,6 +5,7 @@
 #include <QDebug>
 #include <QElapsedTimer>
 #include <QResource>
+#include <QTimer>
 #ifdef Q_OS_ANDROID
 #include <android/log.h>
 #include <dlfcn.h>
@@ -95,8 +96,20 @@ Fonts::Fonts(QObject *parent)
 {
 #ifdef Q_OS_ANDROID
     diagNeedle = qgetenv("STATUS_DIAG_FONT_BT");
-    if (!diagNeedle.isEmpty())
+    if (!diagNeedle.isEmpty()) {
+        // the Nim side installs its own handler later; stay in front of whatever is current
+        auto keepFirst = new QTimer(this);
+        keepFirst->setInterval(200);
+        connect(keepFirst, &QTimer::timeout, this, [] {
+            const auto current = qInstallMessageHandler(diagHandler);
+            if (current != diagHandler) {
+                previousHandler = current;
+                __android_log_print(ANDROID_LOG_WARN, "FONTBT", "handler (re)installed");
+            }
+        });
+        keepFirst->start();
         previousHandler = qInstallMessageHandler(diagHandler);
+    }
 #endif
     initFonts();
 }
