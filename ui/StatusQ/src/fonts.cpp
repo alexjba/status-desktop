@@ -96,6 +96,13 @@ void Fonts::initFonts()
         }
     }
 
+#ifdef Q_OS_ANDROID
+    // Symbols Inter lacks (e.g. the ▴/▾ of the 24h price change) are in Noto Sans Symbols.
+    // Without naming it, Qt tries every system family in turn (about 100, each kept open
+    // for the process lifetime) before it reaches it.
+    QFontDatabase::addApplicationFallbackFontFamily(QChar::Script_Common, u"Noto Sans Symbols"_s);
+#endif
+
     // monoFont fine tuning (https://rsms.me/inter/#features)
     if (baseFontId != -1) {
         m_monoFont = m_baseFont;
