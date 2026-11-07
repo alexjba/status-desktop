@@ -14,6 +14,9 @@ QObject {
     readonly property string picturesShortcut: StandardPaths.writableLocation(StandardPaths.PicturesLocation)
     readonly property string documentsLocation: StandardPaths.writableLocation(StandardPaths.DocumentsLocation)
 
+    // the QtQuick.Dialogs object, created on the first open()
+    readonly property alias dialog: d.dialog
+
     signal accepted
     signal rejected
 

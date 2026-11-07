@@ -25,6 +25,9 @@ QObject {
                                                                   : d.standardPictureLocations.length > 0 ? d.standardPictureLocations[0]
                                                                                                           : ""
 
+    // the QtQuick.Dialogs object, created on the first open()
+    readonly property alias dialog: d.dialog
+
     signal accepted
     signal rejected
 

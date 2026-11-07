@@ -12,6 +12,9 @@ QObject {
     property int modality: Qt.WindowModal
     property url currentFolder
 
+    // the QtQuick.Dialogs object, created on the first open()
+    readonly property alias dialog: d.dialog
+
     signal accepted
     signal rejected
 
