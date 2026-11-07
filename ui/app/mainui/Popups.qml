@@ -709,13 +709,6 @@ QtObject {
     readonly property list<Component> _components: [
 
         Component {
-            id: downloadPageComponent
-            DownloadPage {
-                onClosed: destroy()
-            }
-        },
-
-        Component {
             id: emojiPopupComponent
             StatusEmojiPopup {
                 objectName: "StatusEmojiPopup"
@@ -732,34 +725,6 @@ QtObject {
             StatusImageModal {
                 id: imagePopup
                 onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: communityProfilePopup
-
-            CommunityProfilePopup {
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: pinnedMessagesPopup
-
-            PinnedMessagesPopup {
-                utilsStore: root.utilsStore
-
-                // Unfurling related data:
-                gifUnfurlingEnabled: root.sharedRootStore.gifUnfurlingEnabled
-                neverAskAboutUnfurlingAgain: root.sharedRootStore.neverAskAboutUnfurlingAgain
-
-                onClosed: destroy()
-
-                // Unfurling related requests:
-                onSetNeverAskAboutUnfurlingAgain: neverAskAgain => root.sharedRootStore.setNeverAskAboutUnfurlingAgain(neverAskAgain)
-                onPinMessageRequested: messageId => messageStore.pinMessage(messageId)
-                onUnpinMessageRequested: messageId => messageStore.unpinMessage(messageId)
-                onJumpToMessageRequested: messageId => messageStore.messageModule.jumpToMessage(messageId)
             }
         },
 
@@ -867,39 +832,6 @@ QtObject {
         },
 
         Component {
-            id: testnetModal
-            TestnetModePopup {
-                areTestNetworksEnabled: root.networksStore.areTestNetworksEnabled
-                onToggleTestnetRequested: root.networksStore.toggleTestNetworksEnabled()
-            }
-        },
-
-        Component {
-            id: exportControlNodePopup
-            ExportControlNodePopup {
-                devicesStore: root.devicesStore
-                onClosed: destroy()
-            }
-        },
-
-        Component {
-            id: importControlNodePopup
-            ImportControlNodePopup {
-                onClosed: destroy()
-                onImportControlNode: root.rootStore.promoteSelfToControlNode(communityId)
-            }
-        },
-
-        Component {
-            id: transferOwnershipPopup
-            TransferOwnershipPopup {
-                onTransferOwnershipRequested: (tokenId, senderAddress, tokenName, tokenImage) =>
-                                                  root.transferOwnershipRequested(tokenId, senderAddress, tokenName, tokenImage)
-                onClosed: destroy()
-            }
-        },
-
-        Component {
             id: confirmExternalLinkPopup
             ConfirmExternalLinkPopup {
                 destroyOnClose: true
@@ -964,28 +896,6 @@ QtObject {
         // End of components related to transfer community ownership flow.
 
         Component {
-            id: firstTokenReceivedPopup
-
-            FirstTokenReceivedPopup {
-                destroyOnClose: true
-                communitiesStore: root.communitiesStore
-
-                // The toast payload carries only a symbol, but the hide popups are keyed
-                // by token group key, so resolve it here.
-                onHideClicked: (tokenSymbol, tokenName, tokenImage, isAsset) => {
-                    if (!isAsset) {
-                        root.openConfirmHideCollectiblePopup(tokenSymbol, tokenName, tokenImage, true)
-                        return
-                    }
-                    const token = SQUtils.ModelUtils.getByKey(
-                                    root.walletAssetsStore.groupedAccountAssetsModel, "symbol", tokenSymbol)
-                    if (!token)
-                        return
-                    root.openConfirmHideAssetPopup(token.key, tokenSymbol, tokenName, tokenImage, true)
-                }
-            }
-        },
-        Component {
             id: confirmHideAssetPopup
             ConfirmHideAssetPopup {
                 destroyOnClose: true
@@ -1045,24 +955,6 @@ QtObject {
             }
         },
         Component {
-            id: communityMemberMessagesPopup
-            CommunityMemberMessagesPopup {
-                id: memberMessagesPopup
-
-                sharedRootStore: root.sharedRootStore
-                utilsStore: root.utilsStore
-
-                // mention names in the messages come from the roster
-                readonly property RosterHolder rosterHolder: RosterHolder {
-                    communitiesStore: root.communitiesStore
-                    communityId: memberMessagesPopup.rootStore?.communityId ?? ""
-                }
-
-                onClosed: destroy()
-            }
-        },
-
-        Component {
             id: privacyPolicyPopupComponent
             StatusSimpleTextPopup {
                 title: qsTr("Status Software Privacy Policy")
@@ -1119,14 +1011,6 @@ QtObject {
         },
 
         Component {
-            id: shareProfileCmp
-            ShareProfileDialog {
-                destroyOnClose: true
-                qrCode: root.profileStore.getQrCodeSource(linkToProfile)
-            }
-        },
-
-        Component {
             id: openNavigationEducationComponent
             NavigationEducationDialog {
 
@@ -1177,6 +1061,124 @@ QtObject {
     ]
 
     readonly property list<QtObject> _deferredComponents: [
+        SQUtils.DeferredComponent {
+            id: downloadPageComponent
+
+            module: "shared.popups"
+            typeName: "DownloadPage"
+            onCreated: popup => popup.closed.connect(() => popup.destroy())
+        },
+
+        SQUtils.DeferredComponent {
+            id: communityProfilePopup
+
+            module: "AppLayouts.Communities.popups"
+            typeName: "CommunityProfilePopup"
+            onCreated: popup => popup.closed.connect(() => popup.destroy())
+        },
+
+        SQUtils.DeferredComponent {
+            id: pinnedMessagesPopup
+
+            module: "AppLayouts.Chat.popups"
+            typeName: "PinnedMessagesPopup"
+            properties: ({
+                utilsStore: root.utilsStore,
+                gifUnfurlingEnabled: Qt.binding(() => root.sharedRootStore.gifUnfurlingEnabled),
+                neverAskAboutUnfurlingAgain: Qt.binding(() => root.sharedRootStore.neverAskAboutUnfurlingAgain)
+            })
+            onCreated: popup => {
+                popup.closed.connect(() => popup.destroy())
+                popup.setNeverAskAboutUnfurlingAgain.connect(neverAskAgain => root.sharedRootStore.setNeverAskAboutUnfurlingAgain(neverAskAgain))
+                popup.pinMessageRequested.connect(messageId => popup.messageStore.pinMessage(messageId))
+                popup.unpinMessageRequested.connect(messageId => popup.messageStore.unpinMessage(messageId))
+                popup.jumpToMessageRequested.connect(messageId => popup.messageStore.messageModule.jumpToMessage(messageId))
+            }
+        },
+
+        SQUtils.DeferredComponent {
+            id: testnetModal
+
+            module: "shared.popups"
+            typeName: "TestnetModePopup"
+            properties: ({ areTestNetworksEnabled: Qt.binding(() => root.networksStore.areTestNetworksEnabled) })
+            onCreated: popup => popup.toggleTestnetRequested.connect(() => root.networksStore.toggleTestNetworksEnabled())
+        },
+
+        SQUtils.DeferredComponent {
+            id: exportControlNodePopup
+
+            module: "AppLayouts.Communities.popups"
+            typeName: "ExportControlNodePopup"
+            properties: ({ devicesStore: root.devicesStore })
+            onCreated: popup => popup.closed.connect(() => popup.destroy())
+        },
+
+        SQUtils.DeferredComponent {
+            id: importControlNodePopup
+
+            module: "AppLayouts.Communities.popups"
+            typeName: "ImportControlNodePopup"
+            onCreated: popup => {
+                popup.closed.connect(() => popup.destroy())
+                popup.importControlNode.connect(communityId => root.rootStore.promoteSelfToControlNode(communityId))
+            }
+        },
+
+        SQUtils.DeferredComponent {
+            id: transferOwnershipPopup
+
+            module: "AppLayouts.Communities.popups"
+            typeName: "TransferOwnershipPopup"
+            onCreated: popup => {
+                popup.transferOwnershipRequested.connect((tokenId, senderAddress, tokenName, tokenImage) =>
+                                                         root.transferOwnershipRequested(tokenId, senderAddress, tokenName, tokenImage))
+                popup.closed.connect(() => popup.destroy())
+            }
+        },
+
+        SQUtils.DeferredComponent {
+            id: firstTokenReceivedPopup
+
+            module: "AppLayouts.Communities.popups"
+            typeName: "FirstTokenReceivedPopup"
+            properties: ({ destroyOnClose: true, communitiesStore: root.communitiesStore })
+            // The toast payload carries only a symbol, but the hide popups are keyed
+            // by token group key, so resolve it here.
+            onCreated: popup => popup.hideClicked.connect((tokenSymbol, tokenName, tokenImage, isAsset) => {
+                if (!isAsset) {
+                    root.openConfirmHideCollectiblePopup(tokenSymbol, tokenName, tokenImage, true)
+                    return
+                }
+                const token = SQUtils.ModelUtils.getByKey(
+                                root.walletAssetsStore.groupedAccountAssetsModel, "symbol", tokenSymbol)
+                if (!token)
+                    return
+                root.openConfirmHideAssetPopup(token.key, tokenSymbol, tokenName, tokenImage, true)
+            })
+        },
+
+        SQUtils.DeferredComponent {
+            id: communityMemberMessagesPopup
+
+            source: Qt.resolvedUrl("CommunityMemberMessagesPopupInstance.qml")
+            properties: ({
+                sharedRootStore: root.sharedRootStore,
+                utilsStore: root.utilsStore,
+                communitiesStore: root.communitiesStore
+            })
+            onCreated: popup => popup.closed.connect(() => popup.destroy())
+        },
+
+        SQUtils.DeferredComponent {
+            id: shareProfileCmp
+
+            module: "shared.views.profile"
+            typeName: "ShareProfileDialog"
+            properties: ({ destroyOnClose: true })
+            onCreated: popup => popup.qrCode = Qt.binding(() => root.profileStore.getQrCodeSource(popup.linkToProfile))
+        },
+
         SQUtils.DeferredComponent {
             id: stickersPopupComponent
 
