@@ -21,6 +21,15 @@ SHIM_RESULT = $$system(bash $$PWD/../scripts/gen_controls_shim.sh $$[QT_INSTALL_
 !isEmpty(SHIM_RESULT): warning("gen_controls_shim: $$SHIM_RESULT")
 QMLCACHE_FLAGS += -I $$QMLSHIM_DIR
 
+# Code layout: hot-first symbol order from a device page capture (mobile/scripts/android/order)
+STATUS_LIB_SECTIONS = $$(STATUS_LIB_SECTIONS)
+!isEmpty(STATUS_LIB_SECTIONS) {
+    QMAKE_CFLAGS += -ffunction-sections -fdata-sections
+    QMAKE_CXXFLAGS += -ffunction-sections -fdata-sections
+}
+STATUS_LIB_ORDER = $$(STATUS_LIB_ORDER)
+!isEmpty(STATUS_LIB_ORDER): QMAKE_LFLAGS += -Wl,--symbol-ordering-file=$$STATUS_LIB_ORDER -Wl,--no-warn-symbol-ordering
+
 BUILD_VARIANT = $$(BUILD_VARIANT)
 TARGET = Status
 equals(BUILD_VARIANT, "pr"): TARGET = StatusPR
