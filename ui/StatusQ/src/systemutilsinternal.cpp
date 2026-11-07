@@ -27,6 +27,8 @@
 #include <QQuickWindow>
 #include <QQmlEngine>
 #include <QRawFont>
+#include <QQmlComponent>
+#include <QElapsedTimer>
 #include <QQuickItem>
 #include <QtQml/private/qv4engine_p.h>
 #include <QtQml/private/qv4executablecompilationunit_p.h>
@@ -885,6 +887,21 @@ QStringList SystemUtilsInternal::checkSourceCompiledQmlUnits(QObject *context) c
         for (auto window: QGuiApplication::topLevelWindows())
             if (auto quickWindow = qobject_cast<QQuickWindow*>(window))
                 scan(quickWindow->contentItem());
+    }
+
+    // DIAG (spike, remove): synchronous type-load time of deferred types ("module/Type" or a qrc URL)
+    const auto loads = qEnvironmentVariable("STATUS_DIAG_LOAD");
+    for (const auto& spec: loads.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+        QElapsedTimer t;
+        t.start();
+        QQmlComponent component(engine);
+        if (spec.endsWith(QLatin1String(".qml")))
+            component.loadUrl(QUrl(spec), QQmlComponent::PreferSynchronous);
+        else
+            component.loadFromModule(spec.section(QLatin1Char('/'), 0, 0),
+                                     spec.section(QLatin1Char('/'), 1), QQmlComponent::PreferSynchronous);
+        qWarning().noquote() << "[diag-load]" << spec << component.status() << t.nsecsElapsed() / 1000 << "us"
+                             << component.errorString().left(200);
     }
 
     if (urls.isEmpty())
