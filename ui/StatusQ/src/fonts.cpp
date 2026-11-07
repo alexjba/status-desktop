@@ -5,6 +5,11 @@
 #include <QDebug>
 #include <QElapsedTimer>
 #include <QResource>
+#ifdef Q_OS_ANDROID
+#include <android/log.h>
+#include <dlfcn.h>
+#include <unwind.h>
+#endif
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -49,9 +54,50 @@ constexpr auto loadAndAssignFont = [](QLatin1StringView fontRelPath, QFont& font
 };
 }
 
+#ifdef Q_OS_ANDROID
+namespace {
+// DIAG (spike, remove): backtrace of every font match whose message contains STATUS_DIAG_FONT_BT
+QtMessageHandler previousHandler = nullptr;
+QByteArray diagNeedle;
+
+_Unwind_Reason_Code unwindFrame(_Unwind_Context* context, void* arg)
+{
+    auto frames = static_cast<QList<uintptr_t>*>(arg);
+    if (const auto pc = _Unwind_GetIP(context))
+        frames->append(pc);
+    return frames->size() < 60 ? _URC_NO_REASON : _URC_END_OF_STACK;
+}
+
+void diagHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg)
+{
+    if (context.category && qstrcmp(context.category, "qt.text.font.match") == 0
+        && msg.toUtf8().contains(diagNeedle)) {
+        QList<uintptr_t> frames;
+        _Unwind_Backtrace(unwindFrame, &frames);
+        __android_log_print(ANDROID_LOG_WARN, "FONTBT", "match: %s", qPrintable(msg.left(200)));
+        for (const auto pc: frames) {
+            Dl_info info{};
+            if (dladdr(reinterpret_cast<void*>(pc), &info) && info.dli_fname)
+                __android_log_print(ANDROID_LOG_WARN, "FONTBT", "  %s+0x%lx %s+0x%lx", info.dli_fname,
+                                    (unsigned long)(pc - uintptr_t(info.dli_fbase)),
+                                    info.dli_sname ? info.dli_sname : "?",
+                                    (unsigned long)(info.dli_saddr ? pc - uintptr_t(info.dli_saddr) : 0));
+        }
+    }
+    if (previousHandler)
+        previousHandler(type, context, msg);
+}
+}
+#endif
+
 Fonts::Fonts(QObject *parent)
     : QObject(parent)
 {
+#ifdef Q_OS_ANDROID
+    diagNeedle = qgetenv("STATUS_DIAG_FONT_BT");
+    if (!diagNeedle.isEmpty())
+        previousHandler = qInstallMessageHandler(diagHandler);
+#endif
     initFonts();
 }
 
