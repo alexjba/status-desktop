@@ -1,4 +1,5 @@
 #include "StatusQ/audioutils.h"
+#include "StatusQ/mediabackend.h"
 #include "StatusQ/skeletontileitem.h"
 #include "StatusQ/browserbackendcapabilities.h"
 #include "StatusQ/clipboardutils.h"
@@ -143,6 +144,10 @@ void registerStatusQTypes() {
     qmlRegisterSingletonType<AudioUtils>("StatusQ", 0, 1, "AudioUtils", [](QQmlEngine* engine, QJSEngine*) {
         return new AudioUtils(engine);
     });
+    qmlRegisterSingletonType<MediaBackendUtils>("StatusQ", 0, 1, "MediaBackend", [](QQmlEngine* engine, QJSEngine*) {
+        return new MediaBackendUtils(engine);
+    });
+    qmlRegisterType<MediaHost>("StatusQ", 0, 1, "MediaHost");
 
     qmlRegisterType<Keychain>("StatusQ", 0, 1, "Keychain");
     qRegisterMetaType<Keychain::Status>();
