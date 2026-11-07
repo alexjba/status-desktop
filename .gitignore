@@ -113,7 +113,6 @@ nimbus-build-system.paths
 test/ui-pytest/squish_server.ini
 
 # mobile-ui-tests
-ui/StatusQ/src/StatusQ/Core/TestConfig.qml
 
 # mobile
 mobile/bin/
