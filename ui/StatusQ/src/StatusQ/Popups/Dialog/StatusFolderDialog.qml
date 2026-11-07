@@ -1,5 +1,4 @@
 import QtQuick
-import QtQuick.Dialogs
 
 import StatusQ
 import StatusQ.Core.Utils
@@ -8,25 +7,42 @@ import MobileUI
 QObject {
     id: root
 
-    property alias title: dlg.title
+    property string title
     readonly property alias selectedFolder: d.resolvedFolder
-    property alias modality: dlg.modality
-    property alias currentFolder: dlg.currentFolder
+    property int modality: Qt.WindowModal
+    property url currentFolder
 
     signal accepted
     signal rejected
 
     function open() {
-        dlg.open()
+        d.ensureDialog().open()
     }
 
     function close() {
-        dlg.close()
+        d.dialog?.close()
     }
 
     QtObject {
         id: d
-        property url resolvedFolder: d.resolveFolder(dlg.selectedFolder)
+        property QtObject dialog: null
+        property url resolvedFolder: d.resolveFolder(dialog?.selectedFolder ?? "")
+
+        function ensureDialog() {
+            if (!dialog) {
+                const props = {
+                    title: Qt.binding(() => root.title),
+                    modality: Qt.binding(() => root.modality)
+                }
+                if (root.currentFolder.toString() !== "")
+                    props.currentFolder = root.currentFolder
+                dialog = Qt.createComponent(Qt.resolvedUrl("impl/FolderDialogImpl.qml")).createObject(root, props)
+                dialog.accepted.connect(root.accepted)
+                dialog.rejected.connect(root.rejected)
+                dialog.currentFolderChanged.connect(() => root.currentFolder = dialog.currentFolder)
+            }
+            return dialog
+        }
 
         function resolveFolder(folder) {
             let resolvedFolder = folder;
@@ -43,10 +59,8 @@ QObject {
         }
     }
 
-    FolderDialog {
-        id: dlg
-
-        onAccepted: root.accepted()
-        onRejected: root.rejected()
+    onCurrentFolderChanged: {
+        if (d.dialog && d.dialog.currentFolder.toString() !== root.currentFolder.toString())
+            d.dialog.currentFolder = root.currentFolder
     }
 }
