@@ -3631,4 +3631,22 @@ Item {
         }
         return false
     }
+
+    // PROBE ONLY: first-load timing of the by-URL types, 60 s after AppMain
+    Timer {
+        interval: 60000
+        running: true
+        onTriggered: {
+            let urls = ["app/AppLayouts/Onboarding/pages/CreateProfilePage.qml","app/AppLayouts/Onboarding/pages/NewAccountLoginPage.qml","app/AppLayouts/Onboarding/pages/KeycardDetailsPage.qml","app/AppLayouts/Onboarding/pages/ConvertKeycardAccountPage.qml","app/AppLayouts/Onboarding/pages/KeycardLostPage.qml","imports/shared/popups/DownloadPage.qml","app/AppLayouts/Communities/popups/CommunityProfilePopup.qml","app/AppLayouts/Chat/popups/PinnedMessagesPopup.qml","imports/shared/popups/TestnetModePopup.qml","app/AppLayouts/Communities/popups/ExportControlNodePopup.qml","app/AppLayouts/Communities/popups/ImportControlNodePopup.qml","app/AppLayouts/Communities/popups/TransferOwnershipPopup.qml","app/AppLayouts/Communities/popups/FirstTokenReceivedPopup.qml","app/mainui/CommunityMemberMessagesPopupInstance.qml","imports/shared/views/profile/ShareProfileDialog.qml","imports/shared/status/StatusEmojiPopup.qml","imports/shared/status/StatusImageModal.qml","app/mainui/ImportCommunityPopupInstance.qml","app/mainui/LeaveCommunityPopupInstance.qml","imports/shared/popups/ConfirmExternalLinkPopup.qml","app/AppLayouts/Communities/popups/FinaliseOwnershipDeclinePopup.qml","app/mainui/SignOutConfirmationDialog.qml","app/AppLayouts/Wallet/popups/AddEditSavedAddressPopup.qml","app/AppLayouts/Wallet/popups/RemoveSavedAddressPopup.qml","app/AppLayouts/Wallet/popups/SavedAddressActivityPopup.qml","imports/shared/popups/KeycardChannelDrawer.qml","imports/shared/status/StatusGifPopup.qml","imports/shared/status/StatusStickerPackClickPopup.qml","app/AppLayouts/Chat/views/MembersEditSelectorView.qml","imports/shared/popups/walletconnect/PairWCModal.qml","imports/shared/popups/walletconnect/DAppConfirmDisconnectPopup.qml","imports/shared/popups/walletconnect/DAppsUriCopyInstructionsPopup.qml","app/AppLayouts/Browser/popups/TabsBookmarksOverviewModal.qml","app/AppLayouts/Browser/popups/AddFavoriteModal.qml","app/AppLayouts/Browser/popups/SupportedFormatsModal.qml","app/AppLayouts/Browser/popups/JSDialogWindow.qml","imports/shared/status/StatusSearchListPopup.qml"]
+            const rev = (Math.floor(Date.now() / 1000) % 2) === 1
+            if (rev) urls = urls.reverse()
+            console.info("[typeload] order", rev ? "reverse" : "forward")
+            for (const u of urls) {
+                const t0 = Date.now()
+                const c = Qt.createComponent("qrc:/" + u)
+                console.info("[typeload]", u.split("/").pop(), (Date.now() - t0), c.status === Component.Ready ? "ok" : c.errorString())
+            }
+        }
+    }
+
 }
