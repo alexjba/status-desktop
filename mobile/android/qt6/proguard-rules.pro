@@ -29,6 +29,10 @@
 -keep class app.status.mobile.DensityListener { *; }
 -keep class app.status.mobile.ShakeDetector { *; }
 
+# ui/StatusQ/src/platformhttpsreply_android.cpp: callStaticMethod on
+# PlatformHttps (fetch, installCache), RegisterNatives for nativeFinished.
+-keep class app.status.mobile.PlatformHttps { *; }
+
 # ui/StatusQ/src/safutils_android.cpp: callStaticMethod on SafHelper
 # (takePersistablePermission, getReadableTreePath, copyFromPathToTree).
 -keep class app.status.mobile.SafHelper { *; }
