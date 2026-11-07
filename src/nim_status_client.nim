@@ -36,7 +36,7 @@ import app/global/log_cleanup_tasks
 import app/boot/app_controller
 
 featureGuard KEYCARD_ENABLED:
-  import keycard_go
+  import keycard_lib
 
   var keycardServiceV2QObjPointer: pointer
 
@@ -148,7 +148,7 @@ proc setupRemoteSignalsHandling() =
   status_go.setSignalEventCallback(callbackStatusGo)
 
   featureGuard KEYCARD_ENABLED:
-    var callbackKeycardGo: keycard_go.KeycardSignalCallback = proc(p0: cstring) {.cdecl.} =
+    var callbackKeycardGo: keycard_lib.KeycardSignalCallback = proc(p0: cstring) {.cdecl.} =
       if isShuttingDown():
         return
       when defined(useSimulatedKeycard):
@@ -158,7 +158,7 @@ proc setupRemoteSignalsHandling() =
       if keycardServiceV2QObjPointer != nil:
         signal_handler(keycardServiceV2QObjPointer, p0, "receiveKeycardSignalV2")
 
-    keycard_go.setSignalEventCallback(callbackKeycardGo)
+    keycard_lib.setSignalEventCallback(callbackKeycardGo)
 
 proc ensureDirectories*(dataDir, tmpDir, logDir: string) =
   createDir(dataDir)
