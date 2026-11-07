@@ -5,6 +5,13 @@
 #include <QDebug>
 #include <QElapsedTimer>
 #include <QResource>
+#include <QGuiApplication>
+#include <QQuickItem>
+#include <QQuickWindow>
+#include <QRawFont>
+#include <QSet>
+#include <QTimer>
+#include <functional>
 
 using namespace Qt::Literals::StringLiterals;
 
@@ -49,10 +56,51 @@ constexpr auto loadAndAssignFont = [](QLatin1StringView fontRelPath, QFont& font
 };
 }
 
+namespace {
+// DIAG (spike, remove): every 2 s for 120 s, log texts with characters their own font lacks
+void diagTextScan(int round)
+{
+    static QSet<QString> seen;
+    std::function<void(QQuickItem*)> scan = [&](QQuickItem* item) {
+        const auto text = item->property("text");
+        const auto font = item->property("font");
+        if (text.isValid() && font.isValid()) {
+            const auto str = text.toString();
+            const auto f = font.value<QFont>();
+            const auto raw = QRawFont::fromFont(f);
+            for (const auto ucs4: str.toUcs4()) {
+                if (ucs4 > 0x20 && !raw.supportsCharacter(ucs4)) {
+                    QStringList chain;
+                    for (QObject* o = item; o && chain.size() < 6; o = o->parent())
+                        chain << QString::fromLatin1(o->metaObject()->className()) + QLatin1Char(':') + o->objectName();
+                    const auto key = QString::number(ucs4, 16) + str.left(40) + chain.join(QString());
+                    if (!seen.contains(key)) {
+                        seen.insert(key);
+                        qWarning().noquote() << "[diag-text]" << round << QString::number(ucs4, 16) << f.family()
+                                             << f.pixelSize() << f.weight() << item->isVisible()
+                                             << str.left(60).toUtf8().toHex() << chain.join(QLatin1String(" < "));
+                    }
+                    break;
+                }
+            }
+        }
+        for (auto child: item->childItems())
+            scan(child);
+    };
+    for (auto window: QGuiApplication::topLevelWindows())
+        if (auto quickWindow = qobject_cast<QQuickWindow*>(window))
+            scan(quickWindow->contentItem());
+    if (round < 60)
+        QTimer::singleShot(2000, [round] { diagTextScan(round + 1); });
+}
+}
+
 Fonts::Fonts(QObject *parent)
     : QObject(parent)
 {
     initFonts();
+    if (qEnvironmentVariableIntValue("STATUS_DIAG_TEXT_SCAN") == 1)
+        QTimer::singleShot(1000, [] { diagTextScan(0); });
 }
 
 void Fonts::initFonts()
