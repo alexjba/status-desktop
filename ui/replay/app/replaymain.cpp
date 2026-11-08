@@ -19,6 +19,8 @@
 #include <QQuickWindow>
 #include <QTimer>
 
+#include <utility>
+
 using namespace StatusReplay;
 
 namespace {
@@ -210,7 +212,9 @@ extern "C" int statusreplay_main(int argc, char** argv)
     QObject::connect(replayer.get(), &Replayer::uiAction, &app, [](const QJsonObject& step) {
         QJsonObject single = step;
         single["optional"] = true;
-        single["timeout"] = 10000;
+        // Fast-forwarded, the event can come long before QML shows its target (a popup opened by a
+        // timer): wait as long as a scripted step would.
+        single["timeout"] = 60000;
         auto runner = new ScriptRunner(QJsonArray { single }, qApp);
         QObject::connect(runner, &ScriptRunner::finished, runner, &QObject::deleteLater);
         runner->start();
@@ -227,11 +231,18 @@ extern "C" int statusreplay_main(int argc, char** argv)
             player.start(fastForwardTo);
         },
         Qt::SingleShotConnection);
-    QObject::connect(&app, &QCoreApplication::aboutToQuit, &app, [&] { writeCallLog(recording, *replayer); });
+    // Android ends the process without aboutToQuit: scripted quits write the log first.
+    bool callLogWritten = false;
+    auto finish = [&] {
+        if (!std::exchange(callLogWritten, true))
+            writeCallLog(recording, *replayer);
+    };
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &app, finish);
     if (const int quitAfter = option("quit-after").toInt(); quitAfter > 0) {
         QTimer::singleShot(quitAfter, &app, [&] {
             if (const QString screenshot = option("screenshot"); !screenshot.isEmpty())
                 saveScreenshot(screenshot);
+            finish();
             app.quit();
         });
     }

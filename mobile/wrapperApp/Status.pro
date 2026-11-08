@@ -33,6 +33,8 @@ STATUS_LIB_ORDER = $$(STATUS_LIB_ORDER)
 BUILD_VARIANT = $$(BUILD_VARIANT)
 TARGET = Status
 equals(BUILD_VARIANT, "pr"): TARGET = StatusPR
+# docs/replay-mode.md: the QML app run from a recording, without Nim or status-go
+equals(BUILD_VARIANT, "replay"): TARGET = StatusReplay
 message("Building $$BUILD_VARIANT variant: TARGET = $$TARGET")
 
 # Conditionally add NFC module only if keycard is enabled
@@ -85,16 +87,24 @@ android {
 
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/../android/qt$$QT_MAJOR_VERSION
 
-    LIBS += -L$$PWD/../lib/$$LIB_PREFIX -lnim_status_client
     ANDROID_EXTRA_LIBS += \
                         $$PWD/../lib/$$LIB_PREFIX/libssl_3.so \
                         $$PWD/../lib/$$LIB_PREFIX/libcrypto_3.so \
-                        $$PWD/../lib/$$LIB_PREFIX/libnim_status_client.so \
-                        $$PWD/../lib/$$LIB_PREFIX/libstatus_stub.so \
                         $$PWD/../lib/$$LIB_PREFIX/libStatusQ$$(LIB_SUFFIX)$$(LIB_EXT) \
                         $$PWD/../lib/$$LIB_PREFIX/libMobileWebView$$(LIB_SUFFIX)$$(LIB_EXT)
-    contains(DEFINES, FLAG_KEYCARD_ENABLED) {
-        ANDROID_EXTRA_LIBS += $$PWD/../lib/$$LIB_PREFIX/libstatus-keycard-qt.so
+    equals(BUILD_VARIANT, "replay") {
+        DEFINES += STATUS_REPLAY_APP
+        INCLUDEPATH += $$PWD/../../ui/replay/include
+        LIBS += -L$$PWD/../lib/$$LIB_PREFIX -lStatusReplay
+        ANDROID_EXTRA_LIBS += $$PWD/../lib/$$LIB_PREFIX/libStatusReplay.so
+    } else {
+        LIBS += -L$$PWD/../lib/$$LIB_PREFIX -lnim_status_client
+        ANDROID_EXTRA_LIBS += \
+                            $$PWD/../lib/$$LIB_PREFIX/libnim_status_client.so \
+                            $$PWD/../lib/$$LIB_PREFIX/libstatus_stub.so
+        contains(DEFINES, FLAG_KEYCARD_ENABLED) {
+            ANDROID_EXTRA_LIBS += $$PWD/../lib/$$LIB_PREFIX/libstatus-keycard-qt.so
+        }
     }
 
     OTHER_FILES += \

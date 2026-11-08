@@ -37,6 +37,8 @@ STATUS_KEYCARD_QT?=$(STATUS_DESKTOP)/vendor/status-keycard-qt
 # compile macros: pr -> StatusPR, release -> Status
 ifeq ($(BUILD_VARIANT),pr)
 TARGET_PREFIX := StatusPR
+else ifeq ($(BUILD_VARIANT),replay)
+TARGET_PREFIX := StatusReplay
 else
 TARGET_PREFIX := Status
 endif
@@ -62,6 +64,7 @@ STATUS_DESKTOP_UI_FILES += $(shell find $(STATUS_DESKTOP)/vendor/nim-qtcamera/qm
 # Include CMakeLists.txt (mobilewebview pin) and prune build/ (generated sources).
 STATUS_Q_FILES := $(shell find $(STATUSQ) \( -path '$(STATUSQ)/build' \) -prune -o -type f \( -iname '*.cpp' -o -iname '*.h' -o -iname '*.mm' -o -iname 'CMakeLists.txt' \) -print)
 # Prune build/ (generated .qrc there are deleted by clean-statusq mid-build).
+STATUS_REPLAY_FILES := $(shell find $(STATUS_DESKTOP)/ui/replay \( -path '$(STATUS_DESKTOP)/ui/replay/build' \) -prune -o -type f \( -iname '*.cpp' -o -iname '*.h' -o -iname 'CMakeLists.txt' \) -print)
 STATUS_Q_UI_FILES := $(shell find $(STATUSQ) \( -path '$(STATUSQ)/build' \) -prune -o -type f \( -iname '*.qml' -o -iname '*.qrc' \) -print)
 STATUS_GO_FILES := $(shell find $(STATUS_GO) -type f \( -iname '*.go' \))
 OPENSSL_FILES := $(shell find $(OPENSSL) -type f \( -iname '*.c' -o -iname '*.h' \))
@@ -82,6 +85,7 @@ STATUS_GO_IPC_HEADERS := $(wildcard $(STATUS_GO_IPC_DIR)/*.h)
 
 # script files
 STATUS_Q_SCRIPT := $(SCRIPTS_PATH)/buildStatusQ.sh
+STATUS_REPLAY_SCRIPT := $(SCRIPTS_PATH)/buildStatusReplay.sh
 STATUS_GO_SCRIPT := $(SCRIPTS_PATH)/buildStatusGo.sh
 OPENSSL_SCRIPT := $(SCRIPTS_PATH)/buildOpenSSL.sh
 QRCODEGEN_SCRIPT := $(SCRIPTS_PATH)/buildQRCodeGen.sh
@@ -94,6 +98,7 @@ RUN_SCRIPT := $(SCRIPTS_PATH)/$(OS)/run.sh
 # lib files
 STATUS_GO_LIB := $(LIB_PATH)/libstatus$(LIB_EXT)
 STATUS_Q_LIB := $(LIB_PATH)/libStatusQ$(LIB_SUFFIX)$(LIB_EXT)
+STATUS_REPLAY_LIB := $(LIB_PATH)/libStatusReplay$(LIB_EXT)
 OPENSSL_LIB := $(LIB_PATH)/libssl_3$(LIB_EXT)
 QRCODEGEN_LIB := $(LIB_PATH)/libqrcodegen.a
 STATUS_KEYCARD_QT_LIB := $(LIB_PATH)/libstatus-keycard-qt$(LIB_EXT)

@@ -93,8 +93,10 @@ public class StatusQtActivity extends QtActivity {
     public void onCreate(Bundle savedInstanceState) {
         // Initialize the status-go UI stub bridge early.
         // (In the service-based architecture this forwards to the separate status-go process.)
-        StatusGoStub.setContext(this);
-        StatusGoStub.ensureInitialized(this);
+        if (!BuildFlags.REPLAY) {
+            StatusGoStub.setContext(this);
+            StatusGoStub.ensureInitialized(this);
+        }
 
         // IMPORTANT: call super.onCreate() after starting/binding the service.
         // QtActivity may start the Qt (Nim) side during super.onCreate(), and the Nim
@@ -143,14 +145,16 @@ public class StatusQtActivity extends QtActivity {
         super.onResume();
         ShakeDetector.onResume(this);
         // Inform the status-go service that UI is visible so it can suppress OS notifications.
-        StatusGoStub.setUiVisible(true);
+        if (!BuildFlags.REPLAY)
+            StatusGoStub.setUiVisible(true);
     }
 
     @Override
     protected void onPause() {
         ShakeDetector.onPause();
         // Inform the status-go service that UI is no longer in foreground.
-        StatusGoStub.setUiVisible(false);
+        if (!BuildFlags.REPLAY)
+            StatusGoStub.setUiVisible(false);
         super.onPause();
     }
 
@@ -485,7 +489,7 @@ public class StatusQtActivity extends QtActivity {
      */
     public static void restartApplication(boolean killBackend) {
         final StatusQtActivity activity = sInstance;
-        final android.content.Context context = activity != null
+        final android.content.Context context = activity != null || BuildFlags.REPLAY
                 ? activity
                 : StatusGoStub.getContext();
 
@@ -494,7 +498,7 @@ public class StatusQtActivity extends QtActivity {
             return;
         }
 
-        if (killBackend) {
+        if (killBackend && !BuildFlags.REPLAY) {
             StatusGoStub.stopService();
         }
 

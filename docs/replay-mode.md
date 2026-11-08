@@ -244,12 +244,20 @@ their backends replay as ordinary recorded objects. No camera frames.
 |---|---|
 | `make record-run [RECORDING=<dir>] [RECORD_DATADIR=<dir>] [RECORD_SCRIPT=<json>\|none]` | unattended: creates a test profile on first use, records login screen -> login -> wallet (see above) |
 | `make replay-run RECORDING=<dir> [REPLAY_MOMENT=<name>] [REPLAY_MODE=realtime\|step\|frozen]` | builds StatusQ + `libStatusReplay` + `status-replay` + `resources.rcc` (no Nim, no status-go) and runs it |
-| `make mobile-record-run [RECORDING=<dir>]` | `mobile-run` with `libStatusReplay` added to the APK (not linked) and recording on; pulls the recording on exit |
-| `make mobile-replay-run RECORDING=<dir> [...]` | builds the Android replay variant (`BUILD_VARIANT=replay`: no `libnim_status_client`, `libstatus_stub` or status-go service), pushes the recording into the app's files dir (`run-as`), launches |
+| `make mobile-record-run [RECORDING=<dir>]` | Android, unattended like `record-run`: a debug build with `libStatusReplay` packaged but not linked (`RECORDER=1`); creates the test profile on first use, records login screen -> login -> wallet in-process, pulls the recording |
+| `make mobile-replay-run RECORDING=<dir> [REPLAY_MOMENT=..] [REPLAY_MODE=..]` | builds the Android replay variant (`BUILD_VARIANT=replay`: no `libnim_status_client`, `libstatus_stub`, status-go or service), pushes the recording and launches it |
 | `make run-replay-tests` | host round-trip and parity tests for `libStatusReplay` |
 
-The Android replay variant has its own package id (`app.status.mobile.replay`,
-overridable), so it installs next to the real app.
+Android packages: both targets build debug packages, so the installed names get a
+`.debug` suffix: `app.status.mobile.record.debug` and `app.status.mobile.replay.debug` by
+default (`MOBILE_RECORD_BUNDLE_IDENTIFIER`, `MOBILE_REPLAY_BUNDLE_IDENTIFIER`). Neither
+collides with the regular packages. Options reach the app through `status-env.txt` in the
+app's external files dir, which debug packages read at start (`STATUS_RECORD*` for
+recording; `STATUS_REPLAY` plus `STATUS_REPLAY_<OPTION>`, e.g. `STATUS_REPLAY_MOMENT`,
+for replay, since Android passes no arguments). The scripts start the app once on a
+fresh install so that it creates that directory itself: files adb puts into a directory
+adb created are not readable by the app. The replay variant skips the status-go stub
+and service in `StatusQtActivity` (`BuildConfig.REPLAY_VARIANT`).
 
 ## Tests (host, ctest under `ui/replay/tests`)
 

@@ -66,6 +66,8 @@ export NIMBLE_COMMIT := v0.26.1
 	record-run \
 	replay-run \
 	run-replay-tests \
+	mobile-record-run \
+	mobile-replay-run \
 	update \
 	mobile-run \
 	mobile-build \
@@ -1306,5 +1308,32 @@ endif
 mobile-clean:
 	echo -e "\033[92mCleaning:\033[39m mobile app"
 	$(MAKE) -C mobile clean
+
+# Record / replay on Android (docs/replay-mode.md). Debug packages, so the installed package
+# names get a ".debug" suffix; the defaults never collide with the regular app packages.
+MOBILE_RECORD_BUNDLE_IDENTIFIER ?= app.status.mobile.record
+MOBILE_REPLAY_BUNDLE_IDENTIFIER ?= app.status.mobile.replay
+MOBILE_APK_DIR := mobile/bin/android/qt6
+
+mobile-record-run: USE_SYSTEM_NIM=1
+mobile-record-run: qt-pkgconfig | deps-common
+	$(MAKE) -C mobile all DEBUG=1 GRADLE_TARGETS=assembleDebug RECORDER=1 \
+		BUNDLE_IDENTIFIER=$(MOBILE_RECORD_BUNDLE_IDENTIFIER)
+	APK="$(MOBILE_APK_DIR)/Status.apk" \
+	PKG="$(MOBILE_RECORD_BUNDLE_IDENTIFIER).debug" \
+	RECORDING="$(abspath $(RECORD_OUTPUT))" \
+		$(STATUSREPLAY_SOURCE_PATH)/scripts/android-record.sh
+
+mobile-replay-run: qt-pkgconfig
+ifndef RECORDING
+	$(error RECORDING=<recording dir> is required)
+endif
+	$(MAKE) -C mobile all DEBUG=1 GRADLE_TARGETS=assembleDebug BUILD_VARIANT=replay \
+		BUNDLE_IDENTIFIER=$(MOBILE_REPLAY_BUNDLE_IDENTIFIER)
+	APK="$(MOBILE_APK_DIR)/StatusReplay.apk" \
+	PKG="$(MOBILE_REPLAY_BUNDLE_IDENTIFIER).debug" \
+	RECORDING="$(abspath $(RECORDING))" \
+	REPLAY_MOMENT="$(REPLAY_MOMENT)" REPLAY_MODE="$(REPLAY_MODE)" \
+		$(STATUSREPLAY_SOURCE_PATH)/scripts/android-replay.sh
 
 endif # "variables.mk" was not included

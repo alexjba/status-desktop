@@ -58,6 +58,8 @@ endif
 BUILD_VARIANT ?= release
 ifeq ($(BUILD_VARIANT),pr)
     BUNDLE_IDENTIFIER ?= app.status.mobile.pr
+else ifeq ($(BUILD_VARIANT),replay)
+    BUNDLE_IDENTIFIER ?= app.status.mobile.replay
 else
     BUNDLE_IDENTIFIER ?= app.status.mobile
 endif

@@ -16,6 +16,8 @@
 #include <QWindow>
 #include <QTimer>
 
+#include <utility>
+
 using StatusReplay::Recorder;
 
 namespace {
@@ -56,6 +58,24 @@ void markMoment(const QString& moment)
     saveMomentScreenshot(moment);
 }
 
+// Writes the exit moment once. Scripted quits write it before quitting: on Android the
+// process ends without aboutToQuit.
+void finishRecording()
+{
+    static bool finished = false;
+    if (!g_recorder || std::exchange(finished, true))
+        return;
+    markMoment(QStringLiteral("exit"));
+    g_recorder->flush();
+    qInfo() << "StatusReplay: recording written to" << g_recorder->directory();
+}
+
+void quitRecording()
+{
+    finishRecording();
+    QCoreApplication::quit();
+}
+
 // Unattended recordings: STATUS_RECORD_SCRIPT (ui/replay/scripts/*.json) drives the UI after
 // the startup moment, e.g. onboarding a fresh profile with the test password. Test credentials
 // only. STATUS_RECORD_QUIT_AFTER_SCRIPT_MS then quits; a failed script exits with code 3.
@@ -87,7 +107,7 @@ void runScript()
         }
         qInfo().noquote() << "StatusReplay: script" << path << "done";
         if (const int quitAfter = qEnvironmentVariableIntValue("STATUS_RECORD_QUIT_AFTER_SCRIPT_MS"); quitAfter > 0)
-            QTimer::singleShot(quitAfter, qApp, &QCoreApplication::quit);
+            QTimer::singleShot(quitAfter, qApp, quitRecording);
     });
     runner->start();
 }
@@ -151,15 +171,9 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
 
     // Scripted recordings end themselves so the exit moment is written.
     if (const int quitAfter = qEnvironmentVariableIntValue("STATUS_RECORD_QUIT_AFTER_MS"); quitAfter > 0)
-        QTimer::singleShot(quitAfter, qApp, &QCoreApplication::quit);
+        QTimer::singleShot(quitAfter, qApp, quitRecording);
 
-    QObject::connect(qApp, &QCoreApplication::aboutToQuit, qApp, [] {
-        if (!g_recorder)
-            return;
-        markMoment(QStringLiteral("exit"));
-        g_recorder->flush();
-        qInfo() << "StatusReplay: recording written to" << g_recorder->directory();
-    });
+    QObject::connect(qApp, &QCoreApplication::aboutToQuit, qApp, finishRecording);
 
     return { onContextProperty, onMetacall, onModelData };
 }

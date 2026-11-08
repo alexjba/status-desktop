@@ -3,9 +3,13 @@
 #include <qqml.h>
 #include <QDir>
 
+#ifdef STATUS_REPLAY_APP
+#include <StatusReplay/replayapp.h>
+#else
 extern "C" {
     void NimMain();
 }
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -23,6 +27,10 @@ int main(int argc, char* argv[])
                        "QtCore", QQmlModuleImportLatest);
 #endif
 
+#ifdef STATUS_REPLAY_APP
+    return statusreplay_main(argc, argv);
+#else
     NimMain();
     return 0;
+#endif
 }

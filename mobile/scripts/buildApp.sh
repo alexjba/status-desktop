@@ -14,14 +14,22 @@ FLAG_KEYCARD_ENABLED=${FLAG_KEYCARD_ENABLED:-1}
 QMAKE_BIN="${QMAKE:-qmake}"
 QMAKE_CONFIG=("CONFIG+=device" "CONFIG+=release" ${QMAKE_EXTRA_CONFIG:+CONFIG+=$QMAKE_EXTRA_CONFIG})
 
-# Derive names from variant: pr -> StatusPR, release -> Status
+# Derive names from variant: pr -> StatusPR, replay -> StatusReplay, release -> Status
 OUTPUT_NAME="Status"
 [[ "$BUILD_VARIANT" == "pr" ]] && OUTPUT_NAME="StatusPR"
+[[ "$BUILD_VARIANT" == "replay" ]] && OUTPUT_NAME="StatusReplay"
 
 echo "Building $OUTPUT_NAME for ${OS}, variant: ${BUILD_VARIANT}"
 
 mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
+
+# Objects don't depend on qmake DEFINES: switching to or from the replay variant (main.cpp
+# is built with STATUS_REPLAY_APP there) must not link the other variant's main.o.
+if [[ "$(cat .build-variant 2>/dev/null)" != "${BUILD_VARIANT}" ]]; then
+  rm -f main.o
+  echo "${BUILD_VARIANT}" > .build-variant
+fi
 
 STATUS_DESKTOP=${STATUS_DESKTOP:-"../vendors/status-desktop"}
 VERSION=$(cd "$STATUS_DESKTOP" && git describe --tags --always | cut -d- -f1 | cut -d. -f1-3 | sed 's/^v//')
@@ -78,9 +86,20 @@ if [[ "${OS}" == "android" ]]; then
   # and must NOT be dlopen'd in the UI process (see mobile/wrapperApp/Status.pro).
   # cp -f overwrites any stale copy androiddeployqt may have left from a prior
   # build when these libs were still in ANDROID_EXTRA_LIBS.
-  for lib in libstatus.so libstatus_service.so libsds.so; do
-    cp -f "$CWD/../lib/android/qt${QT_MAJOR}/$lib" "$BUILD_DIR/android-build/libs/arm64-v8a/$lib"
-  done
+  # The replay variant has no status-go service (docs/replay-mode.md).
+  if [[ "$BUILD_VARIANT" != "replay" ]]; then
+    for lib in libstatus.so libstatus_service.so libsds.so; do
+      cp -f "$CWD/../lib/android/qt${QT_MAJOR}/$lib" "$BUILD_DIR/android-build/libs/arm64-v8a/$lib"
+    done
+  fi
+  # Record builds package the recorder without loading it: the app dlopens it only when
+  # STATUS_RECORD is set. (The replay variant links it through ANDROID_EXTRA_LIBS instead.)
+  if [[ "$BUILD_VARIANT" != "replay" ]]; then
+    rm -f "$BUILD_DIR/android-build/libs/arm64-v8a/libStatusReplay.so"
+  fi
+  if [[ -n "${STATUS_REPLAY_PACKAGE_LIB}" ]]; then
+    cp -f "${STATUS_REPLAY_PACKAGE_LIB}" "$BUILD_DIR/android-build/libs/arm64-v8a/libStatusReplay.so"
+  fi
 
   # android-build/ is shared between variants; drop the other variant's main lib
   for stale in Status StatusPR; do

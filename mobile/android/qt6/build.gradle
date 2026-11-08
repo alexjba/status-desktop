@@ -60,6 +60,7 @@ def buildVariant = System.getenv("BUILD_VARIANT") ?: "release"
 def bundleIdentifier = System.getenv("BUNDLE_IDENTIFIER") ?: "app.status.mobile"
 // PR builds are profileable (heapprofd/simpleperf/perfetto from the shell), release and fdroid are not.
 def prVariant = buildVariant == "pr"
+def replayVariant = buildVariant == "replay"
 
 android {
     /*******************************************************
@@ -130,11 +131,13 @@ android {
         versionCode = System.getenv("FDROID_VERSION_CODE")?.toInteger() ?: (System.currentTimeMillis() / 60000).toInteger()
         // Application ID from BUNDLE_IDENTIFIER env var (set in EnvVariables.mk)
         applicationId = bundleIdentifier
-        resValue "string", "app_name", buildVariant == 'release' ? "Status" : "Status PR"
+        resValue "string", "app_name", buildVariant == 'release' ? "Status" : (replayVariant ? "Status Replay" : "Status PR")
         // lib_name must match TARGET in Status.pro (spaces cause weird issues in paths)
-        resValue "string", "lib_name", buildVariant == 'release' ? "Status" : "StatusPR"
+        resValue "string", "lib_name", buildVariant == 'release' ? "Status" : (replayVariant ? "StatusReplay" : "StatusPR")
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField "boolean", "PR_VARIANT", "${prVariant}"
+        // docs/replay-mode.md: no status-go service, the UI replays a recording.
+        buildConfigField "boolean", "REPLAY_VARIANT", "${replayVariant}"
     }
 
     signingConfigs {
