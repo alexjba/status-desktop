@@ -154,19 +154,22 @@ if [[ "${OS}" == "android" ]]; then
 
   # Build with specified gradle targets
   # shellcheck disable=SC2086 # intentional word splitting for multiple gradle tasks
+  touch .gradle-started
   $("$QMAKE_BIN" -query QT_INSTALL_PREFIX)/src/3rdparty/gradle/gradlew ${GRADLE_TARGETS} --no-daemon --console=plain
 
   echo "APK outputs:"
   find build/outputs/apk -name '*.apk' 2>/dev/null || echo "No APKs found"
 
   # A normal build must never ship the recorder (docs/replay-mode.md).
+  # Only what this gradle run produced: other build types' outputs may be recorder builds.
   if [[ "$STATUS_RECORDER" != 1 && "$BUILD_VARIANT" != "replay" ]]; then
-    for apk in "$APK_OUT" "$APK_OUT_UNSIGNED"; do
-      if [[ -f "$apk" ]] && unzip -l "$apk" | grep -q libStatusReplay; then
-        echo "Error: libStatusReplay packaged in a build without RECORDER=1"; exit 1
+    command -v unzip > /dev/null || { echo "Error: unzip is needed to check the package"; exit 1; }
+    for artifact in "$APK_OUT" "$APK_OUT_UNSIGNED" "$AAB_OUT"; do
+      if [[ -f "$artifact" && "$artifact" -nt .gradle-started ]] && unzip -l "$artifact" | grep -q libStatusReplay; then
+        echo "Error: libStatusReplay packaged in a build without RECORDER=1 ($artifact)"; exit 1
       fi
     done
-    if grep -rqs "RECORDER = true" build/generated/source/buildConfig; then
+    if grep -rqs "RECORDER = true" "build/generated/source/buildConfig/${BUILD_TYPE}"; then
       echo "Error: BuildConfig.RECORDER is true in a build without RECORDER=1"; exit 1
     fi
   fi

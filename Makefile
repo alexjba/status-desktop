@@ -1321,6 +1321,9 @@ MOBILE_APK_DIR := mobile/bin/android/qt6
 MOBILE_REPLAY_PROFILE ?= debug
 MOBILE_REPLAY_DEBUG_KEYSTORE ?= $(HOME)/.android/debug.keystore
 ifeq ($(MOBILE_REPLAY_PROFILE),release)
+ifneq ($(filter command line,$(origin STATUS_APP_KEYSTORE_PATH) $(origin STATUS_APP_KEYSTORE_PASSWORD) $(origin STATUS_APP_KEY_ALIAS) $(origin STATUS_APP_KEY_PASSWORD)),)
+MOBILE_REPLAY_KEYSTORE_ERROR := STATUS_APP_KEYSTORE_* on the command line would sign record/replay builds with another keystore; MOBILE_REPLAY_PROFILE=release always uses MOBILE_REPLAY_DEBUG_KEYSTORE
+endif
 MOBILE_REPLAY_BUILD := DEBUG=0 GRADLE_TARGETS=assembleRelease
 MOBILE_REPLAY_SIGNING := STATUS_APP_KEYSTORE_PATH="$(MOBILE_REPLAY_DEBUG_KEYSTORE)" \
 	STATUS_APP_KEYSTORE_PASSWORD=android STATUS_APP_KEY_ALIAS=androiddebugkey STATUS_APP_KEY_PASSWORD=android
@@ -1335,8 +1338,20 @@ MOBILE_PKG_SUFFIX := .debug
 MOBILE_REPLAY_SIGNING :=
 endif
 
+.PHONY: mobile-replay-signing-check
+mobile-replay-signing-check:
+ifeq ($(MOBILE_REPLAY_PROFILE),release)
+ifdef MOBILE_REPLAY_KEYSTORE_ERROR
+	$(error $(MOBILE_REPLAY_KEYSTORE_ERROR))
+endif
+	@test -f "$(MOBILE_REPLAY_DEBUG_KEYSTORE)" || { echo "No debug keystore at $(MOBILE_REPLAY_DEBUG_KEYSTORE). Create it with:"; \
+		echo "  keytool -genkeypair -keystore $(MOBILE_REPLAY_DEBUG_KEYSTORE) -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Android Debug,O=Android,C=US'"; exit 1; }
+else
+	@true
+endif
+
 mobile-record-run: USE_SYSTEM_NIM=1
-mobile-record-run: qt-pkgconfig | deps-common
+mobile-record-run: qt-pkgconfig | deps-common mobile-replay-signing-check
 	$(MOBILE_REPLAY_SIGNING) $(MAKE) -C mobile all $(MOBILE_REPLAY_BUILD) $(MOBILE_RECORD_VARIANT) RECORDER=1 \
 		BUNDLE_IDENTIFIER=$(MOBILE_RECORD_BUNDLE_IDENTIFIER)
 	APK="$(MOBILE_APK_DIR)/$(MOBILE_RECORD_APK)" \
@@ -1344,7 +1359,7 @@ mobile-record-run: qt-pkgconfig | deps-common
 	RECORDING="$(abspath $(RECORD_OUTPUT))" \
 		$(STATUSREPLAY_SOURCE_PATH)/scripts/android-record.sh
 
-mobile-replay-run: qt-pkgconfig
+mobile-replay-run: qt-pkgconfig mobile-replay-signing-check
 ifndef RECORDING
 	$(error RECORDING=<recording dir> is required)
 endif

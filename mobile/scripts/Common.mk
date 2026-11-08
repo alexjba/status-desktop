@@ -42,8 +42,9 @@ TARGET_PREFIX := StatusReplay
 else
 TARGET_PREFIX := Status
 endif
-# Recorder builds (docs/replay-mode.md) get their own output: they never pass for a normal build.
-ifeq ($(RECORDER),1)
+# Android recorder builds (docs/replay-mode.md) get their own APK: they never pass for a normal
+# build. (iOS has no recorder packaging.)
+ifeq ($(OS)$(RECORDER),android1)
 ifneq ($(BUILD_VARIANT),replay)
 TARGET_PREFIX := $(TARGET_PREFIX)Record
 endif

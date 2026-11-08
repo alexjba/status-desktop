@@ -144,14 +144,17 @@ ifeq ($(OS),android)
 $(NIM_STATUS_CLIENT_LIB): $(STATUS_GO_STUB_LIB) $(STATUS_GO_SERVICE_LIB)
 endif
 
-# The build settings the Nim library and the app package bake in: switching any of them (e.g. a
-# normal build after a RECORDER=1 one) rebuilds both instead of reusing the other build's.
-BUILD_CONFIG := BUILD_VARIANT=$(BUILD_VARIANT) RECORDER=$(or $(RECORDER),0) DEBUG=$(or $(DEBUG),0) PROFILE=$(or $(PROFILE),0) BUNDLE_IDENTIFIER=$(BUNDLE_IDENTIFIER)
-BUILD_CONFIG_STAMP := $(BUILD_PATH)/.build-config
-$(BUILD_CONFIG_STAMP): FORCE
+# The build settings an artifact bakes in, one stamp per artifact: changing them (e.g. a normal
+# build after a RECORDER=1 one) rebuilds that artifact instead of reusing the other build's, and
+# only builds that need the artifact look at its stamp (a replay build never touches Nim's).
+BUILD_SETTINGS := RECORDER=$(or $(RECORDER),0) DEBUG=$(or $(DEBUG),0) PROFILE=$(or $(PROFILE),0) BUNDLE_IDENTIFIER=$(BUNDLE_IDENTIFIER)
+NIM_SETTINGS_STAMP := $(BUILD_PATH)/.settings-nim_status_client
+TARGET_SETTINGS_STAMP := $(BUILD_PATH)/.settings-$(TARGET_NAME)
+$(NIM_SETTINGS_STAMP) $(TARGET_SETTINGS_STAMP): FORCE
 	@mkdir -p $(dir $@)
-	@if [ "$$(cat $@ 2>/dev/null)" != "$(BUILD_CONFIG)" ]; then echo "$(BUILD_CONFIG)" > $@; fi
-$(NIM_STATUS_CLIENT_LIB) $(TARGET): $(BUILD_CONFIG_STAMP)
+	@if [ "$$(cat $@ 2>/dev/null)" != "$(BUILD_SETTINGS)" ]; then echo "$(BUILD_SETTINGS)" > $@; fi
+$(NIM_STATUS_CLIENT_LIB): $(NIM_SETTINGS_STAMP)
+$(TARGET): $(TARGET_SETTINGS_STAMP)
 
 $(NIM_STATUS_CLIENT_LIB): $(STATUS_DESKTOP_NIM_FILES) $(NIM_STATUS_CLIENT_SCRIPT) $(STATUS_DESKTOP_RCC) $(OPENSSL_LIB) $(STATUS_Q_LIB) $(QRCODEGEN_LIB) $(ZXING_LIB)
 	@echo "Building Status Desktop Lib"
