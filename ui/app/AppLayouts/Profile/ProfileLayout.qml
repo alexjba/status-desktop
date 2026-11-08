@@ -692,16 +692,21 @@ StatusSectionLayout {
             }
         }
 
-        Component {
+        SQUtils.DeferredComponent {
             id: logosNetworkViewComp
-            LogosNetworkView {
-                contentWidth: d.contentWidth
-                sectionTitle: settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.logosNetworkSettings)
-                peerCount: root.logosNetworkStore.peerCount
-                peerCountLoading: root.logosNetworkStore.peerCountLoading
-                peerCountError: root.logosNetworkStore.peerCountError
-                pollingActive: StackView.visible
-                onRefreshPeerCountRequested: root.logosNetworkStore.refreshPeerCount()
+
+            source: Qt.resolvedUrl("views/LogosNetworkView.qml")
+            properties: ({
+                contentWidth: Qt.binding(() => d.contentWidth),
+                sectionTitle: Qt.binding(() => settingsEntriesModel.getNameForSubsection(Constants.settingsSubsection.logosNetworkSettings)),
+                peerCount: Qt.binding(() => root.logosNetworkStore.peerCount),
+                peerCountLoading: Qt.binding(() => root.logosNetworkStore.peerCountLoading),
+                peerCountError: Qt.binding(() => root.logosNetworkStore.peerCountError)
+            })
+
+            onCreated: view => {
+                view.pollingActive = Qt.binding(() => view.StackView.visible)
+                view.refreshPeerCountRequested.connect(() => root.logosNetworkStore.refreshPeerCount())
             }
         }
         }

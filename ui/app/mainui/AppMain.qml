@@ -48,7 +48,6 @@ import AppLayouts.Communities.stores
 import AppLayouts.Browser.stores as BrowserStores
 import AppLayouts.Profile.stores as ProfileStores
 import AppLayouts.Profile.helpers
-import AppLayouts.Wallet.popups as WalletPopups
 import AppLayouts.Wallet.popups.dapps as DAppsPopups
 import AppLayouts.Wallet.stores as WalletStores
 import AppLayouts.stores as AppStores
@@ -3295,6 +3294,13 @@ Item {
                 showQR.selectedAccount.emoji = params.emoji?? ""
             }
 
+            showQR.setSource(Qt.resolvedUrl("ReceiveModalInstance.qml"), {
+                fixedAccount: Qt.binding(() => showQR.showSingleAccount || showQR.showForSavedAddress),
+                fixedSelectedAccount: Qt.binding(() => showQR.selectedAccount),
+                allAccounts: Qt.binding(() => appMain.walletRootStore.accounts),
+                receiverAccounts: Qt.binding(() => appMain.transactionStore.accounts),
+                selectedReceiverAddress: Qt.binding(() => appMain.transactionStore.selectedReceiverAccountAddress)
+            })
             showQR.active = true
         }
 
@@ -3305,46 +3311,12 @@ Item {
         onLoaded: {
             showQR.item.switchingAccounsEnabled = showQR.params.switchingAccounsEnabled?? true
             showQR.item.hasFloatingButtons = showQR.params.hasFloatingButtons?? true
+            showQR.item.receiverAccountSelected.connect(address => appMain.transactionStore.setReceiverAccount(address))
+            showQR.item.closed.connect(showQR.close)
 
             showQR.item.open()
         }
-
-        sourceComponent: WalletPopups.ReceiveModal {
-
-            ModelEntry {
-                id: selectedReceiverAccount
-                key: "address"
-                sourceModel: appMain.transactionStore.accounts
-                value: appMain.transactionStore.selectedReceiverAccountAddress
-            }
-
-            accounts: {
-                 if (showQR.showSingleAccount || showQR.showForSavedAddress) {
-                    return null
-                }
-                return appMain.walletRootStore.accounts
-            }
-
-            selectedAccount: {
-                if (showQR.showSingleAccount || showQR.showForSavedAddress) {
-                    return showQR.selectedAccount
-                }
-                return selectedReceiverAccount.item ?? SQUtils.ModelUtils.get(appMain.transactionStore.accounts, 0)
-            }
-
-            onUpdateSelectedAddress: (address) => {
-                if (showQR.showSingleAccount || showQR.showForSavedAddress) {
-                    return
-                }
-                appMain.transactionStore.setReceiverAccount(address)
-            }
-
-            onClosed: {
-                showQR.close()
-            }
-        }
     }
-
 
     Loader {
         id: savedAddressActivity
