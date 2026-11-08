@@ -473,17 +473,20 @@ void ReplayerPrivate::invoke(QObject* object, const Schema::Method& method, void
         args.append(ValueCodec::encode(value, type, [this](QObject* o) { return ids.value(o, 0); }));
     }
 
+    // Same arguments win over position: replayed QML can call a getter earlier than the
+    // recorded QML did. Among equal candidates the last one at or before the position, else
+    // the next one after it.
     const RecordedCall* exact = nullptr;
-    const RecordedCall* latest = nullptr;
+    const RecordedCall* any = nullptr;
     const QList<RecordedCall> recordedList = recordedCalls.value({ id, method.signature });
     for (const auto& recorded : recordedList) {
-        if (recorded.seq >= position && latest)
-            break;
-        if (recorded.arguments == args)
+        const bool past = recorded.seq < position;
+        if (recorded.arguments == args && (past || !exact))
             exact = &recorded;
-        latest = &recorded;
+        if (past || !any)
+            any = &recorded;
     }
-    const RecordedCall* chosen = exact ? exact : latest;
+    const RecordedCall* chosen = exact ? exact : any;
 
     calls.append({ QString::fromLatin1(object->metaObject()->className()) + QLatin1Char('#') + QString::number(id),
         QString::fromLatin1(method.signature), values, exact != nullptr });

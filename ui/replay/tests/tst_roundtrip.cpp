@@ -235,6 +235,23 @@ private slots:
         QCOMPARE(calls[4].matched, false);
     }
 
+    void slotCalledEarlierThanRecordedStillMatchesItsArguments()
+    {
+        Hooked<WalletView> wallet;
+        m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
+        call<QString>(&wallet, "formatBalance(int,QString)", 1, QStringLiteral("DAI"));
+        m_recorder->markMoment(QStringLiteral("startup"));
+        call<QString>(&wallet, "formatBalance(int,QString)", 2, QStringLiteral("ETH"));
+        m_recorder->markMoment(QStringLiteral("later"));
+
+        auto replayer = replayAt(QStringLiteral("startup"));
+        QVERIFY(replayer);
+        QObject* replayed = objectOf(replayer->contextProperty("walletSection"));
+        QCOMPARE(call<QString>(replayed, "formatBalance(int,QString)", 2, QStringLiteral("ETH")),
+            QStringLiteral("2 ETH"));
+        QVERIFY(replayer->calls().constLast().matched);
+    }
+
     void sensitiveArgumentsAreNotWritten()
     {
         Hooked<WalletView> wallet;
