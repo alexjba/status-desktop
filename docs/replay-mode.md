@@ -180,7 +180,8 @@ real app's.
 ### Calibration probe
 
 `STATUS_REPLAY_PROBE_AT=<s>,<s>...` (record or replay) writes `probe/probe-<n>.tsv`
-(recording) or `replay-probe/probe-<n>.tsv` (replay) at those seconds after start: the
+(recording), `replay-probe/probe-<n>.tsv` (replay) or `$STATUS_REPLAY_PROBE_DIR` (script-only
+runs) at those seconds after start: the
 composite QML types loaded and instantiated, and the malloc heap in use.
 
 ### Media

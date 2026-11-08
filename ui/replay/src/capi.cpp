@@ -184,7 +184,8 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
     if (!qEnvironmentVariableIsSet("STATUS_RECORD")) {
         qInfo() << "StatusReplay: running" << qEnvironmentVariable("STATUS_RECORD_SCRIPT") << "without recording";
         startProbeIfAsked(engine,
-            QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + QStringLiteral("/probe"));
+            qEnvironmentVariable("STATUS_REPLAY_PROBE_DIR",
+                QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + QStringLiteral("/probe")));
         runScriptAfterLoad(engine);
         return { nullptr, nullptr, nullptr };
     }

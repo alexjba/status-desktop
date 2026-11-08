@@ -4,7 +4,7 @@
 # Same flow as record-run.sh, on a device: creates a test profile through onboarding when the
 # package has none, then records login screen -> login -> wallet and pulls the recording.
 # Everything runs in-process (STATUS_RECORD_SCRIPT); the env reaches the app through the
-# status-env.txt file that debug packages read at start.
+# status-env.txt file that debug, PR and replay packages read at start.
 set -euo pipefail
 
 : "${APK:?apk to install}"
@@ -27,8 +27,10 @@ ensure_files_dir() {
 }
 ensure_files_dir
 
+# Non-debuggable (PR) packages have no run-as: they rely on the marker left by onboarding.
 has_profile() {
-    adb shell run-as "$PKG" find . -name "'*-v4.db'" 2>/dev/null | grep -q -- '-v4.db'
+    adb shell run-as "$PKG" find . -name "'*-v4.db'" 2>/dev/null | grep -q -- '-v4.db' \
+        || adb shell ls "$files/test-profile-created" > /dev/null 2>&1
 }
 
 # <device recording dir> <script> <quit after script ms> <timeout s>
@@ -61,6 +63,9 @@ run_app() {
 if ! has_profile; then
     echo "Creating the test profile in $PKG"
     run_app "$files/onboarding-recording" "$scripts/create-profile.json" 5000 600
+    adb shell "grep -q '\"name\": \"exit\"' $files/onboarding-recording/manifest.json" \
+        || { echo "onboarding did not finish (adb logcat)"; exit 1; }
+    adb shell touch "$files/test-profile-created"
     has_profile || { echo "onboarding did not create a profile (adb logcat)"; exit 1; }
 fi
 

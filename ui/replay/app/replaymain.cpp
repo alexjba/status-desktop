@@ -150,7 +150,7 @@ extern "C" int statusreplay_main(int argc, char** argv)
         "such as the current page, then starts from scratch)." });
     parser.process(app);
     // Android launches without arguments: the same options come from the environment
-    // (status-env.txt of debug packages), e.g. STATUS_REPLAY_MOMENT for --moment.
+    // (status-env.txt of debug and replay packages), e.g. STATUS_REPLAY_MOMENT for --moment.
     auto option = [&parser](const char* name) {
         if (parser.isSet(QString::fromLatin1(name)))
             return parser.value(QString::fromLatin1(name));

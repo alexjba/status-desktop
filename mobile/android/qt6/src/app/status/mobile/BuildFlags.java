@@ -4,8 +4,8 @@ package app.status.mobile;
 public final class BuildFlags {
     private BuildFlags() {}
 
-    /** debug, profile and PR packages; never true for release or fdroid. */
-    public static final boolean PROFILING = BuildConfig.PR_VARIANT
+    /** debug, profile, PR and replay packages; never true for release or fdroid. */
+    public static final boolean PROFILING = BuildConfig.PR_VARIANT || BuildConfig.REPLAY_VARIANT
             || (!"release".equals(BuildConfig.BUILD_TYPE) && !"fdroid".equals(BuildConfig.BUILD_TYPE));
 
     /**
