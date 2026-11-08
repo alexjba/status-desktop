@@ -36,6 +36,31 @@ bool gifTransparent(const QByteArray& gif)
     return at >= 0 && at + 3 < gif.size() && (gif.at(at + 3) & 0x01);
 }
 
+// Whether a paletted PNG carries transparency: a tRNS chunk before the image data. Qt reports
+// Indexed8 either way.
+bool pngHasTransparencyChunk(const QByteArray& png)
+{
+    const qsizetype data = png.indexOf("IDAT");
+    const qsizetype trns = png.indexOf("tRNS");
+    return trns >= 0 && (data < 0 || trns < data);
+}
+
+// Whether a WebP has alpha, from its first chunk: lossy VP8 never, VP8L its alpha_is_used bit,
+// VP8X its alpha flag. Qt reports ARGB32 up front and decodes opaque ones to RGB32.
+bool webpHasAlpha(const QByteArray& webp)
+{
+    if (webp.size() < 30 || !webp.startsWith("RIFF") || webp.mid(8, 4) != "WEBP")
+        return true;
+    const QByteArray chunk = webp.mid(12, 4);
+    if (chunk == "VP8 ")
+        return false;
+    if (chunk == "VP8L")
+        return (quint8(webp.at(24)) >> 4) & 0x01;
+    if (chunk == "VP8X")
+        return quint8(webp.at(20)) & 0x10;
+    return true;
+}
+
 // What a placeholder needs, from the image header only: recording runs on QML's image reader
 // thread and must not decode.
 void describeImage(const QByteArray& body, QJsonObject& entry)
@@ -53,10 +78,15 @@ void describeImage(const QByteArray& body, QJsonObject& entry)
     entry["width"] = size.width();
     entry["height"] = size.height();
     entry["frames"] = qMax(1, reader.imageCount());
-    if (format == "gif")
+    if (format == "gif") {
         entry["transparent"] = gifTransparent(body);
-    else
-        entry["pixelFormat"] = int(reader.imageFormat());
+        return;
+    }
+    entry["pixelFormat"] = int(reader.imageFormat());
+    if (reader.imageFormat() == QImage::Format_Indexed8)
+        entry["transparent"] = pngHasTransparencyChunk(body);
+    if (format == "webp" && !webpHasAlpha(body))
+        entry["pixelFormat"] = int(QImage::Format_RGB32);
 }
 
 // GIF with `frames` solid frames (palette index 0), the shape QGifHandler decodes to frames of
@@ -137,7 +167,9 @@ QByteArray placeholderImage(const QJsonObject& entry)
     auto pixelFormat = QImage::Format(entry["pixelFormat"].toInt(int(QImage::Format_ARGB32)));
     if (pixelFormat == QImage::Format_Invalid)
         pixelFormat = QImage::Format_ARGB32;
-    const bool alpha = QImage::toPixelFormat(pixelFormat).alphaUsage() == QPixelFormat::UsesAlpha;
+    const bool alpha = pixelFormat == QImage::Format_Indexed8
+        ? entry["transparent"].toBool()
+        : QImage::toPixelFormat(pixelFormat).alphaUsage() == QPixelFormat::UsesAlpha;
     if (format == "svg" || format == "svgz")
         return QStringLiteral(R"(<svg xmlns="http://www.w3.org/2000/svg" width="%1" height="%2"/>)")
             .arg(width)
@@ -321,12 +353,15 @@ int MediaLibrary::size() const
 
 bool MediaLibrary::contains(const QUrl& url) const
 {
-    return d->entries.contains(storedKey(url));
+    return d->entries.contains(storedKey(url)) || d->entries.contains(mediaKey(url));
 }
 
 QNetworkReply* MediaLibrary::reply(const QNetworkRequest& request, QObject* parent) const
 {
-    const auto it = d->entries.constFind(storedKey(request.url()));
+    auto it = d->entries.constFind(storedKey(request.url()));
+    // Format 1.0 recordings keyed by the plain key.
+    if (it == d->entries.cend())
+        it = d->entries.constFind(mediaKey(request.url()));
     if (it == d->entries.cend())
         return nullptr;
     const QJsonObject& entry = *it;

@@ -33,12 +33,12 @@ QByteArray transparentGif()
     return gif.replace(QByteArray::fromHex("21f90400"), QByteArray::fromHex("21f90401"));
 }
 
-QByteArray encoded(const QImage& image, const char* format)
+QByteArray encoded(const QImage& image, const char* format, int quality = -1)
 {
     QByteArray bytes;
     QBuffer buffer(&bytes);
     buffer.open(QIODevice::WriteOnly);
-    image.save(&buffer, format);
+    image.save(&buffer, format, quality);
     return bytes;
 }
 
@@ -57,6 +57,14 @@ QByteArray palettedPng(bool alpha)
     image.fill(0);
     image.setPixel(3, 3, 1);
     return encoded(image, "png");
+}
+
+// Lossy (VP8 / VP8X) or, at quality 100, lossless (VP8L).
+QByteArray webp(bool alpha, int quality = -1)
+{
+    QImage image(31, 21, alpha ? QImage::Format_ARGB32 : QImage::Format_RGB32);
+    image.fill(alpha ? QColor(0, 0, 255, 100) : QColor(0, 0, 255));
+    return encoded(image, "webp", quality);
 }
 
 QByteArray opaqueJpeg()
@@ -86,9 +94,10 @@ struct Decoded
     QSize size;
     QImage::Format format = QImage::Format_Invalid;
     int frames = 0;
+    bool alpha = false;
     bool operator==(const Decoded& other) const
     {
-        return size == other.size && format == other.format && frames == other.frames;
+        return size == other.size && format == other.format && frames == other.frames && alpha == other.alpha;
     }
 };
 
@@ -98,7 +107,7 @@ Decoded decode(const QByteArray& bytes)
     buffer.setData(bytes);
     QImageReader reader(&buffer);
     const QImage first = reader.read();
-    return { first.size(), first.format(), qMax(1, reader.imageCount()) };
+    return { first.size(), first.format(), qMax(1, reader.imageCount()), first.hasAlphaChannel() };
 }
 
 // Serves /new.png and redirects /old.png to it.
@@ -166,6 +175,10 @@ private slots:
             { dataUrl("image/png", palettedPng(false)), palettedPng(false) },
             { dataUrl("image/png", palettedPng(true)), palettedPng(true) },
             { dataUrl("image/gif", transparentGif()), transparentGif() },
+            { dataUrl("image/webp", webp(false)), webp(false) },
+            { dataUrl("image/webp", webp(true)), webp(true) },
+            { dataUrl("image/webp", webp(false, 100)), webp(false, 100) },
+            { dataUrl("image/webp", webp(true, 100)), webp(true, 100) },
             { dataUrl("image/jpeg", opaqueJpeg()), opaqueJpeg() },
             { dataUrl("image/gif", AnimatedGif), AnimatedGif },
             { dataUrl("application/json", "{\"price\": 1.25}"), "{\"price\": 1.25}" },
@@ -222,17 +235,17 @@ private slots:
             if (url.toString().startsWith(QLatin1String("data:image"))) {
                 const Decoded original = decode(bytes);
                 const Decoded replayed = decode(placeholder);
+                auto describe = [](const Decoded& d) {
+                    return QStringLiteral("%1x%2 fmt %3 frames %4 alpha %5")
+                        .arg(d.size.width())
+                        .arg(d.size.height())
+                        .arg(int(d.format))
+                        .arg(d.frames)
+                        .arg(d.alpha);
+                };
                 QVERIFY2(replayed == original,
-                    qPrintable(QStringLiteral("%1: %2x%3 fmt %4 frames %5, original %6x%7 fmt %8 frames %9")
-                                   .arg(url.toString().left(20))
-                                   .arg(replayed.size.width())
-                                   .arg(replayed.size.height())
-                                   .arg(int(replayed.format))
-                                   .arg(replayed.frames)
-                                   .arg(original.size.width())
-                                   .arg(original.size.height())
-                                   .arg(int(original.format))
-                                   .arg(original.frames)));
+                    qPrintable(url.toString().left(20) + QStringLiteral(": ") + describe(replayed)
+                        + QStringLiteral(", original ") + describe(original)));
             } else {
                 QCOMPARE(placeholder.size(), bytes.size());
                 QCOMPARE(served->header(QNetworkRequest::ContentTypeHeader).toString(),
@@ -278,6 +291,24 @@ private slots:
         QCOMPARE(drained, pngWithAlpha());
         QCOMPARE(recorder.count(), 0);
         reply->deleteLater();
+    }
+
+    // Format 1.0 recordings keyed media by the plain key; they still replay.
+    void formatOneZeroKeysStillMatch()
+    {
+        QFile index(m_dir.filePath("index.jsonl"));
+        QVERIFY(index.open(QIODevice::WriteOnly));
+        const QUrl url("https://localhost:5000/messages/images?messageId=0x1");
+        index.write(QJsonDocument(QJsonObject { { "key", mediaKey(url) }, { "contentType", "image/png" },
+                                      { "size", 100 }, { "status", 200 }, { "format", "png" }, { "width", 7 },
+                                      { "height", 5 }, { "pixelFormat", int(QImage::Format_ARGB32) } })
+                        .toJson(QJsonDocument::Compact)
+            + '\n');
+        index.close();
+        MediaLibrary library(m_dir.path());
+        std::unique_ptr<QNetworkReply> served(library.reply(QNetworkRequest(url), nullptr));
+        QVERIFY(served);
+        QCOMPARE(decode(readAll(served.get())).size, QSize(7, 5));
     }
 
     void bytesModeServesTheOriginals()
