@@ -1316,23 +1316,28 @@ MOBILE_REPLAY_BUNDLE_IDENTIFIER ?= app.status.mobile.replay
 MOBILE_APK_DIR := mobile/bin/android/qt6
 # MOBILE_REPLAY_PROFILE=release: non-debuggable, profileable builds (pr-style record side,
 # release replay), for memory numbers comparable with release builds (debuggable packages carry
-# 14-26 MB of extra ART). Needs the STATUS_APP_KEYSTORE_* signing variables.
+# 14-26 MB of extra ART). Always signed with the Android debug keystore, never the production
+# one, whatever STATUS_APP_KEYSTORE_* says.
 MOBILE_REPLAY_PROFILE ?= debug
+MOBILE_REPLAY_DEBUG_KEYSTORE ?= $(HOME)/.android/debug.keystore
 ifeq ($(MOBILE_REPLAY_PROFILE),release)
 MOBILE_REPLAY_BUILD := DEBUG=0 GRADLE_TARGETS=assembleRelease
+MOBILE_REPLAY_SIGNING := STATUS_APP_KEYSTORE_PATH="$(MOBILE_REPLAY_DEBUG_KEYSTORE)" \
+	STATUS_APP_KEYSTORE_PASSWORD=android STATUS_APP_KEY_ALIAS=androiddebugkey STATUS_APP_KEY_PASSWORD=android
 MOBILE_RECORD_VARIANT := BUILD_VARIANT=pr
-MOBILE_RECORD_APK := StatusPR.apk
+MOBILE_RECORD_APK := StatusPRRecord.apk
 MOBILE_PKG_SUFFIX :=
 else
 MOBILE_REPLAY_BUILD := DEBUG=1 GRADLE_TARGETS=assembleDebug
 MOBILE_RECORD_VARIANT :=
-MOBILE_RECORD_APK := Status.apk
+MOBILE_RECORD_APK := StatusRecord.apk
 MOBILE_PKG_SUFFIX := .debug
+MOBILE_REPLAY_SIGNING :=
 endif
 
 mobile-record-run: USE_SYSTEM_NIM=1
 mobile-record-run: qt-pkgconfig | deps-common
-	$(MAKE) -C mobile all $(MOBILE_REPLAY_BUILD) $(MOBILE_RECORD_VARIANT) RECORDER=1 \
+	$(MOBILE_REPLAY_SIGNING) $(MAKE) -C mobile all $(MOBILE_REPLAY_BUILD) $(MOBILE_RECORD_VARIANT) RECORDER=1 \
 		BUNDLE_IDENTIFIER=$(MOBILE_RECORD_BUNDLE_IDENTIFIER)
 	APK="$(MOBILE_APK_DIR)/$(MOBILE_RECORD_APK)" \
 	PKG="$(MOBILE_RECORD_BUNDLE_IDENTIFIER)$(MOBILE_PKG_SUFFIX)" \
@@ -1343,7 +1348,7 @@ mobile-replay-run: qt-pkgconfig
 ifndef RECORDING
 	$(error RECORDING=<recording dir> is required)
 endif
-	$(MAKE) -C mobile all $(MOBILE_REPLAY_BUILD) BUILD_VARIANT=replay \
+	$(MOBILE_REPLAY_SIGNING) $(MAKE) -C mobile all $(MOBILE_REPLAY_BUILD) BUILD_VARIANT=replay \
 		BUNDLE_IDENTIFIER=$(MOBILE_REPLAY_BUNDLE_IDENTIFIER)
 	APK="$(MOBILE_APK_DIR)/StatusReplay.apk" \
 	PKG="$(MOBILE_REPLAY_BUNDLE_IDENTIFIER)$(MOBILE_PKG_SUFFIX)" \

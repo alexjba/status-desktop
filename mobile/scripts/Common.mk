@@ -42,6 +42,12 @@ TARGET_PREFIX := StatusReplay
 else
 TARGET_PREFIX := Status
 endif
+# Recorder builds (docs/replay-mode.md) get their own output: they never pass for a normal build.
+ifeq ($(RECORDER),1)
+ifneq ($(BUILD_VARIANT),replay)
+TARGET_PREFIX := $(TARGET_PREFIX)Record
+endif
+endif
 
 # Default package type for Android builds
 PACKAGE_TYPE ?= apk

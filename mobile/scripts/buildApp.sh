@@ -159,23 +159,39 @@ if [[ "${OS}" == "android" ]]; then
   echo "APK outputs:"
   find build/outputs/apk -name '*.apk' 2>/dev/null || echo "No APKs found"
 
+  # A normal build must never ship the recorder (docs/replay-mode.md).
+  if [[ "$STATUS_RECORDER" != 1 && "$BUILD_VARIANT" != "replay" ]]; then
+    for apk in "$APK_OUT" "$APK_OUT_UNSIGNED"; do
+      if [[ -f "$apk" ]] && unzip -l "$apk" | grep -q libStatusReplay; then
+        echo "Error: libStatusReplay packaged in a build without RECORDER=1"; exit 1
+      fi
+    done
+    if grep -rqs "RECORDER = true" build/generated/source/buildConfig; then
+      echo "Error: BuildConfig.RECORDER is true in a build without RECORDER=1"; exit 1
+    fi
+  fi
+
+  # Recorder builds get their own artifact name, so they never pass for a normal build.
+  ARTIFACT_NAME="$OUTPUT_NAME"
+  [[ "$STATUS_RECORDER" == 1 ]] && ARTIFACT_NAME="${OUTPUT_NAME}Record"
+
   # Copy whichever artifacts were built
   BUILT=""
   if [[ -f "$APK_OUT" ]]; then
-    cp "$APK_OUT" "$BIN_DIR/${OUTPUT_NAME}.apk"
-    BUILT="$BIN_DIR/${OUTPUT_NAME}.apk"
+    cp "$APK_OUT" "$BIN_DIR/${ARTIFACT_NAME}.apk"
+    BUILT="$BIN_DIR/${ARTIFACT_NAME}.apk"
   elif [[ -f "$APK_OUT_UNSIGNED" ]]; then
-    cp "$APK_OUT_UNSIGNED" "$BIN_DIR/${OUTPUT_NAME}.apk"
-    BUILT="$BIN_DIR/${OUTPUT_NAME}.apk"
+    cp "$APK_OUT_UNSIGNED" "$BIN_DIR/${ARTIFACT_NAME}.apk"
+    BUILT="$BIN_DIR/${ARTIFACT_NAME}.apk"
   fi
   if [[ -f "$AAB_OUT" ]]; then
-    cp "$AAB_OUT" "$BIN_DIR/${OUTPUT_NAME}.aab"
-    BUILT="$BUILT $BIN_DIR/${OUTPUT_NAME}.aab"
+    cp "$AAB_OUT" "$BIN_DIR/${ARTIFACT_NAME}.aab"
+    BUILT="$BUILT $BIN_DIR/${ARTIFACT_NAME}.aab"
   fi
   # R8 mapping for retracing obfuscated stack traces; archive it with the APK.
   MAPPING_OUT="build/outputs/mapping/${BUILD_TYPE}/mapping.txt"
   if [[ -f "$MAPPING_OUT" ]]; then
-    cp "$MAPPING_OUT" "$BIN_DIR/${OUTPUT_NAME}-mapping.txt"
+    cp "$MAPPING_OUT" "$BIN_DIR/${ARTIFACT_NAME}-mapping.txt"
   fi
 
   [[ -z "$BUILT" ]] && { echo "Error: No artifacts produced"; exit 1; }
