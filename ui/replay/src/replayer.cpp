@@ -137,6 +137,8 @@ bool ReplayerPrivate::open(const QString& directory, QString* error)
         QByteArray line = timeline.readLine().trimmed();
         if (line.isEmpty())
             continue;
+        // readLine() hands back its 32 KB read buffer: without this every line keeps it.
+        line.squeeze();
         if (line.contains("\"k\":\"call\"")) {
             const QJsonObject event = QJsonDocument::fromJson(line).object();
             recordedCalls[{ event["o"].toInt(), event["m"].toString().toLatin1() }].append(
