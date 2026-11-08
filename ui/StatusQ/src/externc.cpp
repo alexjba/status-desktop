@@ -8,10 +8,13 @@
 #include <QJsonDocument>
 #include <QGuiApplication>
 #include <QHash>
+#include <QNetworkReply>
 #include <QPointer>
 #include <QQmlApplicationEngine>
 #include <QQmlIncubator>
 #include <QTimerEvent>
+
+#include <atomic>
 
 #include <StatusQ/backgroundgraphicsrelease.h>
 #include <StatusQ/networkaccessfactory.h>
@@ -274,6 +277,24 @@ Q_DECL_EXPORT bool statusq_incubationControllerSettings(void* engine, int* msPer
     *gentlePeriodMs = controller->gentlePeriodMs();
     *boostGapMs = controller->boostGapMs();
     return true;
+}
+
+// Record/replay network hooks (docs/replay-mode.md); see Status::setNetworkReplyTap.
+static std::atomic<void (*)(void*)> s_cReplyTap { nullptr };
+static std::atomic<void* (*)(const void*, void*)> s_cRequestInterceptor { nullptr };
+
+Q_DECL_EXPORT void statusq_setNetworkReplyTap(void (*tap)(void* reply)) {
+    s_cReplyTap = tap;
+    Status::setNetworkReplyTap(tap ? [](QNetworkReply* reply) { s_cReplyTap.load()(reply); } : nullptr);
+}
+
+Q_DECL_EXPORT void statusq_setNetworkRequestInterceptor(void* (*interceptor)(const void* request, void* parent)) {
+    s_cRequestInterceptor = interceptor;
+    Status::setNetworkRequestInterceptor(
+        interceptor ? [](const QNetworkRequest& request, QObject* parent) {
+            return static_cast<QNetworkReply*>(s_cRequestInterceptor.load()(&request, parent));
+        }
+                    : nullptr);
 }
 
 Q_DECL_EXPORT bool statusq_networkAccessFactorySettings(void* engine, qint64* maxCacheSize) {

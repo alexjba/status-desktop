@@ -1,4 +1,5 @@
 #include <StatusReplay/fingerprint.h>
+#include <StatusReplay/media.h>
 #include <StatusReplay/recorder.h>
 #include <StatusReplay/scriptrunner.h>
 #include <StatusReplay/statusreplay.h>
@@ -10,6 +11,7 @@
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
+#include <QNetworkReply>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QStandardPaths>
@@ -20,9 +22,14 @@
 
 using StatusReplay::Recorder;
 
+#ifdef STATUSREPLAY_WITH_STATUSQ
+extern "C" void statusq_setNetworkReplyTap(void (*tap)(void* reply));
+#endif
+
 namespace {
 
 Recorder* g_recorder = nullptr;
+StatusReplay::MediaRecorder* g_media = nullptr;
 
 QString recordingDirectory()
 {
@@ -150,6 +157,15 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
 
     auto engine = static_cast<QQmlEngine*>(enginePtr);
     recorder->setEngine(engine);
+
+#ifdef STATUSREPLAY_WITH_STATUSQ
+    // Images and other responses the app loads (status-go's media server included), so replay
+    // can serve them; STATUS_RECORD_MEDIA=0 leaves them out.
+    if (qEnvironmentVariable("STATUS_RECORD_MEDIA") != QLatin1String("0")) {
+        g_media = new StatusReplay::MediaRecorder(recorder->directory() + QStringLiteral("/media"));
+        statusq_setNetworkReplyTap([](void* reply) { g_media->observe(static_cast<QNetworkReply*>(reply)); });
+    }
+#endif
 
     if (auto appEngine = qobject_cast<QQmlApplicationEngine*>(engine)) {
         QObject::connect(appEngine, &QQmlApplicationEngine::objectCreated, appEngine,

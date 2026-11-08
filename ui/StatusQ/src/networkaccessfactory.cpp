@@ -8,6 +8,7 @@
 #include <QQmlEngine>
 #include <QUrl>
 
+#include <atomic>
 #include <memory>
 
 #ifdef Q_OS_ANDROID
@@ -17,6 +18,9 @@
 namespace Status {
 
 namespace {
+
+std::atomic<NetworkReplyTap> s_replyTap { nullptr };
+std::atomic<NetworkRequestInterceptor> s_requestInterceptor { nullptr };
 
 // Feeds HttpStats for the QML-layer HTTP statistics screen.
 class CountingNetworkAccessManager : public QNetworkAccessManager
@@ -28,6 +32,11 @@ protected:
     QNetworkReply* createRequest(Operation op, const QNetworkRequest& request,
                                  QIODevice* outgoingData) override
     {
+        if (const auto interceptor = s_requestInterceptor.load(); interceptor && op == GetOperation) {
+            if (auto* answered = interceptor(request, this))
+                return answered;
+        }
+
         QNetworkReply* reply = nullptr;
 #ifdef Q_OS_ANDROID
         if (op == GetOperation && request.url().scheme() == QLatin1String("https"))
@@ -36,6 +45,8 @@ protected:
         if (!reply)
             reply = QNetworkAccessManager::createRequest(op, withAcceptedImageFormats(request),
                                                          outgoingData);
+        if (const auto tap = s_replyTap.load())
+            tap(reply);
 
         const QUrl url = request.url();
         if (!url.host().isEmpty()) {
@@ -71,6 +82,16 @@ protected:
 };
 
 } // namespace
+
+void setNetworkReplyTap(NetworkReplyTap tap)
+{
+    s_replyTap = tap;
+}
+
+void setNetworkRequestInterceptor(NetworkRequestInterceptor interceptor)
+{
+    s_requestInterceptor = interceptor;
+}
 
 QNetworkRequest withAcceptedImageFormats(const QNetworkRequest& request)
 {

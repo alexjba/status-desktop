@@ -1,4 +1,5 @@
 #include <StatusReplay/fingerprint.h>
+#include <StatusReplay/media.h>
 #include <StatusReplay/player.h>
 #include <StatusReplay/replayapp.h>
 #include <StatusReplay/replayer.h>
@@ -13,6 +14,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QKeyEvent>
+#include <QNetworkRequest>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QStandardPaths>
@@ -22,6 +24,8 @@
 #include <utility>
 
 using namespace StatusReplay;
+
+extern "C" void statusq_setNetworkRequestInterceptor(void* (*interceptor)(const void* request, void* parent));
 
 namespace {
 
@@ -172,6 +176,16 @@ extern "C" int statusreplay_main(int argc, char** argv)
     const QString temp = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/status-replay");
     QQmlApplicationEngine engine;
     prepareEngine(&engine, manifest, temp);
+    // Recorded responses answer the app's requests; anything not recorded goes to the network.
+    static MediaLibrary* media = nullptr;
+    MediaLibrary library(QDir(recording).filePath(QStringLiteral("media")));
+    if (library.size() > 0) {
+        media = &library;
+        statusq_setNetworkRequestInterceptor([](const void* request, void* parent) -> void* {
+            return media->reply(*static_cast<const QNetworkRequest*>(request), static_cast<QObject*>(parent));
+        });
+        qInfo() << "StatusReplay:" << library.size() << "recorded network responses";
+    }
 
     QQmlContext* root = engine.rootContext();
     QObject::connect(replayer.get(), &Replayer::contextPropertyChanged, root,
@@ -248,5 +262,7 @@ extern "C" int statusreplay_main(int argc, char** argv)
     }
 
     engine.load(QUrl(QStringLiteral("qrc:///main.qml")));
-    return app.exec();
+    const int result = app.exec();
+    statusq_setNetworkRequestInterceptor(nullptr);
+    return result;
 }

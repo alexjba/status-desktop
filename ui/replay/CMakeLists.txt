@@ -16,10 +16,11 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 
 set(QT_NO_PRIVATE_MODULE_WARNING ON)
-find_package(Qt6 6.11 COMPONENTS Core CorePrivate Gui Qml QmlPrivate Quick REQUIRED)
+find_package(Qt6 6.11 COMPONENTS Core CorePrivate Gui Network Qml QmlPrivate Quick REQUIRED)
 
 add_library(StatusReplay SHARED
     include/StatusReplay/fingerprint.h
+    include/StatusReplay/media.h
     include/StatusReplay/player.h
     include/StatusReplay/recorder.h
     include/StatusReplay/replayer.h
@@ -27,6 +28,7 @@ add_library(StatusReplay SHARED
     include/StatusReplay/statusreplay.h
     src/capi.cpp
     src/fingerprint.cpp
+    src/media.cpp
     src/player.cpp
     src/format.h
     src/recorder.cpp
@@ -42,7 +44,7 @@ add_library(StatusReplay SHARED
 
 target_include_directories(StatusReplay PUBLIC include PRIVATE src)
 target_link_libraries(StatusReplay
-    PUBLIC Qt::Core Qt::Gui Qt::Qml Qt::Quick
+    PUBLIC Qt::Core Qt::Gui Qt::Network Qt::Qml Qt::Quick
     PRIVATE Qt::CorePrivate Qt::QmlPrivate)
 target_compile_definitions(StatusReplay PRIVATE STATUSREPLAY_LIBRARY)
 

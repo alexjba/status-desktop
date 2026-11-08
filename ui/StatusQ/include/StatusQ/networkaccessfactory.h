@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QQmlNetworkAccessManagerFactory>
 #include <QString>
@@ -57,5 +58,12 @@ private:
  */
 void setupNetworkAccessManagerFactory(QQmlEngine* engine, const QString& cacheDir,
                                       qint64 maxCacheSize);
+
+// Record/replay (docs/replay-mode.md): the tap sees every reply the app's managers create;
+// the interceptor may answer a GET itself (return null to let the network answer).
+using NetworkReplyTap = void (*)(QNetworkReply* reply);
+using NetworkRequestInterceptor = QNetworkReply* (*)(const QNetworkRequest& request, QObject* parent);
+void setNetworkReplyTap(NetworkReplyTap tap);
+void setNetworkRequestInterceptor(NetworkRequestInterceptor interceptor);
 
 } // namespace Status

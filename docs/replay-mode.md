@@ -30,7 +30,7 @@ What Nim hands to QML, and how each kind is covered.
 | Nim-set process state | app name/org/domain/version, desktop file name, `QSG_RENDER_LOOP`, `QSG_ATLAS_*`, HDPI/ui-scale, rcc registration, import paths, NAM factory + disk cache, boosted incubation controller, background graphics release, webengine init, `statusq_registerQmlTypes`, monitoring, message handler, extra CA cert | `src/nim_status_client.nim` startup | replay's own C++ setup + setup fingerprint |
 | QML module import dirs added by Nim libs | NimQtCamera, NimQrScan (`qmlImportDir`, compile-time source path) | `shimQmlInstall` | engine `importPathList()` in the fingerprint |
 | Main document | `qrc:///main.qml` | `app_controller.nim` | same URL |
-| Images from status-go media server | every avatar, sticker, community image, chat image | `https://localhost:<port>/...` through the StatusQ NAM factory | media capture (phase 3b) |
+| Images from status-go media server | every avatar, sticker, community image, chat image | `https://localhost:<port>/...` through the StatusQ NAM factory | media capture: StatusQ reply tap / request interceptor |
 
 Not present (checked): image providers registered from Nim (StatusQ only reads them),
 `qmlRegisterType`/singletons from Nim, Nim-implemented QML types, Nim-created Qt C++
@@ -166,6 +166,16 @@ coverage gap.
 `RECORDING=<dir>` picks the output (default `Status/recordings/<timestamp>`);
 `RECORD_SCRIPT=none` records without driving the UI.
 
+### Media
+
+StatusQ's network managers expose two hooks (`statusq_setNetworkReplyTap`,
+`statusq_setNetworkRequestInterceptor`). The recorder taps every reply and keeps the body
+of each successful GET (peeked at when the reply finishes, so QML still reads all of it)
+in `media/`, keyed by URL; status-go's media server URLs (`localhost`/`127.0.0.1`, a new
+port every run) are keyed without host and port. `STATUS_RECORD_MEDIA=0` leaves media out.
+Replay answers requests it has a recorded response for and lets the rest go to the
+network.
+
 ### Format (directory, versioned, diffable)
 
 ```
@@ -175,7 +185,7 @@ coverage gap.
   schemas/<hash>.json
   snapshots/<moment>.json   root context + every live object (props, model rows)
   timeline.jsonl     one event per line, {"seq","t","k",...}
-  media/             phase 3b: captured media-server responses + index
+  media/             recorded GET responses (index.jsonl + one file each), served in replay
 ```
 
 Values are JSON, untagged when the declared type is concrete (string, bool, int,
@@ -332,6 +342,6 @@ and service in `StatusQtActivity` (`BuildConfig.REPLAY_VARIANT`).
   replay setup against the committed fixture.
 - **Private Qt API** (`QMetaObjectBuilder`, `QQmlContextData`) can change between Qt
   minors; both are confined to `libStatusReplay` and covered by the host tests.
-- **Media**: before phase 3b every status-go-served image is missing in replay, which
-  lowers image memory and texture use versus a real run; numbers taken before 3b must
-  state it.
+- **Media**: only responses the recorded run actually loaded are served; anything else
+  goes to the network (or fails offline), which can make image memory differ from a real
+  run.
