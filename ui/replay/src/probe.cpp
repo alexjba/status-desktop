@@ -9,6 +9,8 @@
 #include <QQmlEngine>
 #include <QSet>
 #include <QTimer>
+#include <QElapsedTimer>
+#include <QQmlComponent>
 #include <QFont>
 #include <QGuiApplication>
 #include <QQmlContext>
@@ -136,6 +138,26 @@ void scanGlyphs(int index, const QString& directory)
     out.write(QStringLiteral("# scanned %1 strings in %2 objects\n").arg(scanned).arg(seen.size()).toUtf8());
 }
 
+// [not for merge] first-load time of types loaded by URL: STATUS_REPLAY_PROBE_TYPELOAD="<s>;<url>,<url>..."
+void typeLoad(QQmlEngine* engine, const QStringList& urls, const QString& directory)
+{
+    QFile out(QDir(directory).filePath(QStringLiteral("probe-typeload.txt")));
+    if (!out.open(QIODevice::Append))
+        return;
+    QStringList order = urls;
+    if (qEnvironmentVariableIsSet("STATUS_REPLAY_PROBE_TYPELOAD_REVERSE"))
+        std::reverse(order.begin(), order.end());
+    for (const QString& url : order) {
+        QElapsedTimer timer;
+        timer.start();
+        QQmlComponent component(engine, QUrl(url), QQmlComponent::PreferSynchronous);
+        const qint64 ns = timer.nsecsElapsed();
+        out.write(QStringLiteral("%1\t%2\t%3\n").arg(ns / 1e6, 0, 'f', 1).arg(url)
+                      .arg(component.isError() ? component.errorString().simplified() : QStringLiteral("ok"))
+                      .toUtf8());
+    }
+}
+
 void dump(QQmlEngine* engine, int index, const QString& directory)
 {
     auto v4 = engine->handle();
@@ -219,6 +241,15 @@ void startProbe(QQmlEngine* engine, const QString& seconds, const QString& direc
 {
     const QStringList times = seconds.split(QLatin1Char(','), Qt::SkipEmptyParts);
     QPointer<QQmlEngine> guarded(engine);
+    const QString typeLoadSpec = qEnvironmentVariable("STATUS_REPLAY_PROBE_TYPELOAD");
+    if (!typeLoadSpec.isEmpty()) {
+        const int at = typeLoadSpec.section(QLatin1Char(';'), 0, 0).toInt();
+        const QStringList urls = typeLoadSpec.section(QLatin1Char(';'), 1).split(QLatin1Char(','), Qt::SkipEmptyParts);
+        QTimer::singleShot(at * 1000, qApp, [guarded, urls, directory] {
+            if (guarded)
+                typeLoad(guarded, urls, directory);
+        });
+    }
     for (int i = 0; i < times.size(); ++i) {
         QTimer::singleShot(times[i].toInt() * 1000, qApp, [guarded, i, directory] {
             if (guarded)
