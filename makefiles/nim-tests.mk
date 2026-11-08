@@ -127,3 +127,7 @@ tests-nim-linux: export BENCH_ASSERTS := 0
 tests-nim-linux: export BENCH_QUICK := 1
 tests-nim-linux:
 	+ "$(MAKE)" --no-print-directory -j1 NIM_TESTS_SHARED_CACHE=1 tests-nim benches-nim
+
+# Loads the built libStatusReplay to check record mode only loads it on demand.
+nim-test-run/test/nim/replay_recorder_test.nim: export STATUS_REPLAY_TEST_LIB := $(abspath $(STATUSREPLAY_LIB))
+nim-test-run/test/nim/replay_recorder_test.nim: | statusreplay

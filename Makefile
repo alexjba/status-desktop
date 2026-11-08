@@ -61,6 +61,11 @@ export NIMBLE_COMMIT := v0.26.1
 	storybook-build \
 	run-storybook \
 	run-storybook-tests \
+	statusreplay \
+	statusreplay-clean \
+	record-run \
+	replay-run \
+	run-replay-tests \
 	update \
 	mobile-run \
 	mobile-build \
@@ -515,6 +520,67 @@ run-storybook-pages-validator: storybook-build
 storybook-clean:
 	echo -e "\033[92mCleaning:\033[39m Storybook"
 	rm -rf $(STORYBOOK_BUILD_PATH)
+
+##
+##	Record / replay (docs/replay-mode.md)
+##
+
+STATUSREPLAY_SOURCE_PATH := ui/replay
+STATUSREPLAY_BUILD_PATH := ui/replay/build/Qt$(QT_VERSION)
+STATUSREPLAY_TESTS_BUILD_PATH := ui/replay/build/Qt$(QT_VERSION)-tests
+STATUSREPLAY_LIB := $(STATUSREPLAY_BUILD_PATH)/lib/libStatusReplay.$(LIB_EXT)
+STATUSREPLAY_BINARY := $(STATUSREPLAY_BUILD_PATH)/bin/status-replay
+REPLAY_MODE ?= realtime
+
+statusreplay: | statusq
+	echo -e "\033[92mBuilding:\033[39m StatusReplay"
+	cmake \
+		-DCMAKE_BUILD_TYPE=$(COMMON_CMAKE_BUILD_TYPE) \
+		-DSTATUSREPLAY_BUILD_TESTS=OFF \
+		-DSTATUSQ_LIBRARY=$(abspath $(STATUSQ_LIB_PATH))/libStatusQ.$(LIB_EXT) \
+		$(COMMON_CMAKE_CONFIG_PARAMS) \
+		-B $(STATUSREPLAY_BUILD_PATH) \
+		-S $(STATUSREPLAY_SOURCE_PATH) \
+		-Wno-dev \
+		$(HANDLE_OUTPUT)
+	cmake --build $(STATUSREPLAY_BUILD_PATH) --config $(COMMON_CMAKE_BUILD_TYPE) $(HANDLE_OUTPUT)
+
+# The app dlopens libStatusReplay only because STATUS_RECORD is set; RECORDING picks the directory.
+record-run: statusreplay
+	echo -e "\033[92mRecording:\033[39m $(or $(RECORDING),Status/recordings/<timestamp>)"
+	STATUS_RECORD="$(if $(RECORDING),$(abspath $(RECORDING)),1)" \
+	STATUS_REPLAY_LIB="$(abspath $(STATUSREPLAY_LIB))" \
+	STATUS_RECORD_APP_COMMIT="$(shell git rev-parse HEAD)" \
+		$(MAKE) run
+
+replay-run: statusreplay rcc
+ifndef RECORDING
+	$(error RECORDING=<recording dir> is required)
+endif
+	echo -e "\033[92mReplaying:\033[39m $(RECORDING)"
+	STATUS_REPLAY_RCC="$(abspath $(UI_RESOURCES))" \
+	DYLD_LIBRARY_PATH="$(STATUSQ_LIB_PATH)":"$(EXTRA_LIBS_PATH)":"$(DYLD_LIBRARY_PATH)" \
+	LD_LIBRARY_PATH="$(QT_LIBDIR)":"$(STATUSQ_LIB_PATH)":"$(EXTRA_LIBS_PATH)":"$(LD_LIBRARY_PATH)" \
+		$(NIXGL_WRAPPER) $(STATUSREPLAY_BINARY) --recording "$(abspath $(RECORDING))" \
+		$(if $(REPLAY_MOMENT),--moment "$(REPLAY_MOMENT)") --mode $(REPLAY_MODE) $(ARGS)
+
+run-replay-tests: | statusq
+	echo -e "\033[92mRunning:\033[39m StatusReplay Tests"
+	cmake \
+		-DCMAKE_BUILD_TYPE=$(COMMON_CMAKE_BUILD_TYPE) \
+		-DSTATUSREPLAY_BUILD_TESTS=ON \
+		-DSTATUSQ_LIBRARY=$(abspath $(STATUSQ_LIB_PATH))/libStatusQ.$(LIB_EXT) \
+		$(COMMON_CMAKE_CONFIG_PARAMS) \
+		-B $(STATUSREPLAY_TESTS_BUILD_PATH) \
+		-S $(STATUSREPLAY_SOURCE_PATH) \
+		-Wno-dev \
+		$(HANDLE_OUTPUT)
+	cmake --build $(STATUSREPLAY_TESTS_BUILD_PATH) --config $(COMMON_CMAKE_BUILD_TYPE) $(HANDLE_OUTPUT)
+	QT_QPA_PLATFORM=offscreen ctest -V --test-dir $(STATUSREPLAY_TESTS_BUILD_PATH) ${ARGS}
+
+statusreplay-clean:
+	echo -e "\033[92mCleaning:\033[39m StatusReplay"
+	rm -rf $(STATUSREPLAY_BUILD_PATH) $(STATUSREPLAY_TESTS_BUILD_PATH)
 
 ##
 ##	status-go

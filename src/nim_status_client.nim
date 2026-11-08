@@ -10,6 +10,7 @@ import app/core/main
 import constants as main_constants
 import statusq_bridge
 import app/core/signal_handler
+import app/core/replay_recorder
 import app/core/custom_urls/url_scheme_event
 import app/core/intake/pending_intake_slot
 import app/global/single_instance
@@ -361,6 +362,10 @@ proc mainProc() =
     const qmlDebugPort {.intdefine: "qmlDebugPort".} = 49152
     discard QQmlDebuggingEnabler.startTcpDebugServer(qmlDebugPort.cint,
       QQmlDebuggingEnablerStartModeEnum.WaitForClient)
+
+  # Before anything hands objects to QML, so the recording sees every context property.
+  if recordingRequested():
+    startRecording(singletonInstance.engine.vptr)
 
   let singleInstance = newSingleInstance(($keccak256.digest(DATADIR))[0..31], openUri)
   let urlSchemeEvent = newUrlSchemeEvent()

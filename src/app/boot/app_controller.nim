@@ -46,7 +46,7 @@ import app/global/global_singleton
 import app/global/app_signals
 import app/global/log_cleanup
 import app/global/log_cleanup_tasks
-import app/core/[main]
+import app/core/[main, replay_recorder]
 
 import constants as main_constants
 
@@ -376,6 +376,7 @@ proc onboardingDidLoad*(self: AppController) =
   self.initializeQmlContext()
 
 proc mainDidLoad*(self: AppController) =
+  markRecordingMoment("loggedIn")
   if not self.onboardingModule.isNil:
     self.runPostOnboardingTasks()
 
