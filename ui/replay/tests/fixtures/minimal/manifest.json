@@ -1,0 +1,74 @@
+{
+    "app": {
+        "commit": "",
+        "name": "Status Desktop",
+        "version": ""
+    },
+    "events": 8,
+    "fingerprint": {
+        "app": {
+            "desktopFileName": "nim-status",
+            "domain": "status.app",
+            "name": "Status Desktop",
+            "organization": "Status"
+        },
+        "engine": {
+            "contextProperties": [
+                "fixtureView",
+                "production"
+            ],
+            "importPaths": [
+                "$ABS/nim-qrscan/qml",
+                "$ABS/nim-qtcamera/qml",
+                "qrc:/./app",
+                "qrc:/./imports",
+                "qrc:/",
+                "$APP",
+                "qrc:/qt-project.org/imports",
+                "qrc:/qt/qml",
+                "$QT_QML"
+            ],
+            "incubationController": "27BoostedIncubationController",
+            "mainQml": true,
+            "networkAccessManagerFactory": "N6Status20NetworkAccessFactoryE"
+        },
+        "env": {
+            "QSG_RENDER_LOOP": "threaded",
+            "QTWEBENGINE_CHROMIUM_FLAGS": "--test-crs-constraints=86a1ecba089c4a8d3bbe2734c612ba341d813e043cf9e8a862cd5c57a36bbe6b:maxversionexclusive=0"
+        },
+        "rendering": {
+            "devicePixelRatio": 1,
+            "font": ".AppleSystemUIFont",
+            "fontPointSize": 13,
+            "graphicsApi": 6,
+            "sceneGraphBackend": ""
+        }
+    },
+    "formatVersion": "1.0",
+    "gaps": [],
+    "importPaths": [
+        "vendor/nim-qrscan/qml",
+        "vendor/nim-qtcamera/qml",
+        "qrc:/./app",
+        "qrc:/./imports",
+        "qrc:/",
+        "qrc:/qt-project.org/imports",
+        "qrc:/qt/qml"
+    ],
+    "moments": [
+        {
+            "name": "startup",
+            "q": 6,
+            "snapshot": "snapshots/startup.json",
+            "t": 60
+        }
+    ],
+    "platform": {
+        "abi": "arm64-little_endian-lp64",
+        "kernel": "25.6.0",
+        "os": "macos",
+        "osVersion": "26.6.2"
+    },
+    "qt": "6.11.1",
+    "startedAt": "2026-11-08T09:58:23Z"
+}

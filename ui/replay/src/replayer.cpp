@@ -282,6 +282,13 @@ void ReplayerPrivate::apply(const QJsonObject& event)
         for (int i = 0; i < values.size(); ++i)
             argv.append(types[i] == QMetaType::fromType<QVariant>() ? static_cast<void*>(&values[i]) : values[i].data());
         p->emitSignal(target, method, argv.data());
+    } else if (kind == QLatin1String("val")) {
+        // A value QML read that changed without a notify signal reaching QML first.
+        if (DynamicPart* p = target ? part(target) : nullptr) {
+            const int index = p->propertyIndex(event["p"].toString().toLatin1());
+            if (index >= 0)
+                p->setValue(index, decode(event["v"], QMetaType::fromName(p->schema().properties[index].type)));
+        }
     } else if (kind == QLatin1String("ins")) {
         if (auto model = dynamic_cast<ReplayModel*>(target))
             model->insertRowsAt(event["f"].toInt(), decodeRows(event["rows"].toArray()));

@@ -33,9 +33,51 @@ bool isSensitive(const QByteArray& name)
         QStringLiteral("password|passphrase|mnemonic|seedphrase|privatekey|secret"),
         QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression exact(
-        QStringLiteral("^(pin|puk|seed|newpin|newpuk|currentpin|pairingcode)$"), QRegularExpression::CaseInsensitiveOption);
+        QStringLiteral("^(seed|pairingcode)$|pin$|puk$"), QRegularExpression::CaseInsensitiveOption);
     const QString n = QString::fromLatin1(name);
     return contains.match(n).hasMatch() || exact.match(n).hasMatch();
+}
+
+QJsonValue redactJson(const QJsonValue& value);
+
+// Nim passes structured data as JSON strings (e.g. the login payload); redact inside them too.
+QJsonValue redactString(const QString& text)
+{
+    const QStringView trimmed = QStringView(text).trimmed();
+    if (trimmed.isEmpty() || (trimmed.front() != QLatin1Char('{') && trimmed.front() != QLatin1Char('[')))
+        return text;
+    QJsonParseError error;
+    const QJsonDocument doc = QJsonDocument::fromJson(text.toUtf8(), &error);
+    if (error.error != QJsonParseError::NoError)
+        return text;
+    const QJsonValue original = doc.isObject() ? QJsonValue(doc.object()) : QJsonValue(doc.array());
+    const QJsonValue redacted = redactJson(original);
+    // Untouched payloads keep their exact text so replayed slot arguments still match.
+    if (redacted == original)
+        return text;
+    const QJsonDocument out = redacted.isObject() ? QJsonDocument(redacted.toObject()) : QJsonDocument(redacted.toArray());
+    return QString::fromUtf8(out.toJson(QJsonDocument::Compact));
+}
+
+QJsonValue redactJson(const QJsonValue& value)
+{
+    if (value.isString())
+        return redactString(value.toString());
+    if (value.isArray()) {
+        QJsonArray result;
+        for (const auto& item : value.toArray())
+            result.append(redactJson(item));
+        return result;
+    }
+    if (!value.isObject())
+        return value;
+    QJsonObject result;
+    const QJsonObject object = value.toObject();
+    for (auto it = object.begin(); it != object.end(); ++it)
+        result.insert(it.key(),
+            isSensitive(it.key().toLatin1()) && !it.key().startsWith(QLatin1Char('$')) ? QJsonValue(Redacted)
+                                                                                     : redactJson(it.value()));
+    return result;
 }
 
 bool writeJson(const QString& path, const QJsonObject& json)
@@ -66,6 +108,8 @@ public:
     int idFor(QObject* object);
     const Schema& schemaFor(const QMetaObject* metaObject);
     QJsonObject state(QObject* object, const Schema& schema);
+    QJsonValue readValue(QObject* object, const QByteArray& name);
+    void propertyRead(QObject* object, const QMetaProperty& property, const void* storage);
     QJsonArray rows(QAbstractItemModel* model, int first, int last, const QList<int>& roles = {});
     QJsonValue encode(const QVariant& value, QMetaType declared);
     void writeEvent(QJsonObject event);
@@ -84,6 +128,10 @@ public:
     bool loaded = false;
 
     QHash<QObject*, int> ids;
+    // Only properties QML has read are read back by the recorder: Nim getters QML never
+    // calls may not be safe to call (e.g. before their module finished loading).
+    QHash<QObject*, QHash<QByteArray, QJsonValue>> readValues;
+    int selfReads = 0;
     QHash<int, QPointer<QObject>> objects;
     QList<int> order;
     QHash<const QMetaObject*, Schema> schemas;
@@ -138,7 +186,7 @@ const Schema& RecorderPrivate::schemaFor(const QMetaObject* metaObject)
 
 QJsonValue RecorderPrivate::encode(const QVariant& value, QMetaType declared)
 {
-    return ValueCodec::encode(value, declared, [this](QObject* o) { return idFor(o); });
+    return redactJson(ValueCodec::encode(value, declared, [this](QObject* o) { return idFor(o); }));
 }
 
 int RecorderPrivate::idFor(QObject* object)
@@ -162,18 +210,41 @@ int RecorderPrivate::idFor(QObject* object)
     return id;
 }
 
-QJsonObject RecorderPrivate::state(QObject* object, const Schema& schema)
+QJsonValue RecorderPrivate::readValue(QObject* object, const QByteArray& name)
+{
+    if (isSensitive(name))
+        return Redacted;
+    const QMetaObject* mo = object->metaObject();
+    const QMetaProperty property = mo->property(mo->indexOfProperty(name));
+    ++selfReads;
+    const QVariant value = property.read(object);
+    --selfReads;
+    const QJsonValue encoded = encode(value, property.metaType());
+    readValues[object].insert(name, encoded);
+    return encoded;
+}
+
+void RecorderPrivate::propertyRead(QObject* object, const QMetaProperty& property, const void* storage)
+{
+    if (selfReads > 0)
+        return;
+    const QByteArray name = property.name();
+    const QJsonValue encoded =
+        isSensitive(name) ? QJsonValue(Redacted) : encode(ValueCodec::read(storage, property.metaType()), property.metaType());
+    auto& values = readValues[object];
+    const auto known = values.constFind(name);
+    if (known != values.cend() && *known == encoded)
+        return;
+    values.insert(name, encoded);
+    writeEvent({ { "k", "val" }, { "o", ids.value(object) }, { "p", QString::fromLatin1(name) }, { "v", encoded } });
+}
+
+QJsonObject RecorderPrivate::state(QObject* object, const Schema&)
 {
     QJsonObject values;
-    const QMetaObject* mo = object->metaObject();
-    for (const auto& p : schema.properties) {
-        if (isSensitive(p.name)) {
-            values.insert(QString::fromLatin1(p.name), Redacted);
-            continue;
-        }
-        const QMetaProperty property = mo->property(mo->indexOfProperty(p.name));
-        values.insert(QString::fromLatin1(p.name), encode(property.read(object), property.metaType()));
-    }
+    const QList<QByteArray> names = readValues.value(object).keys();
+    for (const auto& name : names)
+        values.insert(QString::fromLatin1(name), readValue(object, name));
     QJsonObject result { { "v", values } };
 
     if (auto model = qobject_cast<QAbstractItemModel*>(object)) {
@@ -230,6 +301,7 @@ void RecorderPrivate::follow(QObject* object, const Schema& schema)
     QObject::connect(object, &QObject::destroyed, this, [this, object] {
         const int id = ids.take(object);
         objects.remove(id);
+        readValues.remove(object);
         writeEvent({ { "k", "del" }, { "o", id } });
     });
 
@@ -288,12 +360,11 @@ void RecorderPrivate::onSignal(QObject* sender, int signalIndex, void** argv)
     }
 
     QJsonObject changed;
+    const auto& known = readValues.value(sender);
     for (const auto& p : schema.properties) {
-        if (p.notify < 0 || schema.methods[p.notify].signature != signal.methodSignature())
+        if (p.notify < 0 || schema.methods[p.notify].signature != signal.methodSignature() || !known.contains(p.name))
             continue;
-        const QMetaProperty property = mo->property(mo->indexOfProperty(p.name));
-        changed.insert(QString::fromLatin1(p.name),
-            isSensitive(p.name) ? QJsonValue(Redacted) : encode(property.read(sender), property.metaType()));
+        changed.insert(QString::fromLatin1(p.name), readValue(sender, p.name));
     }
 
     QJsonObject event { { "k", "sig" }, { "o", ids.value(sender) },
@@ -374,6 +445,7 @@ void RecorderPrivate::writeManifest()
         { { "formatVersion", QStringLiteral("%1.%2").arg(Format::Major).arg(Format::Minor) }, { "qt", qVersion() },
             { "platform", platform }, { "app", app }, { "startedAt", startedAt.toString(Qt::ISODate) },
             { "events", seq }, { "moments", moments }, { "fingerprint", fingerprint },
+            { "importPaths", QJsonArray::fromStringList(engine ? engine->importPathList() : QStringList()) },
             { "gaps", QJsonArray::fromStringList(gaps) } });
 }
 
@@ -417,12 +489,22 @@ void Recorder::setContextProperty(const QString& name, const QVariant& value)
 
 void Recorder::metacallObserved(QObject* object, QMetaObject::Call call, int index, void** argv)
 {
-    if (!object || (call != QMetaObject::InvokeMetaMethod && call != QMetaObject::WriteProperty))
+    if (!object
+        || (call != QMetaObject::InvokeMetaMethod && call != QMetaObject::WriteProperty
+            && call != QMetaObject::ReadProperty))
+        return;
+    if (call == QMetaObject::ReadProperty && d->selfReads > 0)
         return;
     const QMetaObject* mo = object->metaObject();
     const Schema& schema = d->schemaFor(mo);
     const QMetaObject* base = Schema::baseMetaObject(schema.base);
     const int id = d->idFor(object);
+
+    if (call == QMetaObject::ReadProperty) {
+        if (index >= base->propertyCount())
+            d->propertyRead(object, mo->property(index), argv[0]);
+        return;
+    }
 
     if (call == QMetaObject::WriteProperty) {
         if (index < base->propertyCount())

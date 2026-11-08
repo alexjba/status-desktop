@@ -10,6 +10,13 @@
 
 inline StatusReplay::Recorder* g_recorder = nullptr;
 
+// What a QML consumer bound to these properties does: read them (through qt_metacall).
+inline void readLikeQml(QObject* object, const QByteArrayList& names)
+{
+    for (const auto& name : names)
+        object->property(name.constData());
+}
+
 // Mirrors the nimqml metacall hook: every metacall is reported after it was handled.
 template <typename T>
 class Hooked : public T
@@ -165,6 +172,8 @@ class WalletView : public QObject
     Q_PROPERTY(QVariant current READ current NOTIFY currentChanged)
     Q_PROPERTY(QVariant accounts READ accounts CONSTANT)
     Q_PROPERTY(QString filter READ filter WRITE setFilter NOTIFY filterChanged)
+    // Like a Nim getter that is only safe once QML asks for it.
+    Q_PROPERTY(QString fragile READ fragile NOTIFY titleChanged)
 
 public:
     explicit WalletView(QObject* parent = nullptr)
@@ -196,6 +205,13 @@ public:
     QVariant accounts() const { return QVariant::fromValue<QObject*>(m_accounts); }
     AccountsModel* accountsModel() const { return m_accounts; }
 
+    QString fragile() const
+    {
+        ++m_fragileReads;
+        return {};
+    }
+    int fragileReads() const { return m_fragileReads; }
+
     QString filter() const { return m_filter; }
     void setFilter(const QString& filter)
     {
@@ -208,6 +224,11 @@ public:
         return QStringLiteral("%1 %2").arg(amount).arg(symbol);
     }
     Q_INVOKABLE bool login(const QString& password) { return password == QStringLiteral("secret"); }
+    // Shaped like the onboarding module's loginRequested(keyUid, loginFlow, dataJson).
+    Q_INVOKABLE QString loginRequested(const QString& keyUid, int flow, const QString& dataJson)
+    {
+        return QStringLiteral("%1:%2:%3").arg(keyUid).arg(flow).arg(dataJson.size());
+    }
     Q_INVOKABLE QVariant accountAt(int row) const
     {
         return m_accounts->data(m_accounts->index(row), AccountsModel::AccountRole);
@@ -231,4 +252,5 @@ private:
     AccountsModel* m_accounts;
     QString m_filter;
     int m_refreshes = 0;
+    mutable int m_fragileReads = 0;
 };

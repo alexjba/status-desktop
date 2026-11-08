@@ -1,0 +1,17 @@
+{
+    "base": "QObject",
+    "className": "FixtureView",
+    "methods": [
+        {
+            "signature": "titleChanged()",
+            "type": "signal"
+        }
+    ],
+    "properties": [
+        {
+            "name": "title",
+            "notify": 0,
+            "type": "QString"
+        }
+    ]
+}

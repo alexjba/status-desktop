@@ -1,0 +1,20 @@
+{
+    "ctx": {
+        "fixtureView": {
+            "$obj": 1
+        },
+        "production": false
+    },
+    "loaded": true,
+    "name": "startup",
+    "objects": [
+        {
+            "o": 1,
+            "s": "0000000000000001",
+            "v": {
+                "title": "Fixture"
+            }
+        }
+    ],
+    "q": 6
+}

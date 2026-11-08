@@ -24,6 +24,4 @@ struct StatusReplayHooks
 // Returns the hooks to install into nimqml, or null hooks when recording could not start.
 STATUSREPLAY_EXPORT StatusReplayHooks statusreplay_recorder_attach(void* engine);
 STATUSREPLAY_EXPORT void statusreplay_recorder_markMoment(const char* name);
-
-STATUSREPLAY_EXPORT int statusreplay_main(int argc, char** argv);
 }

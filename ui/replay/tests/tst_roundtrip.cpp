@@ -100,6 +100,8 @@ private slots:
 
         m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
         m_recorder->setContextProperty(QStringLiteral("production"), false);
+        readLikeQml(&wallet, { "title", "loading", "rate", "timestamp", "current", "accounts", "filter" });
+        readLikeQml(&account, { "name", "balance" });
         m_recorder->markMoment(QStringLiteral("startup"));
 
         auto replayer = replayAt(QStringLiteral("startup"));
@@ -163,6 +165,9 @@ private slots:
         wallet.accountsModel()->insert(1, QStringLiteral("Savings"), 20, &savings);
 
         m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
+        readLikeQml(&wallet, { "accounts" });
+        readLikeQml(wallet.accountsModel(), { "count" });
+        readLikeQml(&savings, { "name" });
         m_recorder->markMoment(QStringLiteral("startup"));
 
         auto replayer = replayAt(QStringLiteral("startup"));
@@ -195,6 +200,7 @@ private slots:
         formatted = call<QString>(&wallet, "formatBalance(int,QString)", 7, QStringLiteral("SNT"));
         QVariant account;
         account = call<QVariant>(&wallet, "accountAt(int)", 0);
+        readLikeQml(&savings, { "name" });
         m_recorder->markMoment(QStringLiteral("startup"));
 
         auto replayer = replayAt(QStringLiteral("startup"));
@@ -249,10 +255,29 @@ private slots:
         QVERIFY(timeline.readAll().contains("login(QString)"));
     }
 
+    void sensitiveFieldsInsideJsonArgumentsAreNotWritten()
+    {
+        Hooked<WalletView> wallet;
+        m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
+        call<QString>(&wallet, "loginRequested(QString,int,QString)", QStringLiteral("0xkey"), 1,
+            QStringLiteral(R"({"password":"hunter2","keycard":{"pin":"123456"},"mnemonic":"apple banana","name":"Alice"})"));
+        m_recorder->flush();
+
+        QFile timeline(m_dir.filePath("timeline.jsonl"));
+        QVERIFY(timeline.open(QIODevice::ReadOnly));
+        const QByteArray content = timeline.readAll();
+        QVERIFY(!content.contains("hunter2"));
+        QVERIFY(!content.contains("123456"));
+        QVERIFY(!content.contains("apple banana"));
+        QVERIFY(content.contains("Alice"));
+        QVERIFY(content.contains("0xkey"));
+    }
+
     void timelineReplaysChangesInRecordedOrder()
     {
         Hooked<WalletView> wallet;
         m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
+        readLikeQml(&wallet, { "title", "loading", "rate", "timestamp", "current", "accounts", "filter" });
         m_recorder->markMoment(QStringLiteral("startup"));
 
         auto* model = wallet.accountsModel();
@@ -261,6 +286,7 @@ private slots:
         wallet.setTitle(QStringLiteral("Loading"));
         model->insert(0, QStringLiteral("A"), 1);
         model->insert(1, QStringLiteral("B"), 2, &savings);
+        readLikeQml(&savings, { "name", "balance" });
         model->insert(2, QStringLiteral("C"), 3);
         wallet.setLoading(true);
         model->move(0, 2);
@@ -330,6 +356,7 @@ private slots:
         wallet->accountsModel()->resetTo({ QStringLiteral("X"), QStringLiteral("Y") });
         // Added mid-run, like the main module after login.
         m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(wallet.get()));
+        readLikeQml(wallet.get(), { "title", "loading", "rate", "timestamp", "current", "accounts", "filter" });
         auto transient = std::make_unique<Hooked<Account>>();
         wallet->setCurrent(transient.get());
         wallet->setCurrent(nullptr);
@@ -364,6 +391,39 @@ private slots:
             QCOMPARE(model->data(model->index(1, 0), AccountsModel::NameRole), QVariant("Y"));
         }
         QCOMPARE(fromSnapshot->moments(), (QStringList { "startup", "loggedIn" }));
+    }
+
+    void propertiesQmlNeverReadAreNotReadByTheRecorder()
+    {
+        Hooked<WalletView> wallet;
+        m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
+        readLikeQml(&wallet, { "title" });
+        wallet.setTitle(QStringLiteral("Changed"));
+        m_recorder->markMoment(QStringLiteral("startup"));
+        QCOMPARE(wallet.fragileReads(), 0);
+
+        // Once QML reads it, the recorder follows it like any other property.
+        readLikeQml(&wallet, { "fragile" });
+        wallet.setTitle(QStringLiteral("Again"));
+        QCOMPARE(wallet.fragileReads(), 2);
+    }
+
+    void committedFixtureLoadsAndPlays()
+    {
+        QString error;
+        auto replayer = Replayer::open(QStringLiteral(STATUSREPLAY_FIXTURE_DIR), &error);
+        QVERIFY2(replayer, qPrintable(error));
+        QCOMPARE(replayer->moments(), QStringList { "startup" });
+        QVERIFY2(replayer->startAt(QStringLiteral("startup"), &error), qPrintable(error));
+        QVERIFY(replayer->loadReached());
+        QObject* view = objectOf(replayer->contextProperty("fixtureView"));
+        QVERIFY(view);
+        QCOMPARE(view->property("title"), QVariant(QStringLiteral("Fixture")));
+        QSignalSpy changed(view, SIGNAL(titleChanged()));
+        QVERIFY(replayer->step());
+        QCOMPARE(changed.size(), 1);
+        QCOMPARE(view->property("title"), QVariant(QStringLiteral("Changed")));
+        QVERIFY(replayer->atEnd());
     }
 
     void unknownMajorFormatVersionIsRejected()

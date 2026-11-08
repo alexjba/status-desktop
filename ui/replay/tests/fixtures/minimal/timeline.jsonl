@@ -1,0 +1,8 @@
+{"k":"obj","o":1,"q":0,"s":"0000000000000001","t":0}
+{"k":"init","o":1,"q":1,"t":10,"v":{}}
+{"k":"ctx","n":"fixtureView","q":2,"t":20,"v":{"$obj":1}}
+{"k":"ctx","n":"production","q":3,"t":30,"v":false}
+{"k":"load","q":4,"t":40}
+{"k":"val","o":1,"p":"title","q":5,"t":50,"v":"Fixture"}
+{"k":"moment","n":"startup","q":6,"t":60}
+{"k":"sig","m":"titleChanged()","o":1,"p":{"title":"Changed"},"q":7,"t":70}
