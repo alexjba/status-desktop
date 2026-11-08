@@ -87,21 +87,25 @@ android {
 
     ANDROID_PACKAGE_SOURCE_DIR = $$PWD/../android/qt$$QT_MAJOR_VERSION
 
-    ANDROID_EXTRA_LIBS += \
-                        $$PWD/../lib/$$LIB_PREFIX/libssl_3.so \
-                        $$PWD/../lib/$$LIB_PREFIX/libcrypto_3.so \
-                        $$PWD/../lib/$$LIB_PREFIX/libStatusQ$$(LIB_SUFFIX)$$(LIB_EXT) \
-                        $$PWD/../lib/$$LIB_PREFIX/libMobileWebView$$(LIB_SUFFIX)$$(LIB_EXT)
     equals(BUILD_VARIANT, "replay") {
         DEFINES += STATUS_REPLAY_APP
         INCLUDEPATH += $$PWD/../../ui/replay/include
         LIBS += -L$$PWD/../lib/$$LIB_PREFIX -lStatusReplay
-        ANDROID_EXTRA_LIBS += $$PWD/../lib/$$LIB_PREFIX/libStatusReplay.so
+        ANDROID_EXTRA_LIBS += \
+                            $$PWD/../lib/$$LIB_PREFIX/libssl_3.so \
+                            $$PWD/../lib/$$LIB_PREFIX/libcrypto_3.so \
+                            $$PWD/../lib/$$LIB_PREFIX/libStatusQ$$(LIB_SUFFIX)$$(LIB_EXT) \
+                            $$PWD/../lib/$$LIB_PREFIX/libMobileWebView$$(LIB_SUFFIX)$$(LIB_EXT) \
+                            $$PWD/../lib/$$LIB_PREFIX/libStatusReplay.so
     } else {
         LIBS += -L$$PWD/../lib/$$LIB_PREFIX -lnim_status_client
         ANDROID_EXTRA_LIBS += \
+                            $$PWD/../lib/$$LIB_PREFIX/libssl_3.so \
+                            $$PWD/../lib/$$LIB_PREFIX/libcrypto_3.so \
                             $$PWD/../lib/$$LIB_PREFIX/libnim_status_client.so \
-                            $$PWD/../lib/$$LIB_PREFIX/libstatus_stub.so
+                            $$PWD/../lib/$$LIB_PREFIX/libstatus_stub.so \
+                            $$PWD/../lib/$$LIB_PREFIX/libStatusQ$$(LIB_SUFFIX)$$(LIB_EXT) \
+                            $$PWD/../lib/$$LIB_PREFIX/libMobileWebView$$(LIB_SUFFIX)$$(LIB_EXT)
         contains(DEFINES, FLAG_KEYCARD_ENABLED) {
             ANDROID_EXTRA_LIBS += $$PWD/../lib/$$LIB_PREFIX/libstatus-keycard-qt.so
         }

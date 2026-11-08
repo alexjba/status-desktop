@@ -61,6 +61,8 @@ def bundleIdentifier = System.getenv("BUNDLE_IDENTIFIER") ?: "app.status.mobile"
 // PR builds are profileable (heapprofd/simpleperf/perfetto from the shell), release and fdroid are not.
 def prVariant = buildVariant == "pr"
 def replayVariant = buildVariant == "replay"
+// RECORDER=1 (docs/replay-mode.md): libStatusReplay packaged so the app can record.
+def recorderBuild = System.getenv("STATUS_RECORDER") == "1"
 
 android {
     /*******************************************************
@@ -138,6 +140,7 @@ android {
         buildConfigField "boolean", "PR_VARIANT", "${prVariant}"
         // docs/replay-mode.md: no status-go service, the UI replays a recording.
         buildConfigField "boolean", "REPLAY_VARIANT", "${replayVariant}"
+        buildConfigField "boolean", "RECORDER", "${recorderBuild}"
     }
 
     signingConfigs {

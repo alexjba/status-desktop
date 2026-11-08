@@ -99,6 +99,9 @@ if [[ "${OS}" == "android" ]]; then
   fi
   if [[ -n "${STATUS_REPLAY_PACKAGE_LIB}" ]]; then
     cp -f "${STATUS_REPLAY_PACKAGE_LIB}" "$BUILD_DIR/android-build/libs/arm64-v8a/libStatusReplay.so"
+    export STATUS_RECORDER=1
+  else
+    export STATUS_RECORDER=0
   fi
 
   # android-build/ is shared between variants; drop the other variant's main lib
