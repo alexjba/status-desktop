@@ -158,6 +158,45 @@ void typeLoad(QQmlEngine* engine, const QStringList& urls, const QString& direct
     }
 }
 
+// [not for merge] open a popup by objectName and time open() and the next frame:
+// STATUS_REPLAY_PROBE_OPEN="<s>;<objectName>"
+void openPopup(const QString& objectName, const QString& directory)
+{
+    QObject* target = nullptr;
+    for (QWindow* w : QGuiApplication::allWindows())
+        if (auto* qw = qobject_cast<QQuickWindow*>(w)) {
+            if (!target)
+                target = qw->contentItem()->findChild<QObject*>(objectName);
+            if (!target)
+                target = qw->findChild<QObject*>(objectName);
+        }
+    QFile out(QDir(directory).filePath(QStringLiteral("probe-open.txt")));
+    if (!out.open(QIODevice::Append))
+        return;
+    if (!target) {
+        out.write(QStringLiteral("%1 not found\n").arg(objectName).toUtf8());
+        return;
+    }
+    auto* window = qobject_cast<QQuickWindow*>(QGuiApplication::allWindows().value(0));
+    for (QWindow* w : QGuiApplication::allWindows())
+        if (auto* qw = qobject_cast<QQuickWindow*>(w))
+            window = qw;
+    auto* timer = new QElapsedTimer;
+    timer->start();
+    QMetaObject::invokeMethod(target, "open");
+    const double syncMs = timer->nsecsElapsed() / 1e6;
+    auto* conn = new QMetaObject::Connection;
+    *conn = QObject::connect(window, &QQuickWindow::frameSwapped, window, [timer, conn, syncMs, objectName, directory] {
+        QFile f(QDir(directory).filePath(QStringLiteral("probe-open.txt")));
+        if (f.open(QIODevice::Append))
+            f.write(QStringLiteral("%1\topen() %2 ms\tfirst frame %3 ms\n").arg(objectName).arg(syncMs, 0, 'f', 1)
+                        .arg(timer->nsecsElapsed() / 1e6, 0, 'f', 1).toUtf8());
+        QObject::disconnect(*conn);
+        delete conn;
+        delete timer;
+    }, Qt::DirectConnection);
+}
+
 void dump(QQmlEngine* engine, int index, const QString& directory)
 {
     auto v4 = engine->handle();
@@ -241,6 +280,12 @@ void startProbe(QQmlEngine* engine, const QString& seconds, const QString& direc
 {
     const QStringList times = seconds.split(QLatin1Char(','), Qt::SkipEmptyParts);
     QPointer<QQmlEngine> guarded(engine);
+    const QString openSpec = qEnvironmentVariable("STATUS_REPLAY_PROBE_OPEN");
+    if (!openSpec.isEmpty()) {
+        const int at = openSpec.section(QLatin1Char(';'), 0, 0).toInt();
+        const QString name = openSpec.section(QLatin1Char(';'), 1);
+        QTimer::singleShot(at * 1000, qApp, [name, directory] { openPopup(name, directory); });
+    }
     const QString typeLoadSpec = qEnvironmentVariable("STATUS_REPLAY_PROBE_TYPELOAD");
     if (!typeLoadSpec.isEmpty()) {
         const int at = typeLoadSpec.section(QLatin1Char(';'), 0, 0).toInt();
