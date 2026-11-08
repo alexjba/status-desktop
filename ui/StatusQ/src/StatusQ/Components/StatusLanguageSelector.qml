@@ -149,7 +149,8 @@ Button {
 
                 id: userSelectorPanel
                 objectName: "statusLanguageSelectorListView"
-                model: d.languageModel
+                // no delegates while closed: shaping the native names (e.g. 한국어) loads CJK fallback fonts
+                model: dropdown.visible ? d.languageModel : null
                 highlightFollowsCurrentItem: true
                 highlight: Rectangle {
                     radius: Theme.radius
