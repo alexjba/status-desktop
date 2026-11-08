@@ -16,7 +16,8 @@ class ScriptRunnerPrivate;
 // with test credentials). Dev tooling only: it lives in libStatusReplay, which release
 // builds never load.
 //
-// Each step waits (polling) for a visible, enabled item with the given objectName, then acts:
+// Each step waits (polling) for a visible, enabled item with the given objectName (or, as
+// {"text": "..."}, the given `text` for controls without one), then acts:
 //   { "click": name }                    mouse press/release at the item's centre
 //   { "type": name, "text": "..." }      focuses the item's text input and types; "\n" = Enter
 //   { "setChecked": name, "value": b }   clicks the item if its `checked` differs

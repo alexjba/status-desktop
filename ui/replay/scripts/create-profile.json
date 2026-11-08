@@ -1,10 +1,12 @@
 [
-    { "click": "btnCreateProfile" },
-    { "click": "btnCreateWithPassword" },
-    { "type": "passwordViewNewPassword", "text": "TestPassword2026" },
-    { "type": "passwordViewNewPasswordConfirm", "text": "TestPassword2026" },
-    { "setChecked": "stayLoggedInSwitch", "value": false, "optional": true, "timeout": 2000 },
-    { "setChecked": "biometricsSwitch", "value": false, "optional": true, "timeout": 2000 },
-    { "click": "btnConfirmPassword" },
-    { "waitFor": "Wallet-navbar", "timeout": 180000 }
+    {"click": "btnCreateProfile"},
+    {"click": "btnCreateWithPassword"},
+    {"type": "passwordViewNewPassword", "text": "TestPassword2026"},
+    {"type": "passwordViewNewPasswordConfirm", "text": "TestPassword2026"},
+    {"setChecked": "stayLoggedInSwitch", "value": false, "optional": true, "timeout": 2000},
+    {"setChecked": "biometricsSwitch", "value": false, "optional": true, "timeout": 2000},
+    {"click": "btnConfirmPassword"},
+    {"waitFor": "Wallet-navbar", "timeout": 180000},
+    {"setChecked": {"text": "Don't ask me again"}, "value": true, "optional": true, "timeout": 10000},
+    {"click": "btnPushNotificationsLater", "optional": true, "timeout": 3000}
 ]

@@ -26,6 +26,7 @@ Window {
     readonly property string entered: nameInput.text
     property string accepted
     readonly property bool saved: savePassword.checked
+    readonly property bool dontAsk: dontAskAgain.checked
     property int presses: 0
 
     Column {
@@ -39,6 +40,11 @@ Window {
             id: savePassword
             objectName: "savePassword"
             checked: true
+        }
+        Switch {
+            id: dontAskAgain
+            // \x27: a quote character would throw moc off inside this raw string.
+            text: "Don\x27t ask me again"
         }
         Button {
             objectName: "confirmButton"
@@ -93,6 +99,7 @@ private slots:
         ScriptRunner runner(steps(R"([
             { "type": "nameInput", "text": "TestPassword2026\n" },
             { "setChecked": "savePassword", "value": false },
+            { "setChecked": { "text": "Don\u0027t ask me again" }, "value": true },
             { "click": "confirmButton" },
             { "click": "laterButton" },
             { "moment": "done" },
@@ -110,10 +117,11 @@ private slots:
         QCOMPARE(root()->property("entered"), QVariant(QStringLiteral("TestPassword2026")));
         QCOMPARE(root()->property("accepted"), QVariant(QStringLiteral("TestPassword2026")));
         QCOMPARE(root()->property("saved"), QVariant(false));
+        QCOMPARE(root()->property("dontAsk"), QVariant(true));
         QCOMPARE(root()->property("presses"), QVariant(11));
         QCOMPARE(moments, QStringList { "done" });
         // Typing is not replayable input (it can carry test credentials); clicks and toggles are.
-        QCOMPARE(acted, (QStringList { "setChecked", "click", "click" }));
+        QCOMPARE(acted, (QStringList { "setChecked", "setChecked", "click", "click" }));
     }
 
     void stopsAtARequiredItemThatNeverAppears()

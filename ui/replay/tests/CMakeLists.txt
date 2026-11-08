@@ -6,6 +6,10 @@ target_compile_definitions(RoundTripTest PRIVATE
     STATUSREPLAY_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/minimal")
 add_test(NAME RoundTripTest COMMAND RoundTripTest)
 
+add_executable(SettingsTest tst_settings.cpp)
+target_link_libraries(SettingsTest PRIVATE Qt::Test StatusReplay)
+add_test(NAME SettingsTest COMMAND SettingsTest)
+
 add_executable(MediaTest tst_media.cpp)
 target_link_libraries(MediaTest PRIVATE Qt::Test StatusReplay)
 add_test(NAME MediaTest COMMAND MediaTest)

@@ -1,8 +1,9 @@
 [
-    { "type": "loginPasswordInput", "text": "TestPassword2026\n" },
-    { "waitFor": "Wallet-navbar", "timeout": 180000 },
-    { "click": "btnPushNotificationsLater", "optional": true, "timeout": 10000 },
-    { "click": "Wallet-navbar" },
-    { "sleep": 30000 },
-    { "moment": "wallet" }
+    {"type": "loginPasswordInput", "text": "TestPassword2026\n"},
+    {"waitFor": "Wallet-navbar", "timeout": 180000},
+    {"setChecked": {"text": "Don't ask me again"}, "value": true, "optional": true, "timeout": 10000},
+    {"click": "btnPushNotificationsLater", "optional": true, "timeout": 3000},
+    {"click": "Wallet-navbar"},
+    {"sleep": 30000},
+    {"moment": "wallet"}
 ]

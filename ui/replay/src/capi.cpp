@@ -1,5 +1,7 @@
 #include <StatusReplay/fingerprint.h>
 #include <StatusReplay/media.h>
+#include <StatusReplay/probe.h>
+#include <StatusReplay/settings.h>
 #include <StatusReplay/recorder.h>
 #include <StatusReplay/scriptrunner.h>
 #include <StatusReplay/statusreplay.h>
@@ -157,6 +159,11 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
 
     auto engine = static_cast<QQmlEngine*>(enginePtr);
     recorder->setEngine(engine);
+    if (qEnvironmentVariableIsSet("STATUS_REPLAY_PROBE_AT"))
+        StatusReplay::startProbe(engine, qEnvironmentVariable("STATUS_REPLAY_PROBE_AT"),
+            recorder->directory() + QStringLiteral("/probe"));
+    // What QML `Settings` start from in this run; replay restores it into its own store.
+    StatusReplay::snapshotSettings(recorder->directory() + QStringLiteral("/settings.ini"));
 
 #ifdef STATUSREPLAY_WITH_STATUSQ
     // Images and other responses the app loads (status-go's media server included), described so

@@ -47,11 +47,15 @@ void forEachItem(Visit&& visit)
     }
 }
 
-QQuickItem* findItem(const QString& objectName)
+// A target is an objectName, or {"text": "..."} for controls without one (matched on `text`).
+QQuickItem* findItem(const QJsonValue& target)
 {
+    const bool byText = target.isObject();
+    const QString wanted = byText ? target.toObject()["text"].toString() : target.toString();
     QQuickItem* found = nullptr;
     forEachItem([&](QQuickItem* item) {
-        if (item->objectName() == objectName && isActionable(item))
+        const bool matches = byText ? item->property("text").toString() == wanted : item->objectName() == wanted;
+        if (matches && isActionable(item))
             found = item;
         return !found;
     });
@@ -170,8 +174,9 @@ ScriptRunner::ScriptRunner(const QJsonArray& steps, QObject* parent)
             emit finished(false, QStringLiteral("step %1: unknown action").arg(d->current));
             return;
         }
-        const QString name = step[action].toString();
-        QQuickItem* item = findItem(name);
+        const QString name = step[action].isObject() ? step[action].toObject()["text"].toString()
+                                                     : step[action].toString();
+        QQuickItem* item = findItem(step[action]);
         if (!item) {
             if (d->stepClock.elapsed() < step["timeout"].toInt(DefaultTimeoutMs))
                 return d->timer.start(PollIntervalMs);

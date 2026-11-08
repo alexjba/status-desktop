@@ -2,7 +2,9 @@
 #include <StatusReplay/media.h>
 #include <StatusReplay/player.h>
 #include <StatusReplay/replayapp.h>
+#include <StatusReplay/probe.h>
 #include <StatusReplay/replayer.h>
+#include <StatusReplay/settings.h>
 #include <StatusReplay/scriptrunner.h>
 
 #include <QCommandLineParser>
@@ -129,6 +131,9 @@ extern "C" int statusreplay_main(int argc, char** argv)
 
     prepareProcess(manifest);
     QGuiApplication app(argc, argv);
+    const QString temp = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/status-replay");
+    // QML `Settings` start from the recorded run's, in a store of their own (before QML loads).
+    useReplaySettings(QDir(recording).filePath(QStringLiteral("settings.ini")), temp + QStringLiteral("/settings"));
     prepareApplication(manifest);
 
     QCommandLineParser parser;
@@ -173,9 +178,11 @@ extern "C" int statusreplay_main(int argc, char** argv)
         fastForwardTo = moment;
     }
 
-    const QString temp = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/status-replay");
     QQmlApplicationEngine engine;
     prepareEngine(&engine, manifest, temp);
+    if (qEnvironmentVariableIsSet("STATUS_REPLAY_PROBE_AT"))
+        startProbe(&engine, qEnvironmentVariable("STATUS_REPLAY_PROBE_AT"),
+            QDir(recording).filePath(QStringLiteral("replay-probe")));
     // Recorded responses answer the app's requests; anything not recorded goes to the network.
     static MediaLibrary* media = nullptr;
     MediaLibrary library(QDir(recording).filePath(QStringLiteral("media")));

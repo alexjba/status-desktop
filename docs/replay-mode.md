@@ -166,6 +166,20 @@ coverage gap.
 `RECORDING=<dir>` picks the output (default `Status/recordings/<timestamp>`);
 `RECORD_SCRIPT=none` records without driving the UI.
 
+### QML settings
+
+QML keeps state of its own in `Settings` (the app's default QSettings), e.g. "notifications
+prompt already seen". The recorder snapshots them when it attaches (`settings.ini`); replay
+points its default QSettings at a fresh ini store in its temp dir and fills it from the
+snapshot before QML loads, so replay starts from the same settings and never writes the
+real app's.
+
+### Calibration probe
+
+`STATUS_REPLAY_PROBE_AT=<s>,<s>...` (record or replay) writes `probe/probe-<n>.tsv`
+(recording) or `replay-probe/probe-<n>.tsv` (replay) at those seconds after start: the
+composite QML types loaded and instantiated, and the malloc heap in use.
+
 ### Media
 
 StatusQ's network managers expose two hooks (`statusq_setNetworkReplyTap`,
@@ -314,10 +328,9 @@ and service in `StatusQtActivity` (`BuildConfig.REPLAY_VARIANT`).
 - Driving the backend from replay: slot calls never change replayed state, they only
   return recorded values.
 - Web content (browser section, dApps WebEngine pages), camera frames, keycard, iOS.
-- State QML keeps outside Nim: its own persisted settings (`Settings`/QSettings, e.g.
-  "notifications prompt already seen") and OS state (notification permission). The replay
-  package starts with its own, so such prompts can differ from the recording (seen on
-  Android: the notifications prompt shows in replay, not in the recording).
+- OS state such as the notification permission. The scripts answer the notifications
+  prompt the same way in every run ("Don't ask me again", then "Maybe later"), and replay
+  repeats those clicks.
 - Editing or synthesizing recordings beyond the test fixture.
 - Exact async timing (status-go response latency, incubation interleaving) beyond the
   recorded timestamps. Realtime replay has no back-pressure when QML is slower than the
