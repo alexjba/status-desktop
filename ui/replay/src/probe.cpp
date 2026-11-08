@@ -9,6 +9,13 @@
 #include <QQmlEngine>
 #include <QSet>
 #include <QTimer>
+#include <QFont>
+#include <QGuiApplication>
+#include <QQmlContext>
+#include <QQuickItem>
+#include <QQuickWindow>
+#include <QRawFont>
+#include <functional>
 
 #include <private/qqmlmetatype_p.h>
 #include <private/qqmltype_p.h>
@@ -65,6 +72,70 @@ void dumpSmaps(int index, const QString& directory)
 #endif
 }
 
+
+// [not for merge] code points of text-like properties that neither the item's font nor Roboto can render
+void scanGlyphs(int index, const QString& directory)
+{
+    QFile out(QDir(directory).filePath(QStringLiteral("probe-%1-glyphs.txt").arg(index)));
+    if (!out.open(QIODevice::WriteOnly))
+        return;
+    const QRawFont roboto = QRawFont::fromFont(QFont(QStringLiteral("Roboto")));
+    QSet<QObject*> seen;
+    int scanned = 0;
+    std::function<void(QObject*)> walk = [&](QObject* o) {
+        if (!o || seen.contains(o))
+            return;
+        seen.insert(o);
+        const QMetaObject* mo = o->metaObject();
+        for (const char* name : { "text", "displayText", "placeholderText", "preeditText" }) {
+            const int pi = mo->indexOfProperty(name);
+            if (pi < 0)
+                continue;
+            const QVariant v = mo->property(pi).read(o);
+            if (v.typeId() != QMetaType::QString)
+                continue;
+            const QString s = v.toString();
+            if (s.isEmpty())
+                continue;
+            ++scanned;
+            const int fi = mo->indexOfProperty("font");
+            const QFont f = fi >= 0 ? mo->property(fi).read(o).value<QFont>() : QFont();
+            const QRawFont raw = QRawFont::fromFont(f);
+            QStringList missing;
+            for (char32_t c : s.toUcs4()) {
+                if (c == U'\n' || c == U' ')
+                    continue;
+                if (!raw.supportsCharacter(c) && !roboto.supportsCharacter(c))
+                    missing << QString::number(uint(c), 16);
+            }
+            if (missing.isEmpty())
+                continue;
+            auto* item = qobject_cast<QQuickItem*>(o);
+            const QQmlContext* ctx = qmlContext(o);
+            QString shown = s.left(60);
+            shown.replace(QLatin1Char('\n'), QLatin1String("\\n")).replace(QLatin1Char('\t'), QLatin1String("\\t")).replace(QLatin1Char('\r'), QLatin1String("\\r"));
+            out.write(QStringLiteral("%1\t%2\t%3\tvisible=%4\t%5 %6px w%7\tU+%8\t%9\t%10\n")
+                          .arg(QString::fromLatin1(mo->className()), o->objectName(), QString::fromLatin1(name))
+                          .arg(item ? item->isVisible() : -1)
+                          .arg(f.family()).arg(f.pixelSize()).arg(f.weight())
+                          .arg(missing.join(QLatin1String(" U+")), shown,
+                               ctx ? ctx->baseUrl().toString() : QString())
+                          .toUtf8());
+        }
+        for (QObject* c : o->children())
+            walk(c);
+        if (auto* item = qobject_cast<QQuickItem*>(o))
+            for (QQuickItem* c : item->childItems())
+                walk(c);
+    };
+    for (QWindow* w : QGuiApplication::allWindows())
+        if (auto* qw = qobject_cast<QQuickWindow*>(w)) {
+            walk(qw);
+            walk(qw->contentItem());
+        }
+    out.write(QStringLiteral("# scanned %1 strings in %2 objects\n").arg(scanned).arg(seen.size()).toUtf8());
+}
+
 void dump(QQmlEngine* engine, int index, const QString& directory)
 {
     auto v4 = engine->handle();
@@ -106,6 +177,8 @@ void dump(QQmlEngine* engine, int index, const QString& directory)
     file.write(rows.toUtf8());
     file.close();
     dumpSmaps(index, directory);
+    if (qEnvironmentVariableIsSet("STATUS_REPLAY_PROBE_GLYPHS"))
+        scanGlyphs(index, directory);
     qInfo().noquote() << "StatusReplay: probe" << file.fileName() << "loaded" << loaded << "instantiated" << created;
 }
 
