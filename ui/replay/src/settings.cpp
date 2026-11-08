@@ -2,18 +2,44 @@
 
 #include <QDir>
 #include <QFile>
+#include <QRegularExpression>
 #include <QSettings>
 
 namespace StatusReplay {
 
-bool snapshotSettings(const QString& file)
+namespace {
+
+// Public keys, key UIDs, addresses and community ids in group names.
+bool keptFor(const QString& key, const QStringList& profileIds)
 {
-    QFile::remove(file);
+    static const QRegularExpression hexId(QStringLiteral("0x[0-9a-fA-F]+"));
+    auto it = hexId.globalMatch(key);
+    while (it.hasNext()) {
+        if (!profileIds.contains(it.next().captured(), Qt::CaseInsensitive))
+            return false;
+    }
+    return true;
+}
+
+} // namespace
+
+SettingsSnapshot::SettingsSnapshot()
+{
     QSettings source;
-    QSettings snapshot(file, QSettings::IniFormat);
+    source.setFallbacksEnabled(false);
     const QStringList keys = source.allKeys();
     for (const auto& key : keys)
-        snapshot.setValue(key, source.value(key));
+        m_values.insert(key, source.value(key));
+}
+
+bool SettingsSnapshot::write(const QString& file, const QStringList& profileIds) const
+{
+    QFile::remove(file);
+    QSettings snapshot(file, QSettings::IniFormat);
+    for (auto it = m_values.cbegin(); it != m_values.cend(); ++it) {
+        if (keptFor(it.key(), profileIds))
+            snapshot.setValue(it.key(), it.value());
+    }
     snapshot.sync();
     return snapshot.status() == QSettings::NoError;
 }

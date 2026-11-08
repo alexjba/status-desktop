@@ -1,9 +1,9 @@
 #include <StatusReplay/fingerprint.h>
 #include <StatusReplay/media.h>
 #include <StatusReplay/probe.h>
-#include <StatusReplay/settings.h>
 #include <StatusReplay/recorder.h>
 #include <StatusReplay/scriptrunner.h>
+#include <StatusReplay/settings.h>
 #include <StatusReplay/statusreplay.h>
 
 #include <QCoreApplication>
@@ -14,11 +14,13 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QNetworkReply>
+#include <QPointer>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 #include <QQuickWindow>
 #include <QStandardPaths>
-#include <QWindow>
 #include <QTimer>
+#include <QWindow>
 
 #include <utility>
 
@@ -32,6 +34,8 @@ namespace {
 
 Recorder* g_recorder = nullptr;
 StatusReplay::MediaRecorder* g_media = nullptr;
+StatusReplay::SettingsSnapshot* g_settings = nullptr;
+QPointer<QQmlEngine> g_engine;
 
 QString recordingDirectory()
 {
@@ -59,6 +63,31 @@ void saveMomentScreenshot(const QString& moment)
             return;
         }
     }
+}
+
+QStringList g_profileIds;
+
+void writeSettings()
+{
+    if (g_settings && g_recorder)
+        g_settings->write(g_recorder->directory() + QStringLiteral("/settings.ini"), g_profileIds);
+}
+
+// The logged-in profile's ids, from the `userProfile` context property Nim sets.
+void captureProfileIds()
+{
+    if (!g_recorder || !g_engine)
+        return;
+    auto profile = g_engine->rootContext()->contextProperty(QStringLiteral("userProfile")).value<QObject*>();
+    if (!profile)
+        return;
+    g_profileIds.clear();
+    for (const char* name : { "pubKey", "keyUid" }) {
+        const QString id = profile->property(name).toString();
+        if (!id.isEmpty())
+            g_profileIds.append(id);
+    }
+    writeSettings();
 }
 
 void markMoment(const QString& moment)
@@ -200,9 +229,12 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
     qInfo() << "StatusReplay: recording into" << recorder->directory();
 
     recorder->setEngine(engine);
+    g_engine = engine;
     startProbeIfAsked(engine, recorder->directory() + QStringLiteral("/probe"));
-    // What QML `Settings` start from in this run; replay restores it into its own store.
-    StatusReplay::snapshotSettings(recorder->directory() + QStringLiteral("/settings.ini"));
+    // What QML `Settings` start from in this run; replay restores it into its own store. Written
+    // now without any profile's groups, again with the recorded profile's once it is logged in.
+    g_settings = new StatusReplay::SettingsSnapshot;
+    writeSettings();
 
 #ifdef STATUSREPLAY_WITH_STATUSQ
     // Images and other responses the app loads (status-go's media server included), described so
@@ -234,6 +266,8 @@ void statusreplay_recorder_markMoment(const char* name)
     if (!g_recorder)
         return;
     const QString moment = QString::fromUtf8(name);
+    if (moment == QLatin1String("loggedIn"))
+        captureProfileIds();
     markMoment(moment);
     const int delay = qEnvironmentVariableIntValue("STATUS_RECORD_SETTLE_MS");
     QTimer::singleShot(delay > 0 ? delay : 60000, qApp, [moment] {

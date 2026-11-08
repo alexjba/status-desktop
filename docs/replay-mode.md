@@ -172,7 +172,12 @@ coverage gap.
 ### QML settings
 
 QML keeps state of its own in `Settings` (the app's default QSettings), e.g. "notifications
-prompt already seen". The recorder snapshots them when it attaches (`settings.ini`); replay
+prompt already seen". The recorder snapshots them when it attaches (`settings.ini`), without
+fallbacks (organization-wide settings, the macOS global domain) and keeping only unkeyed groups
+plus the recorded profile's: groups named after any other `0x…` id (the developer's other
+profiles, account addresses, communities) never go into a recording. The file is written
+without any keyed group at attach and rewritten with the profile's (`userProfile.pubKey` and
+`keyUid`) at the `loggedIn` moment. Replay
 points its default QSettings at a fresh ini store in its temp dir and fills it from the
 snapshot before QML loads, so replay starts from the same settings and never writes the
 real app's.
