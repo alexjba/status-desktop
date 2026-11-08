@@ -16,7 +16,12 @@
 
 #include <private/qqmlcontextdata_p.h>
 
-#include <typeinfo>
+#ifdef STATUSREPLAY_WITH_STATUSQ
+extern "C" {
+bool statusq_incubationControllerSettings(void* engine, int* msPerTick, int* gentlePeriodMs, int* boostGapMs);
+bool statusq_networkAccessFactorySettings(void* engine, qint64* maxCacheSize);
+}
+#endif
 
 namespace StatusReplay {
 
@@ -34,11 +39,6 @@ const char* const EnvironmentKeys[] = {
     "QML_DISABLE_DISK_CACHE",
     "QTWEBENGINE_CHROMIUM_FLAGS",
 };
-
-QString typeName(const void* object, const std::type_info& type)
-{
-    return object ? QString::fromLatin1(type.name()) : QString();
-}
 
 QString normalizedPath(QString path)
 {
@@ -120,11 +120,23 @@ QJsonObject setupFingerprint(QQmlEngine* engine)
     for (const auto& path : engine->importPathList())
         importPaths.append(normalizedPath(path));
 
-    const QQmlIncubationController* incubation = engine->incubationController();
-    const QQmlNetworkAccessManagerFactory* nam = engine->networkAccessManagerFactory();
-    QJsonObject engineJson { { "importPaths", importPaths },
-        { "incubationController", incubation ? typeName(incubation, typeid(*incubation)) : QString() },
-        { "networkAccessManagerFactory", nam ? typeName(nam, typeid(*nam)) : QString() },
+    // The values the app passed, not just which helpers exist: a changed budget or cache size
+    // in the Nim startup shows up as a difference.
+    QJsonObject incubation { { "installed", engine->incubationController() != nullptr } };
+    QJsonObject network { { "installed", engine->networkAccessManagerFactory() != nullptr } };
+#ifdef STATUSREPLAY_WITH_STATUSQ
+    int msPerTick = 0, gentlePeriodMs = 0, boostGapMs = 0;
+    if (statusq_incubationControllerSettings(engine, &msPerTick, &gentlePeriodMs, &boostGapMs)) {
+        incubation["msPerTick"] = msPerTick;
+        incubation["gentlePeriodMs"] = gentlePeriodMs;
+        incubation["boostGapMs"] = boostGapMs;
+    }
+    qint64 maxCacheSize = 0;
+    if (statusq_networkAccessFactorySettings(engine, &maxCacheSize))
+        network["maxCacheSize"] = QString::number(maxCacheSize);
+#endif
+    QJsonObject engineJson { { "importPaths", importPaths }, { "incubationController", incubation },
+        { "networkAccessManagerFactory", network },
         { "contextProperties", QJsonArray::fromStringList(contextPropertyNames(engine)) },
         { "mainQml", QFile::exists(QStringLiteral(":/main.qml")) } };
 

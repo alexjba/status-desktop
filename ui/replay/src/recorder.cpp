@@ -21,6 +21,8 @@
 #include <QRegularExpression>
 #include <QSysInfo>
 
+#include <unordered_map>
+
 #include <private/qqmlcontextdata_p.h>
 
 namespace StatusReplay {
@@ -32,7 +34,7 @@ const QString Redacted = QStringLiteral("$redacted");
 bool isSensitive(const QByteArray& name)
 {
     static const QRegularExpression contains(
-        QStringLiteral("password|passphrase|mnemonic|seedphrase|privatekey|secret"),
+        QStringLiteral("password|passphrase|mnemonic|seedphrase|privatekey|secret|credential|connectionstring"),
         QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression exact(
         QStringLiteral("^(seed|pairingcode)$|pin$|puk$"), QRegularExpression::CaseInsensitiveOption);
@@ -115,9 +117,12 @@ public:
 
     int idFor(QObject* object);
     const Schema& schemaFor(const QMetaObject* metaObject);
-    QJsonObject state(QObject* object, const Schema& schema);
+    QJsonObject state(QObject* object);
+    QJsonValue encodeFromQml(const QVariant& value, QMetaType declared);
+    void modelDataRead(QObject* model, int role);
     QJsonValue readValue(QObject* object, const QByteArray& name);
     void propertyRead(QObject* object, const QMetaProperty& property, const void* storage);
+    // Only roles QML has read (modelDataObserved) are read back, like properties.
     QJsonArray rows(QAbstractItemModel* model, int first, int last, const QList<int>& roles = {});
     QJsonValue encode(const QVariant& value, QMetaType declared);
     void writeEvent(QJsonObject event);
@@ -139,10 +144,12 @@ public:
     // Only properties QML has read are read back by the recorder: Nim getters QML never
     // calls may not be safe to call (e.g. before their module finished loading).
     QHash<QObject*, QHash<QByteArray, QJsonValue>> readValues;
+    QHash<QObject*, QSet<int>> readRoles;
     int selfReads = 0;
     QHash<int, QPointer<QObject>> objects;
     QList<int> order;
-    QHash<const QMetaObject*, Schema> schemas;
+    // Stable addresses: callers hold a schema while reading values that register new types.
+    std::unordered_map<const QMetaObject*, std::unique_ptr<Schema>> schemas;
     QSet<QString> writtenSchemas;
     QMap<QString, QJsonValue> contextProperties;
     QJsonArray moments;
@@ -182,19 +189,28 @@ const Schema& RecorderPrivate::schemaFor(const QMetaObject* metaObject)
 {
     auto it = schemas.find(metaObject);
     if (it == schemas.end()) {
-        it = schemas.insert(metaObject, Schema::fromMetaObject(metaObject));
-        if (!writtenSchemas.contains(it->id)) {
-            writtenSchemas.insert(it->id);
-            writeJson(dir.filePath(Format::SchemasDir + QLatin1Char('/') + it->id + QStringLiteral(".json")),
-                it->toJson());
+        it = schemas.emplace(metaObject, std::make_unique<Schema>(Schema::fromMetaObject(metaObject))).first;
+        const Schema& schema = *it->second;
+        if (!writtenSchemas.contains(schema.id)) {
+            writtenSchemas.insert(schema.id);
+            writeJson(dir.filePath(Format::SchemasDir + QLatin1Char('/') + schema.id + QStringLiteral(".json")),
+                schema.toJson());
         }
     }
-    return *it;
+    return *it->second;
 }
 
+// Values Nim hands out: objects in them are followed from now on.
 QJsonValue RecorderPrivate::encode(const QVariant& value, QMetaType declared)
 {
     return redactJson(ValueCodec::encode(value, declared, [this](QObject* o) { return idFor(o); }));
+}
+
+// Values QML passes in (slot arguments, property writes): objects Nim never handed out
+// (QML items) are referenced by class only, not followed.
+QJsonValue RecorderPrivate::encodeFromQml(const QVariant& value, QMetaType declared)
+{
+    return redactJson(ValueCodec::encode(value, declared, [this](QObject* o) { return ids.value(o, -1); }));
 }
 
 int RecorderPrivate::idFor(QObject* object)
@@ -211,7 +227,7 @@ int RecorderPrivate::idFor(QObject* object)
     writeEvent({ { "k", "obj" }, { "o", id }, { "s", schema.id } });
     follow(object, schema);
 
-    QJsonObject init = state(object, schema);
+    QJsonObject init = state(object);
     init["k"] = QStringLiteral("init");
     init["o"] = id;
     writeEvent(init);
@@ -245,7 +261,7 @@ void RecorderPrivate::propertyRead(QObject* object, const QMetaProperty& propert
     writeEvent({ { "k", "val" }, { "o", ids.value(object) }, { "p", QString::fromLatin1(name) }, { "v", encoded } });
 }
 
-QJsonObject RecorderPrivate::state(QObject* object, const Schema&)
+QJsonObject RecorderPrivate::state(QObject* object)
 {
     QJsonObject values;
     const QList<QByteArray> names = readValues.value(object).keys();
@@ -268,20 +284,42 @@ QJsonObject RecorderPrivate::state(QObject* object, const Schema&)
 
 QJsonArray RecorderPrivate::rows(QAbstractItemModel* model, int first, int last, const QList<int>& roles)
 {
-    QList<int> wanted = roles;
-    if (wanted.isEmpty())
-        wanted = model->roleNames().keys();
+    const QSet<int> known = readRoles.value(model);
+    QList<int> wanted;
+    for (int role : roles.isEmpty() ? QList<int>(known.cbegin(), known.cend()) : roles) {
+        if (known.contains(role))
+            wanted.append(role);
+    }
     std::sort(wanted.begin(), wanted.end());
+    const auto roleNames = model->roleNames();
 
     QJsonArray result;
+    ++selfReads;
     for (int row = first; row <= last; ++row) {
         const QModelIndex index = model->index(row, 0);
         QJsonObject values;
         for (int role : wanted)
-            values.insert(QString::number(role), encode(model->data(index, role), QMetaType::fromType<QVariant>()));
+            values.insert(QString::number(role),
+                redactNamed(roleNames.value(role), encode(model->data(index, role), QMetaType::fromType<QVariant>())));
         result.append(values);
     }
+    --selfReads;
     return result;
+}
+
+// The first read of a role makes it known: its whole column is written, later inserts and
+// changes carry it.
+void RecorderPrivate::modelDataRead(QObject* object, int role)
+{
+    auto model = qobject_cast<QAbstractItemModel*>(object);
+    if (!model || readRoles[object].contains(role))
+        return;
+    readRoles[object].insert(role);
+    QJsonArray values;
+    const QJsonArray rowValues = rows(model, 0, model->rowCount() - 1, { role });
+    for (const auto& row : rowValues)
+        values.append(row.toObject().value(QString::number(role)));
+    writeEvent({ { "k", "col" }, { "o", ids.value(object) }, { "role", role }, { "values", values } });
 }
 
 void RecorderPrivate::writeEvent(QJsonObject event)
@@ -308,6 +346,7 @@ void RecorderPrivate::follow(QObject* object, const Schema& schema)
         const int id = ids.take(object);
         objects.remove(id);
         readValues.remove(object);
+        readRoles.remove(object);
         writeEvent({ { "k", "del" }, { "o", id } });
     });
 
@@ -340,7 +379,7 @@ void RecorderPrivate::follow(QObject* object, const Schema& schema)
                 { "rows", rows(model, topLeft.row(), bottomRight.row(), roles) } });
         });
     connect(model, &QAbstractItemModel::modelReset, this, [=] {
-        QJsonObject event = state(model, schemaFor(model->metaObject()));
+        QJsonObject event = state(model);
         event.remove("v");
         event["k"] = QStringLiteral("reset");
         event["o"] = idOf();
@@ -359,10 +398,11 @@ void RecorderPrivate::onSignal(QObject* sender, int signalIndex, void** argv)
     const QMetaMethod signal = mo->method(signalIndex);
     const Schema& schema = schemaFor(mo);
 
+    const QByteArrayList names = signal.parameterNames();
     QJsonArray args;
     for (int i = 0; i < signal.parameterCount(); ++i) {
         const QMetaType type = signal.parameterMetaType(i);
-        args.append(encode(ValueCodec::read(argv[i + 1], type), type));
+        args.append(redactNamed(names.value(i), encode(ValueCodec::read(argv[i + 1], type), type)));
     }
 
     QJsonObject changed;
@@ -421,7 +461,7 @@ void RecorderPrivate::writeSnapshot(const QString& requested)
         if (!object)
             continue;
         const Schema& schema = schemaFor(object->metaObject());
-        QJsonObject entry = state(object, schema);
+        QJsonObject entry = state(object);
         entry["o"] = id;
         entry["s"] = schema.id;
         objectArray.append(entry);
@@ -520,8 +560,8 @@ void Recorder::metacallObserved(QObject* object, QMetaObject::Call call, int ind
         if (index < base->propertyCount())
             return;
         const QMetaProperty property = mo->property(index);
-        const QJsonValue value =
-            redactNamed(property.name(), d->encode(ValueCodec::read(argv[0], property.metaType()), property.metaType()));
+        const QJsonValue value = redactNamed(
+            property.name(), d->encodeFromQml(ValueCodec::read(argv[0], property.metaType()), property.metaType()));
         d->writeEvent({ { "k", "write" }, { "o", id }, { "p", QString::fromLatin1(property.name()) }, { "v", value } });
         return;
     }
@@ -536,7 +576,7 @@ void Recorder::metacallObserved(QObject* object, QMetaObject::Call call, int ind
     QJsonArray args;
     for (int i = 0; i < method.parameterCount(); ++i) {
         const QMetaType type = method.parameterMetaType(i);
-        args.append(redactNamed(names.value(i), d->encode(ValueCodec::read(argv[i + 1], type), type)));
+        args.append(redactNamed(names.value(i), d->encodeFromQml(ValueCodec::read(argv[i + 1], type), type)));
     }
     QJsonObject event { { "k", "call" }, { "o", id }, { "m", QString::fromLatin1(method.methodSignature()) } };
     if (!args.isEmpty())
@@ -545,6 +585,13 @@ void Recorder::metacallObserved(QObject* object, QMetaObject::Call call, int ind
     if (argv[0] && returnType.isValid() && returnType.id() != QMetaType::Void)
         event["r"] = redactNamed(method.name(), d->encode(ValueCodec::read(argv[0], returnType), returnType));
     d->writeEvent(event);
+}
+
+void Recorder::modelDataObserved(QObject* model, int, int role, const QVariant&)
+{
+    if (d->selfReads > 0 || !model || !d->ids.contains(model))
+        return;
+    d->modelDataRead(model, role);
 }
 
 void Recorder::markLoaded()

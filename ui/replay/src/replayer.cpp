@@ -10,6 +10,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QPointer>
+#include <QQmlEngine>
 
 #include <map>
 
@@ -88,6 +89,8 @@ public:
     QVariant decode(const QJsonValue& value, QMetaType declared);
 
     void invoke(QObject* object, const Schema::Method& method, void** argv) override;
+    void roleMissing(QObject* model, int role) override;
+    void applyColumn(qsizetype line, bool notify);
 
     Replayer* q;
     QDir dir;
@@ -107,6 +110,9 @@ public:
     QHash<int, QPair<QString, qsizetype>> creations; // id -> schema, line of its init event
     QSet<int> preCreated;
     QSet<int> deleted;
+    QHash<QPair<int, int>, QList<qsizetype>> columns; // (model, role) -> lines of its col events
+    // Deleted with deleteLater; must still go before their metaobjects are freed.
+    QList<QPointer<QObject>> doomed;
     QList<Replayer::Call> calls;
 };
 
@@ -147,6 +153,11 @@ void ReplayerPrivate::indexSegments()
     QHash<int, QString> objectSchemas;
     for (qsizetype lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
         const QByteArray& line = lines[lineIndex];
+        if (line.contains("\"k\":\"col\"")) {
+            const QJsonObject event = QJsonDocument::fromJson(line).object();
+            columns[{ event["o"].toInt(), event["role"].toInt() }].append(lineIndex);
+            continue;
+        }
         const bool relevant = line.contains("\"k\":\"obj\"") || line.contains("\"k\":\"init\"")
             || line.contains("\"k\":\"val\"") || line.contains("\"k\":\"sig\"");
         if (!relevant)
@@ -228,6 +239,8 @@ QObject* ReplayerPrivate::create(int id, const QString& schemaId)
         object = new ReplayModel(*s, metaObjects[schemaId], this);
     else
         object = new ReplayObject(*s, metaObjects[schemaId], this);
+    // Like nimqml: QML never owns these, even when a slot returns one without a parent.
+    QQmlEngine::setObjectOwnership(object, QQmlEngine::CppOwnership);
     objects.insert(id, object);
     ids.insert(object, id);
     return object;
@@ -383,6 +396,7 @@ void ReplayerPrivate::apply(const QJsonObject& event)
             ids.remove(target);
             objects.remove(event["o"].toInt());
             target->deleteLater();
+            doomed.append(target);
         }
     } else if (kind == QLatin1String("ctx")) {
         const QString name = event["n"].toString();
@@ -393,13 +407,22 @@ void ReplayerPrivate::apply(const QJsonObject& event)
         DynamicPart* p = target ? part(target) : nullptr;
         if (!p)
             return;
-        const QJsonObject changed = event["p"].toObject();
-        for (auto it = changed.begin(); it != changed.end(); ++it) {
+        const QJsonObject notified = event["p"].toObject();
+        // A notify for a value replayed QML wrote itself was already emitted on that write.
+        // (Equal values alone don't tell: a recorded read can land just before its notify.)
+        bool alreadyNotified = !notified.isEmpty() && event["a"].toArray().isEmpty();
+        for (auto it = notified.begin(); it != notified.end(); ++it) {
             const int index = p->propertyIndex(it.key().toLatin1());
-            if (index >= 0)
-                p->setValue(index, decode(it.value(), QMetaType::fromName(p->schema().properties[index].type)));
+            if (index < 0)
+                continue;
+            const QVariant value = decode(it.value(), QMetaType::fromName(p->schema().properties[index].type));
+            const bool writtenByQml = p->takeWrittenByQml(index);
+            alreadyNotified = alreadyNotified && writtenByQml && value == p->value(index);
+            p->setValue(index, value);
         }
         applyHoists(event["q"].toInteger());
+        if (alreadyNotified)
+            return;
         const int method = p->methodIndex(event["m"].toString().toLatin1());
         if (method < 0)
             return;
@@ -422,6 +445,8 @@ void ReplayerPrivate::apply(const QJsonObject& event)
             if (index >= 0)
                 p->setValue(index, decode(event["v"], QMetaType::fromName(p->schema().properties[index].type)));
         }
+    } else if (kind == QLatin1String("col")) {
+        applyColumn(position - 1, true);
     } else if (kind == QLatin1String("ins")) {
         if (auto model = dynamic_cast<ReplayModel*>(target))
             model->insertRowsAt(event["f"].toInt(), decodeRows(event["rows"].toArray()));
@@ -498,10 +523,41 @@ void ReplayerPrivate::invoke(QObject* object, const Schema::Method& method, void
         chosen && chosen->hasResult ? decode(chosen->result, returnType) : decode(QJsonValue::Null, returnType));
 }
 
+void ReplayerPrivate::applyColumn(qsizetype line, bool notify)
+{
+    const QJsonObject event = QJsonDocument::fromJson(lines[line]).object();
+    auto model = dynamic_cast<ReplayModel*>(object(event["o"].toInt()));
+    if (!model)
+        return;
+    QList<QVariant> values;
+    for (const auto& value : event["values"].toArray())
+        values.append(decode(value, QMetaType::fromType<QVariant>()));
+    model->setColumn(event["role"].toInt(), values, notify);
+}
+
+// The recorded QML read this role later than replayed QML does: apply its next recorded column
+// now (it is applied again at its own position, for the rows that exist by then).
+void ReplayerPrivate::roleMissing(QObject* model, int role)
+{
+    const auto it = columns.constFind({ ids.value(model), role });
+    if (it == columns.cend())
+        return;
+    for (qsizetype line : *it) {
+        if (line >= position) {
+            // Inside data(): the asking read gets the value, nothing to notify.
+            applyColumn(line, false);
+            return;
+        }
+    }
+}
+
 void ReplayerPrivate::clear()
 {
     for (const auto& object : std::as_const(objects))
         delete object.data();
+    for (const auto& object : std::as_const(doomed))
+        delete object.data();
+    doomed.clear();
     objects.clear();
     ids.clear();
     preCreated.clear();

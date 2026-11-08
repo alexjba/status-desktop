@@ -5,6 +5,7 @@
 #include <QAbstractListModel>
 #include <QHash>
 #include <QList>
+#include <QSet>
 #include <QVariant>
 
 namespace StatusReplay {
@@ -16,6 +17,8 @@ public:
     virtual ~ReplayHost() = default;
     // A slot or invokable called from QML; `argv` follows the metacall convention.
     virtual void invoke(QObject* object, const Schema::Method& method, void** argv) = 0;
+    // QML asked a model for a role it has no value for yet (read later in the recording).
+    virtual void roleMissing(QObject* model, int role) = 0;
 };
 
 // Dynamic part shared by replayed objects and models: schema-built metaobject plus values.
@@ -32,10 +35,14 @@ public:
     // Stores without notifying; notification is replayed from the recorded signal.
     void setValue(int property, const QVariant& value);
 
+    // True once for a property replayed QML wrote itself (and was notified about on that write).
+    bool takeWrittenByQml(int property) { return m_writtenByQml.remove(property); }
+
     // Handles the metacall for the dynamic part; `id` is relative to the base class.
     int metacall(QObject* self, QMetaObject::Call call, int id, void** argv);
 
     int methodIndex(const QByteArray& signature) const;
+    ReplayHost* host() const { return m_host; }
     void emitSignal(QObject* self, int method, void** argv);
 
 private:
@@ -45,6 +52,7 @@ private:
     QList<QVariant> m_values;
     QHash<QByteArray, int> m_propertyIndex;
     QHash<QByteArray, int> m_methodIndex;
+    QSet<int> m_writtenByQml;
 };
 
 class ReplayObject : public QObject
@@ -83,6 +91,9 @@ public:
     // Silent: used while building state from a snapshot.
     void setRows(const QList<Row>& rows) { m_rows = rows; }
 
+    // Sets one role on every row; `notify` emits dataChanged when QML already asked for it.
+    void setColumn(int role, const QList<QVariant>& values, bool notify);
+
     void insertRowsAt(int first, const QList<Row>& rows);
     void removeRowsAt(int first, int last);
     void moveRowsTo(int first, int last, int destination);
@@ -95,6 +106,7 @@ private:
     QHash<int, QByteArray> m_roles;
     QList<Row> m_rows;
     bool m_canFetchMore = false;
+    mutable QSet<int> m_requestedRoles;
 };
 
 } // namespace StatusReplay

@@ -67,9 +67,14 @@ int DynamicPart::metacall(QObject* self, QMetaObject::Call call, int id, void** 
     case QMetaObject::WriteProperty:
         if (id < propertyCount) {
             const auto& property = m_schema.properties[id];
-            m_values[id] = ValueCodec::read(argv[0], QMetaType::fromName(property.type));
-            if (property.notify >= 0 && m_schema.methods[property.notify].parameterTypes.isEmpty())
+            const QVariant written = ValueCodec::read(argv[0], QMetaType::fromName(property.type));
+            const bool changed = written != m_values[id];
+            m_values[id] = written;
+            // The recorded notify that followed the write replays without re-emitting.
+            if (changed && property.notify >= 0 && m_schema.methods[property.notify].parameterTypes.isEmpty()) {
+                m_writtenByQml.insert(id);
                 emitSignal(self, property.notify, nullptr);
+            }
         }
         return id - propertyCount;
     case QMetaObject::ResetProperty:
@@ -128,8 +133,35 @@ QVariant ReplayModel::data(const QModelIndex& index, int role) const
 {
     if (!index.isValid() || index.row() >= m_rows.size())
         return {};
-    return m_rows[index.row()].value(role);
+    const Row& row = m_rows[index.row()];
+    if (!row.contains(role) && !m_requestedRoles.contains(role)) {
+        m_requestedRoles.insert(role);
+        m_part.host()->roleMissing(const_cast<ReplayModel*>(this), role);
+        return m_rows[index.row()].value(role);
+    }
+    return row.value(role);
 }
+
+void ReplayModel::setColumn(int role, const QList<QVariant>& values, bool notify)
+{
+    // Applied ahead of its position (QML read earlier), the row count may differ: index-mapped.
+    const int count = qMin(values.size(), m_rows.size());
+    if (notify && values.size() != m_rows.size())
+        qWarning() << "StatusReplay: column of" << values.size() << "values for" << m_rows.size() << "rows";
+    for (int i = 0; i < count; ++i)
+        m_rows[i].insert(role, values[i]);
+    if (notify && count > 0 && m_requestedRoles.contains(role))
+        emit dataChanged(index(0), index(count - 1), { role });
+}
+
+namespace {
+bool diverged(const char* operation, bool ok)
+{
+    if (!ok)
+        qWarning() << "StatusReplay: model diverged from the recording at" << operation << "- skipped";
+    return !ok;
+}
+} // namespace
 
 QHash<int, QByteArray> ReplayModel::roleNames() const
 {
@@ -143,7 +175,7 @@ bool ReplayModel::canFetchMore(const QModelIndex& parent) const
 
 void ReplayModel::insertRowsAt(int first, const QList<Row>& rows)
 {
-    if (rows.isEmpty())
+    if (rows.isEmpty() || diverged("insert", first >= 0 && first <= m_rows.size()))
         return;
     beginInsertRows({}, first, first + rows.size() - 1);
     for (int i = 0; i < rows.size(); ++i)
@@ -153,6 +185,8 @@ void ReplayModel::insertRowsAt(int first, const QList<Row>& rows)
 
 void ReplayModel::removeRowsAt(int first, int last)
 {
+    if (diverged("remove", first >= 0 && first <= last && last < m_rows.size()))
+        return;
     beginRemoveRows({}, first, last);
     m_rows.remove(first, last - first + 1);
     endRemoveRows();
@@ -160,6 +194,9 @@ void ReplayModel::removeRowsAt(int first, int last)
 
 void ReplayModel::moveRowsTo(int first, int last, int destination)
 {
+    if (diverged("move", first >= 0 && first <= last && last < m_rows.size() && destination >= 0
+                && destination <= m_rows.size()))
+        return;
     if (!beginMoveRows({}, first, last, {}, destination))
         return;
     const QList<Row> moved = m_rows.mid(first, last - first + 1);
@@ -172,7 +209,7 @@ void ReplayModel::moveRowsTo(int first, int last, int destination)
 
 void ReplayModel::updateRows(int first, const QList<Row>& rows, const QList<int>& roles)
 {
-    if (rows.isEmpty())
+    if (rows.isEmpty() || diverged("dataChanged", first >= 0 && first + rows.size() <= m_rows.size()))
         return;
     for (int i = 0; i < rows.size(); ++i) {
         Row& row = m_rows[first + i];

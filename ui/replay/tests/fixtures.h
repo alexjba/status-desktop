@@ -3,6 +3,8 @@
 #include <StatusReplay/recorder.h>
 
 #include <QAbstractListModel>
+
+#include <limits>
 #include <QObject>
 #include <QVariant>
 
@@ -15,6 +17,15 @@ inline void readLikeQml(QObject* object, const QByteArrayList& names)
 {
     for (const auto& name : names)
         object->property(name.constData());
+}
+
+// What delegates bound to these roles do: read them for every row (through data()).
+inline void readRolesLikeQml(QAbstractItemModel* model, const QList<int>& roles)
+{
+    for (int row = 0; row < model->rowCount(); ++row) {
+        for (int role : roles)
+            model->data(model->index(row, 0), role);
+    }
 }
 
 // Mirrors the nimqml metacall hook: every metacall is reported after it was handled.
@@ -31,6 +42,22 @@ public:
         if (g_recorder)
             g_recorder->metacallObserved(this, call, absolute, argv);
         return result;
+    }
+};
+
+// Mirrors the nimqml model data hook as well: every data() answer is reported.
+template <typename T>
+class HookedModel : public Hooked<T>
+{
+public:
+    using Hooked<T>::Hooked;
+
+    QVariant data(const QModelIndex& index, int role) const override
+    {
+        const QVariant value = T::data(index, role);
+        if (g_recorder)
+            g_recorder->modelDataObserved(const_cast<HookedModel*>(this), index.row(), role, value);
+        return value;
     }
 };
 
@@ -84,6 +111,7 @@ public:
         NameRole = Qt::UserRole + 1,
         BalanceRole,
         AccountRole,
+        SeedPhraseRole,
     };
 
     using QAbstractListModel::QAbstractListModel;
@@ -104,14 +132,20 @@ public:
             return row.balance;
         case AccountRole:
             return QVariant::fromValue<QObject*>(row.account);
+        case SeedPhraseRole:
+            ++m_seedPhraseReads;
+            return QStringLiteral("apple banana cherry");
         }
         return {};
     }
 
     QHash<int, QByteArray> roleNames() const override
     {
-        return { { NameRole, "name" }, { BalanceRole, "balance" }, { AccountRole, "account" } };
+        return { { NameRole, "name" }, { BalanceRole, "balance" }, { AccountRole, "account" },
+            { SeedPhraseRole, "seedPhrase" } };
     }
+
+    int seedPhraseReads() const { return m_seedPhraseReads; }
 
     void insert(int at, const QString& name, int balance, QObject* account = nullptr)
     {
@@ -166,6 +200,7 @@ private:
         QObject* account;
     };
     QList<Row> m_rows;
+    mutable int m_seedPhraseReads = 0;
 };
 
 class WalletView : public QObject
@@ -180,11 +215,14 @@ class WalletView : public QObject
     Q_PROPERTY(QString filter READ filter WRITE setFilter NOTIFY filterChanged)
     // Like a Nim getter that is only safe once QML asks for it.
     Q_PROPERTY(QString fragile READ fragile NOTIFY titleChanged)
+    // Shapes of Nim surfaces that carry secrets (keypair import, main view, onboarding).
+    Q_PROPERTY(QString connectionString READ getConnectionString NOTIFY connectionStringChanged)
+    Q_PROPERTY(quint64 bigValue READ bigValue CONSTANT)
 
 public:
     explicit WalletView(QObject* parent = nullptr)
         : QObject(parent)
-        , m_accounts(new Hooked<AccountsModel>(this))
+        , m_accounts(new HookedModel<AccountsModel>(this))
     {
     }
 
@@ -240,6 +278,23 @@ public:
         return m_accounts->data(m_accounts->index(row), AccountsModel::AccountRole);
     }
     Q_INVOKABLE void refresh() { ++m_refreshes; }
+    Q_INVOKABLE QString getConnectionString() const { return QStringLiteral("cs2:pairing-secret"); }
+    Q_INVOKABLE QString validateConnectionString(const QString& connectionString) const
+    {
+        return connectionString.isEmpty() ? QStringLiteral("empty") : QString();
+    }
+    Q_INVOKABLE void attach(QObject* item) { m_attached = item; }
+    quint64 bigValue() const { return std::numeric_limits<quint64>::max(); }
+
+    void requestStoreCredential(const QString& key, const QString& password)
+    {
+        emit requestStoreCredentialToKeychain(key, password);
+    }
+    void authenticate(const QString& publicKey, const QString& chatKey) { emit keycardAuthSuccess(publicKey, chatKey); }
+    void requestStayLoggedIn(const QString& account, const QString& credential)
+    {
+        emit stayLoggedInSaveRequested(account, credential, true);
+    }
 
     void notifyTransfer(const QString& txHash, int amount) { emit transferConfirmed(txHash, amount); }
 
@@ -250,6 +305,10 @@ signals:
     void currentChanged();
     void filterChanged();
     void transferConfirmed(const QString& txHash, int amount);
+    void connectionStringChanged();
+    void requestStoreCredentialToKeychain(const QString& key, const QString& password);
+    void keycardAuthSuccess(const QString& encryptionPublicKey, const QString& chatPrivateKey);
+    void stayLoggedInSaveRequested(const QString& account, const QString& credential, bool enablePreference);
 
 private:
     QString m_title;
@@ -258,5 +317,6 @@ private:
     AccountsModel* m_accounts;
     QString m_filter;
     int m_refreshes = 0;
+    QObject* m_attached = nullptr;
     mutable int m_fragileReads = 0;
 };

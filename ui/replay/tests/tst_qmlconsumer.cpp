@@ -70,6 +70,7 @@ private slots:
             wallet.accountsModel()->insert(0, QStringLiteral("Main"), 10);
             recorder.setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
             readLikeQml(&wallet, { "title", "loading", "current", "accounts" });
+            readRolesLikeQml(wallet.accountsModel(), { AccountsModel::NameRole, AccountsModel::BalanceRole, AccountsModel::AccountRole });
             QString formatted;
             void* argv[] = { &formatted, nullptr, nullptr };
             int amount = 5;

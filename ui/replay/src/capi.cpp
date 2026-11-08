@@ -12,6 +12,7 @@
 #include <QJsonDocument>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
+#include <QStandardPaths>
 #include <QWindow>
 #include <QTimer>
 
@@ -25,7 +26,7 @@ QString recordingDirectory()
 {
     QString dir = qEnvironmentVariable("STATUS_RECORD");
     if (dir.isEmpty() || dir == QLatin1String("1"))
-        dir = QStringLiteral("Status/recordings/")
+        dir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + QStringLiteral("/recordings/")
             + QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-HHmmss"));
     return QDir(dir).absolutePath();
 }
@@ -99,6 +100,12 @@ void onMetacall(void* object, int call, int index, void** argv)
         g_recorder->metacallObserved(static_cast<QObject*>(object), static_cast<QMetaObject::Call>(call), index, argv);
 }
 
+void onModelData(void* model, int row, int role, const void* value)
+{
+    if (g_recorder)
+        g_recorder->modelDataObserved(static_cast<QObject*>(model), row, role, *static_cast<const QVariant*>(value));
+}
+
 } // namespace
 
 extern "C" {
@@ -106,13 +113,13 @@ extern "C" {
 StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
 {
     if (g_recorder)
-        return { onContextProperty, onMetacall };
+        return { onContextProperty, onMetacall, onModelData };
 
     auto recorder = new Recorder(recordingDirectory());
     if (!recorder->isValid()) {
         qWarning() << "StatusReplay: recording disabled:" << recorder->errorString();
         delete recorder;
-        return { nullptr, nullptr };
+        return { nullptr, nullptr, nullptr };
     }
     g_recorder = recorder;
     qInfo() << "StatusReplay: recording into" << recorder->directory();
@@ -150,7 +157,7 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
         qInfo() << "StatusReplay: recording written to" << g_recorder->directory();
     });
 
-    return { onContextProperty, onMetacall };
+    return { onContextProperty, onMetacall, onModelData };
 }
 
 // App-defined moments also get a '<name>-settled' snapshot once async loading has had time to finish.

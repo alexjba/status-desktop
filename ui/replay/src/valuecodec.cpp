@@ -40,12 +40,17 @@ QJsonValue encodeScalar(const QVariant& value)
         return value.toBool();
     case QMetaType::QString:
         return value.toString();
-    case QMetaType::LongLong:
-    case QMetaType::ULongLong: {
+    case QMetaType::LongLong: {
         const qint64 v = value.toLongLong();
         if (v > MaxSafeInteger || v < -MaxSafeInteger)
             return value.toString();
         return v;
+    }
+    case QMetaType::ULongLong: {
+        const quint64 v = value.toULongLong();
+        if (v > quint64(MaxSafeInteger))
+            return value.toString();
+        return qint64(v);
     }
     case QMetaType::Double:
     case QMetaType::Float:
@@ -76,7 +81,10 @@ QJsonValue encode(const QVariant& input, QMetaType declared, const ObjectToId& i
         QObject* object = value.value<QObject*>();
         if (!object)
             return QJsonValue::Null;
-        return QJsonObject { { "$obj", idFor(object) } };
+        const int id = idFor(object);
+        if (id < 0)
+            return QJsonObject { { "$ext", QString::fromLatin1(object->metaObject()->className()) } };
+        return QJsonObject { { "$obj", id } };
     }
 
     if (isScalar(type)) {
@@ -142,12 +150,16 @@ QVariant decode(const QJsonValue& json, QMetaType declared, const IdToObject& ob
 
     if (!json.isObject()) {
         QVariant plain = json.toVariant();
-        if (declared.id() == QMetaType::LongLong || declared.id() == QMetaType::ULongLong)
+        if (declared.id() == QMetaType::LongLong)
             plain = json.isString() ? QVariant(json.toString().toLongLong()) : QVariant(qint64(json.toDouble()));
+        else if (declared.id() == QMetaType::ULongLong)
+            plain = json.isString() ? QVariant(json.toString().toULongLong()) : QVariant(quint64(json.toDouble()));
         return toDeclared(plain);
     }
 
     const QJsonObject object = json.toObject();
+    if (object.contains("$ext"))
+        return isQObjectPointer(declared) ? QVariant(declared, nullptr) : QVariant();
     if (object.contains("$obj")) {
         QObject* target = objectFor(object["$obj"].toInt());
         if (isQObjectPointer(declared)) {
@@ -188,9 +200,11 @@ QVariant decode(const QJsonValue& json, QMetaType declared, const IdToObject& ob
         return toDeclared(QByteArray::fromBase64(v.toString().toLatin1()));
 
     const QMetaType type = QMetaType::fromName(typeName.toLatin1());
-    QVariant result = (type.id() == QMetaType::LongLong || type.id() == QMetaType::ULongLong) && v.isString()
-        ? QVariant(v.toString().toLongLong())
-        : v.toVariant();
+    QVariant result = v.toVariant();
+    if (v.isString() && type.id() == QMetaType::LongLong)
+        result = v.toString().toLongLong();
+    else if (v.isString() && type.id() == QMetaType::ULongLong)
+        result = v.toString().toULongLong();
     if (type.isValid() && !result.convert(type))
         result = QVariant(type);
     return toDeclared(result);

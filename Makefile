@@ -550,12 +550,16 @@ statusreplay: | statusq
 RECORD_DATADIR ?= Status/record-profile
 RECORD_OUTPUT = $(or $(RECORDING),Status/recordings/$(shell date +%Y%m%d-%H%M%S))
 
-record-run: statusreplay
+record-run: statusreplay rcc
 	MAKE="$(MAKE)" \
 	RECORDING="$(abspath $(RECORD_OUTPUT))" \
 	RECORD_DATADIR="$(abspath $(RECORD_DATADIR))" \
 	STATUS_REPLAY_LIB="$(abspath $(STATUSREPLAY_LIB))" \
+	STATUS_REPLAY_BINARY="$(abspath $(STATUSREPLAY_BINARY))" \
+	STATUS_REPLAY_RCC="$(abspath $(UI_RESOURCES))" \
 	STATUS_RECORD_APP_COMMIT="$(shell git rev-parse HEAD)" \
+	DYLD_LIBRARY_PATH="$(STATUSQ_LIB_PATH)":"$(EXTRA_LIBS_PATH)":"$(DYLD_LIBRARY_PATH)" \
+	LD_LIBRARY_PATH="$(QT_LIBDIR)":"$(STATUSQ_LIB_PATH)":"$(EXTRA_LIBS_PATH)":"$(LD_LIBRARY_PATH)" \
 		$(STATUSREPLAY_SOURCE_PATH)/scripts/record-run.sh
 
 replay-run: statusreplay rcc

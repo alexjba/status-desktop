@@ -43,5 +43,12 @@ else
     rm -rf "$RECORDING"
     run_app "$RECORDING" "$RECORD_SCRIPT" "${RECORD_TAIL_MS:-10000}"
     has_moments "$RECORDING" startup loggedIn exit
+    # A change to the Nim startup that the replay setup does not mirror fails here.
+    if [ -n "${STATUS_REPLAY_BINARY:-}" ]; then
+        "$STATUS_REPLAY_BINARY" --recording "$RECORDING" --check-setup || {
+            echo "replay setup differs from the recorded app: update ui/replay/app/replaysetup.cpp"
+            exit 1
+        }
+    fi
 fi
 echo "Recording: $RECORDING"

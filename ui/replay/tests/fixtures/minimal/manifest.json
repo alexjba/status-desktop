@@ -28,9 +28,17 @@
                 "qrc:/qt/qml",
                 "$QT_QML"
             ],
-            "incubationController": "27BoostedIncubationController",
+            "incubationController": {
+                "boostGapMs": 2,
+                "gentlePeriodMs": 300,
+                "installed": true,
+                "msPerTick": 12
+            },
             "mainQml": true,
-            "networkAccessManagerFactory": "N6Status20NetworkAccessFactoryE"
+            "networkAccessManagerFactory": {
+                "installed": true,
+                "maxCacheSize": "536870912"
+            }
         },
         "env": {
             "QSG_RENDER_LOOP": "threaded",

@@ -37,6 +37,8 @@ public:
 
     // Called after the object finished handling the metacall, so argv[0] holds a slot's return value.
     void metacallObserved(QObject* object, QMetaObject::Call call, int index, void** argv);
+    // Called after a model answered data(): the roles read this way are the ones recorded.
+    void modelDataObserved(QObject* model, int row, int role, const QVariant& value);
 
     // Marks the main document load: replay loads QML at the same point of the timeline.
     void markLoaded();

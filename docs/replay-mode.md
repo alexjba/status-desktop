@@ -55,7 +55,8 @@ Recorder and replayer live in their own library, `ui/replay/` → `libStatusRepl
 normal builds do not link it:
 
 - **Normal run**: Nim checks `STATUS_RECORD`. Unset → nothing is loaded, hooks stay
-  nil, zero added pages. Set → Nim `dlopen`s `libStatusReplay` (next to the app
+  nil, zero added pages. Production builds compile the check out entirely (it is on by
+  default in non-production builds; `-d:statusRecorder` re-enables it). Set → Nim `dlopen`s `libStatusReplay` (next to the app
   binary, or `STATUS_REPLAY_LIB`), resolves `statusreplay_recorder_attach`, and
   installs the callbacks it returns into the nimqml-seaqt hooks. A missing library
   is logged and the app runs unrecorded.
@@ -64,18 +65,20 @@ normal builds do not link it:
 
 ### Choke points
 
-Two hooks, both in nimqml-seaqt, each a nil-checked C function pointer, so the cost
-when off is one branch per metacall. Developed on a local nimqml-seaqt branch pinned
-in this work; the upstream seaqt PR and the final pin bump come later, on the owner's
-go:
+Three hooks, all in nimqml-seaqt, each a nil-checked C function pointer, so the cost
+when off is one branch per metacall or data() call. They are developed on a local
+nimqml-seaqt branch (`replay-hooks`) that the submodule pin points at. **That commit
+exists only locally: the pin is unreachable for anyone else until the seaqt PR is
+merged and the pin is bumped (owner's go). This blocks merging this work upstream.**
 
 1. **Context property hook** in `setRootContextProperty`: `(engine, name, QVariant*)`.
    Needed for ordering: login sets `mainModule` and friends mid-run, and QML reacts to
    the moment they appear. No call-site edits in `src/`.
 2. **Metacall hook** in `notherside.nim` `vtbl.metacall`, after dispatch:
    `(QObject*, call, index, argv)`. Records slot calls from QML with arguments and the
-   return value, and `WriteProperty` from QML. Property reads are not hooked; values come
-   from snapshots and notify signals.
+   return value, `WriteProperty` from QML, and `ReadProperty` (what QML read, see below).
+3. **Model data hook** in the model `vtbl.data`, after Nim answered: `(model, row, role,
+   QVariant*)`. Tells which roles QML reads.
 
 Everything else is reached generically from C++ through `QMetaObject`/`QAbstractItemModel`
 APIs, so new Nim types, properties and models need no recorder changes. The two
@@ -86,21 +89,27 @@ coverage gap.
 
 ### Recorder (`libStatusReplay`)
 
-- Loaded only when `STATUS_RECORD=<dir>` is set (desktop env; Android: env from the
-  launch intent). After `dlopen`, Nim calls `statusreplay_recorder_attach(engine)` once
+- Loaded only when `STATUS_RECORD=<dir>` is set (desktop env; Android: the
+  `status-env.txt` file debug packages read at start). Without it, recordings go to
+  `<app data dir>/recordings/<timestamp>`. After `dlopen`, Nim calls `statusreplay_recorder_attach(engine)` once
   after creating the engine, and `statusreplay_recorder_markMoment(name)` (resolved
   the same way, skipped when not loaded) at two app-defined points.
-- **Object registry**: every QObject reachable from context properties, QObject-valued
-  properties, role data, slot returns and signal args gets a stable id in discovery
-  order (deterministic traversal, so diffs between recordings stay small). On first
-  sight: schema (if new), rows and roles for models, generic connections to all its
-  signals, `destroyed` tracking.
+- **Object registry**: every QObject Nim hands out (context properties, QObject-valued
+  properties, role data, slot returns, signal args) gets a stable id in discovery order.
+  On first sight: schema (if new), role names and row count for models, generic
+  connections to all its signals, `destroyed` tracking. Objects QML passes in (slot
+  arguments, property writes) that Nim never handed out are referenced by class only and
+  not followed. Metacalls on objects that are not registered (or were deleted by the call
+  itself) are ignored.
 - **Read-driven values**: the recorder never calls a property getter QML has not called.
   Property values come from the metacall hook when QML reads them (`val` events when a
   read returns something new); after that the recorder re-reads them on their notify
   signal and at each moment. Calling every getter eagerly crashed the first desktop
   recording (a Nim getter that is only valid once its module finished loading), and
   values QML never read are not needed to replay what QML showed.
+- **Read-driven roles**, the same for models: a role is read back only once QML read
+  it (model data hook). Its first read writes the whole column (`col` event); later
+  inserts, `dataChanged`, resets and snapshots carry the known roles only.
 - **Schemas** are keyed by a content hash, not class name: many Nim types share a name
   (`View`, `Model`). Schema = class name, base kind (`QObject`, `QAbstractListModel`,
   `QAbstractItemModel`), the full metaobject chain below the base (properties with type,
@@ -269,14 +278,17 @@ overridable), so it installs next to the real app.
 
 ## Out of scope
 
-- Replaying user input; QML-internal state (current page, scroll position, popups)
-  only matches where QML derives it from Nim state.
+- Replaying hand-driven user input. Scripted recordings replay exactly (their clicks are
+  `ui` events); a recording driven by hand (`RECORD_SCRIPT=none`) replays the Nim state,
+  but QML-only state (current page, scroll position, popups) diverges where QML does not
+  derive it from Nim.
 - Driving the backend from replay: slot calls never change replayed state, they only
   return recorded values.
 - Web content (browser section, dApps WebEngine pages), camera frames, keycard, iOS.
 - Editing or synthesizing recordings beyond the test fixture.
 - Exact async timing (status-go response latency, incubation interleaving) beyond the
-  recorded timestamps.
+  recorded timestamps. Realtime replay has no back-pressure when QML is slower than the
+  recording (the play-up-to-a-moment path does).
 
 ## Risks
 
@@ -297,9 +309,11 @@ overridable), so it installs next to the real app.
   are not used for measurements, replay runs and plain runs are.
 - **Upstream dependency**: the hooks live on a local nimqml-seaqt branch until the
   seaqt PR merges; the submodule pin points at that branch meanwhile.
-- **Setup drift**: the replay setup duplicates Nim's Qt-side startup; a change on one
-  side only shows up as a fingerprint mismatch, so the parity test must run in CI with
-  the other replay tests.
+- **Setup drift**: the replay setup duplicates Nim's Qt-side startup. The fingerprint
+  records the values Nim passed (incubation budget, network cache size, import paths of
+  the Nim QML libraries, env defaults), `make record-run` fails when
+  `status-replay --check-setup` finds a difference, and SetupParityTest checks the
+  replay setup against the committed fixture.
 - **Private Qt API** (`QMetaObjectBuilder`, `QQmlContextData`) can change between Qt
   minors; both are confined to `libStatusReplay` and covered by the host tests.
 - **Media**: before phase 3b every status-go-served image is missing in replay, which

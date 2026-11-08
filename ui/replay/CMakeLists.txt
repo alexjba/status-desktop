@@ -20,12 +20,14 @@ find_package(Qt6 6.11 COMPONENTS Core CorePrivate Gui Qml QmlPrivate Quick REQUI
 
 add_library(StatusReplay SHARED
     include/StatusReplay/fingerprint.h
+    include/StatusReplay/player.h
     include/StatusReplay/recorder.h
     include/StatusReplay/replayer.h
     include/StatusReplay/scriptrunner.h
     include/StatusReplay/statusreplay.h
     src/capi.cpp
     src/fingerprint.cpp
+    src/player.cpp
     src/format.h
     src/recorder.cpp
     src/replayer.cpp
@@ -51,6 +53,7 @@ if(STATUSQ_LIBRARY)
         app/replaysetup.cpp
     )
     target_link_libraries(StatusReplay PRIVATE ${STATUSQ_LIBRARY})
+    target_compile_definitions(StatusReplay PRIVATE STATUSREPLAY_WITH_STATUSQ)
 
     if(NOT ANDROID)
         add_executable(status-replay app/main.cpp)

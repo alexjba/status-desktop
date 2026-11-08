@@ -72,8 +72,9 @@ void prepareProcess(const QJsonObject& manifest)
 
 void prepareApplication(const QJsonObject&)
 {
+    // Mobile builds compile the resources into the app instead of shipping resources.rcc.
     const QString rcc = resourcesPath();
-    if (!QResource::registerResource(rcc))
+    if (QFileInfo::exists(rcc) && !QResource::registerResource(rcc))
         qWarning() << "StatusReplay: cannot register" << rcc;
 }
 
@@ -83,13 +84,14 @@ void prepareEngine(QQmlApplicationEngine* engine, const QJsonObject& manifest, c
     engine->addImportPath(QStringLiteral("qrc:/./imports"));
     engine->addImportPath(QStringLiteral("qrc:/./app"));
 
-    // QML modules shipped by Nim libraries (NimQtCamera, NimQrScan) add absolute source dirs.
+    // Mirrors qtcamera/qrscan installOnEngine: their QML import dirs (compile-time source paths)
+    // as recorded; their backend context properties come with the recording.
     // addImportPath prepends, so add them last-first to keep the recorded order.
     const QStringList present = engine->importPathList();
     const QJsonArray recorded = manifest["importPaths"].toArray();
     for (qsizetype i = recorded.size() - 1; i >= 0; --i) {
         const QString path = recorded.at(i).toString();
-        if (QFileInfo(path).isAbsolute() && QFileInfo::exists(path) && !present.contains(path))
+        if (QFileInfo(path).isAbsolute() && !present.contains(path))
             engine->addImportPath(path);
     }
 

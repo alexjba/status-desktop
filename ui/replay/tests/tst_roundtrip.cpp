@@ -167,6 +167,7 @@ private slots:
         m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
         readLikeQml(&wallet, { "accounts" });
         readLikeQml(wallet.accountsModel(), { "count" });
+        readRolesLikeQml(wallet.accountsModel(), { AccountsModel::NameRole, AccountsModel::BalanceRole, AccountsModel::AccountRole });
         readLikeQml(&savings, { "name" });
         m_recorder->markMoment(QStringLiteral("startup"));
 
@@ -317,6 +318,8 @@ private slots:
         savings.setName(QStringLiteral("Savings"));
         wallet.setTitle(QStringLiteral("Loading"));
         model->insert(0, QStringLiteral("A"), 1);
+        // The first delegate reads its roles once the first row exists.
+        readRolesLikeQml(model, { AccountsModel::NameRole, AccountsModel::BalanceRole, AccountsModel::AccountRole });
         model->insert(1, QStringLiteral("B"), 2, &savings);
         readLikeQml(&savings, { "name", "balance" });
         model->insert(2, QStringLiteral("C"), 3);
@@ -389,6 +392,7 @@ private slots:
         // Added mid-run, like the main module after login.
         m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(wallet.get()));
         readLikeQml(wallet.get(), { "title", "loading", "rate", "timestamp", "current", "accounts", "filter" });
+        readRolesLikeQml(wallet->accountsModel(), { AccountsModel::NameRole, AccountsModel::BalanceRole, AccountsModel::AccountRole });
         auto transient = std::make_unique<Hooked<Account>>();
         wallet->setCurrent(transient.get());
         wallet->setCurrent(nullptr);
@@ -423,6 +427,28 @@ private slots:
             QCOMPARE(model->data(model->index(1, 0), AccountsModel::NameRole), QVariant("Y"));
         }
         QCOMPARE(fromSnapshot->moments(), (QStringList { "startup", "loggedIn" }));
+    }
+
+    void notifyIsReplayedWhenTheReadWasRecordedFirst()
+    {
+        Hooked<WalletView> wallet;
+        // QML's binding connected before the recorder followed the object: it re-reads on the
+        // notify before the recorder sees the signal, so the read lands in the timeline first.
+        QObject binding;
+        connect(&wallet, &WalletView::titleChanged, &binding, [&] { readLikeQml(&wallet, { "title" }); });
+        m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
+        readLikeQml(&wallet, { "title" });
+        m_recorder->markMoment(QStringLiteral("startup"));
+        wallet.setTitle(QStringLiteral("Renamed"));
+        m_recorder->markMoment(QStringLiteral("end"));
+
+        auto replayer = replayAt(QStringLiteral("startup"));
+        QVERIFY(replayer);
+        QObject* replayed = objectOf(replayer->contextProperty("walletSection"));
+        QSignalSpy changed(replayed, SIGNAL(titleChanged()));
+        QVERIFY(replayer->runUntilMoment(QStringLiteral("end")));
+        QCOMPARE(changed.size(), 1);
+        QCOMPARE(replayed->property("title"), QVariant(QStringLiteral("Renamed")));
     }
 
     void valuesReadLateAreKnownFromTheStartOfTheirSegment()

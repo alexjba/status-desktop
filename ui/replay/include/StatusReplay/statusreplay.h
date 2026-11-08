@@ -13,11 +13,13 @@ extern "C" {
 
 typedef void (*StatusReplayContextPropertyHook)(void* engine, const char* name, const void* qvariant);
 typedef void (*StatusReplayMetacallHook)(void* qobject, int call, int index, void** argv);
+typedef void (*StatusReplayModelDataHook)(void* model, int row, int role, const void* qvariant);
 
 struct StatusReplayHooks
 {
     StatusReplayContextPropertyHook contextProperty;
     StatusReplayMetacallHook metacall;
+    StatusReplayModelDataHook modelData;
 };
 
 // Starts recording into the STATUS_RECORD directory for the given QQmlEngine*.

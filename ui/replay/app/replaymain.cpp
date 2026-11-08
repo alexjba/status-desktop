@@ -1,4 +1,5 @@
 #include <StatusReplay/fingerprint.h>
+#include <StatusReplay/player.h>
 #include <StatusReplay/replayapp.h>
 #include <StatusReplay/replayer.h>
 #include <StatusReplay/scriptrunner.h>
@@ -39,126 +40,39 @@ QString argumentValue(int argc, char** argv, const char* name)
     return {};
 }
 
-// Plays the timeline: realtime follows recorded timestamps, step waits for F8 (next event)
-// and F9 (next moment), frozen keeps the starting state. F10 pauses/resumes realtime.
-class Player : public QObject
+// F8 next event, F9 next moment, F10 pause/resume realtime.
+class PlayerKeys : public QObject
 {
 public:
-    enum class Mode
+    explicit PlayerKeys(Player* player)
+        : m_player(player)
     {
-        Realtime,
-        Step,
-        Frozen,
-    };
-
-    Player(Replayer* replayer, Mode mode, double speed)
-        : m_replayer(replayer)
-        , m_mode(mode)
-        , m_speed(speed > 0 ? speed : 1.0)
-    {
-        m_timer.setSingleShot(true);
-        connect(&m_timer, &QTimer::timeout, this, [this] { advance(); });
-        connect(replayer, &Replayer::momentReached, this, [this](const QString& name) {
-            m_momentReached = true;
-            m_targetReached = m_targetReached || name == m_target;
-            qInfo().noquote() << "StatusReplay: moment" << name;
-        });
         qApp->installEventFilter(this);
-    }
-
-    // With a target moment, first plays the timeline as fast as QML keeps up (a batch of
-    // events per event-loop turn), so QML walks through the same states as in the recording.
-    void start(const QString& fastForwardTo = {})
-    {
-        if (!fastForwardTo.isEmpty()) {
-            fastForward(fastForwardTo);
-            return;
-        }
-        if (m_mode != Mode::Realtime)
-            return;
-        m_base = m_replayer->nextEventTime();
-        m_clock.start();
-        advance();
     }
 
 protected:
     bool eventFilter(QObject* watched, QEvent* event) override
     {
-        if (event->type() != QEvent::KeyPress)
-            return QObject::eventFilter(watched, event);
-        switch (static_cast<QKeyEvent*>(event)->key()) {
-        case Qt::Key_F8:
-            m_replayer->step();
-            return true;
-        case Qt::Key_F9:
-            m_momentReached = false;
-            while (!m_momentReached && m_replayer->step()) { }
-            return true;
-        case Qt::Key_F10:
-            togglePause();
-            return true;
-        default:
-            return QObject::eventFilter(watched, event);
+        if (event->type() == QEvent::KeyPress) {
+            switch (static_cast<QKeyEvent*>(event)->key()) {
+            case Qt::Key_F8:
+                m_player->stepEvent();
+                return true;
+            case Qt::Key_F9:
+                m_player->stepToNextMoment();
+                return true;
+            case Qt::Key_F10:
+                m_player->togglePause();
+                return true;
+            default:
+                break;
+            }
         }
+        return QObject::eventFilter(watched, event);
     }
 
 private:
-    void fastForward(const QString& moment)
-    {
-        constexpr int EventsPerTurn = 20;
-        m_momentReached = false;
-        m_target = moment;
-        for (int i = 0; i < EventsPerTurn && !m_targetReached && m_replayer->step(); ++i) { }
-        if (!m_targetReached && !m_replayer->atEnd()) {
-            QTimer::singleShot(0, this, [this, moment] { fastForward(moment); });
-            return;
-        }
-        if (!m_targetReached)
-            qWarning().noquote() << "StatusReplay: timeline ended before moment" << moment;
-        m_target.clear();
-        start();
-    }
-
-    void advance()
-    {
-        if (m_paused)
-            return;
-        const qint64 now = m_base + qint64(m_clock.elapsed() * m_speed);
-        while (!m_replayer->atEnd() && m_replayer->nextEventTime() <= now)
-            m_replayer->step();
-        if (m_replayer->atEnd()) {
-            qInfo() << "StatusReplay: timeline finished";
-            return;
-        }
-        m_timer.start(int(qMax<qint64>(1, (m_replayer->nextEventTime() - now) / m_speed)));
-    }
-
-    void togglePause()
-    {
-        if (m_mode != Mode::Realtime)
-            return;
-        m_paused = !m_paused;
-        if (m_paused) {
-            m_timer.stop();
-            m_pausedAt = m_base + qint64(m_clock.elapsed() * m_speed);
-        } else {
-            m_base = m_pausedAt;
-            m_clock.restart();
-            advance();
-        }
-    }
-
-    Replayer* m_replayer;
-    Mode m_mode;
-    double m_speed;
-    QTimer m_timer;
-    QElapsedTimer m_clock;
-    qint64 m_base = 0;
-    qint64 m_pausedAt = 0;
-    bool m_paused = false;
-    bool m_momentReached = false;
-    QString m_target;
-    bool m_targetReached = false;
+    Player* m_player;
 };
 
 void saveScreenshot(const QString& path)
@@ -218,10 +132,21 @@ extern "C" int statusreplay_main(int argc, char** argv)
     parser.addOption({ "speed", "Realtime speed factor.", "factor", "1" });
     parser.addOption({ "quit-after", "Quit after this many ms (scripted runs).", "ms" });
     parser.addOption({ "screenshot", "Save the window to this PNG before quitting.", "path" });
+    parser.addOption({ "check-setup",
+        "Compare the replay setup with the recorded app's and exit (1 on any difference)." });
     parser.addOption({ "from-snapshot",
         "Start a post-load moment from its snapshot instead of playing up to it (QML's own state, "
         "such as the current page, then starts from scratch)." });
     parser.process(app);
+    // Android launches without arguments: the same options come from the environment
+    // (status-env.txt of debug packages), e.g. STATUS_REPLAY_MOMENT for --moment.
+    auto option = [&parser](const char* name) {
+        if (parser.isSet(QString::fromLatin1(name)))
+            return parser.value(QString::fromLatin1(name));
+        const QByteArray env = "STATUS_REPLAY_" + QByteArray(name).toUpper().replace('-', '_');
+        return qEnvironmentVariableIsSet(env.constData()) ? qEnvironmentVariable(env.constData())
+                                                         : parser.value(QString::fromLatin1(name));
+    };
 
     QString error;
     auto replayer = Replayer::open(recording, &error);
@@ -229,7 +154,7 @@ extern "C" int statusreplay_main(int argc, char** argv)
         qCritical().noquote() << "StatusReplay:" << error;
         return 2;
     }
-    const QString moment = parser.value("moment");
+    const QString moment = option("moment");
     if (!replayer->startAt(moment, &error)) {
         qCritical().noquote() << "StatusReplay:" << error << "- moments:" << replayer->moments().join(", ");
         return 2;
@@ -237,7 +162,7 @@ extern "C" int statusreplay_main(int argc, char** argv)
     // A moment after main.qml loaded is reached by playing up to it: QML keeps state of its own
     // (current page, popups) that only follows from the events that led there.
     QString fastForwardTo;
-    if (replayer->loadReached() && !parser.isSet("from-snapshot")) {
+    if (replayer->loadReached() && option("from-snapshot").isEmpty() && !parser.isSet("from-snapshot")) {
         replayer->startAt(QString());
         fastForwardTo = moment;
     }
@@ -256,11 +181,29 @@ extern "C" int statusreplay_main(int argc, char** argv)
     if (!replayer->loadReached())
         replayer->runUntilLoaded();
 
-    const QString modeName = parser.value("mode");
+    if (parser.isSet("check-setup")) {
+        const QStringList differences =
+            fingerprintDifferences(manifest["fingerprint"].toObject(), setupFingerprint(&engine));
+        for (const auto& line : differences)
+            qWarning().noquote() << "StatusReplay: setup differs:" << line;
+        if (differences.isEmpty())
+            qInfo() << "StatusReplay: replay setup matches the recorded app";
+        return differences.isEmpty() ? 0 : 1;
+    }
+
+    const QString modeName = option("mode");
     const auto mode = modeName == QLatin1String("step") ? Player::Mode::Step
         : modeName == QLatin1String("frozen")           ? Player::Mode::Frozen
                                                         : Player::Mode::Realtime;
-    Player player(replayer.get(), mode, parser.value("speed").toDouble());
+    Player player(replayer.get(), mode, option("speed").toDouble());
+    PlayerKeys keys(&player);
+    QObject::connect(replayer.get(), &Replayer::momentReached, &app,
+        [](const QString& name) { qInfo().noquote() << "StatusReplay: moment" << name; });
+    QObject::connect(&player, &Player::fastForwardFinished, &app, [&](bool reached) {
+        if (!reached)
+            qWarning().noquote() << "StatusReplay: timeline ended before moment" << fastForwardTo;
+    });
+    QObject::connect(&player, &Player::finished, &app, [] { qInfo() << "StatusReplay: timeline finished"; });
 
     // Recorded UI actions (e.g. the scripted click on the wallet button) are performed again,
     // so QML's own navigation state follows the recording.
@@ -285,10 +228,10 @@ extern "C" int statusreplay_main(int argc, char** argv)
         },
         Qt::SingleShotConnection);
     QObject::connect(&app, &QCoreApplication::aboutToQuit, &app, [&] { writeCallLog(recording, *replayer); });
-    if (const int quitAfter = parser.value("quit-after").toInt(); quitAfter > 0) {
+    if (const int quitAfter = option("quit-after").toInt(); quitAfter > 0) {
         QTimer::singleShot(quitAfter, &app, [&] {
-            if (parser.isSet("screenshot"))
-                saveScreenshot(parser.value("screenshot"));
+            if (const QString screenshot = option("screenshot"); !screenshot.isEmpty())
+                saveScreenshot(screenshot);
             app.quit();
         });
     }
