@@ -59,20 +59,19 @@ QtObject {
         }
     }
 
+    // the privacy walls are only shown with third-party services off; their section loaders
+    // precompile them then
     function precompileAll(async = true) {
         precompile(appMainUrl, async)
         precompile(browserUrl, async)
-        precompile(browserPrivacyWallUrl, async)
         precompile(communitiesPortalUrl, async)
         precompile(chatUrl, async)
         precompile(handlersManagerUrl, async)
         precompile(homeUrl, async)
         precompile(marketUrl, async)
-        precompile(marketPrivacyWallUrl, async)
         precompile(popupsUrl, async)
         precompile(profileUrl, async)
         precompile(walletUrl, async)
-        precompile(walletPrivacyWallUrl, async)
     }
 
     onPrecompileFinished: function(componentUrl, success) {

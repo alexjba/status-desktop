@@ -840,30 +840,32 @@ StatusSectionLayout {
     Loader {
         id: mobileSettingsMenuLoader
         active: false
-        sourceComponent: MobileSettingsMenu {
-            id: mobileSettingsMenu
-
-            supportsIncognito: _internal.currentWebView?.supportsIncognito ?? false
-            incognitoMode: _internal.currentTabIncognito
-
-            supportsZoom: _internal.currentWebView?.supportsZoom ?? false
-            zoomFactor: _internal.currentWebView?.zoomFactor ?? 1
-            onZoomIn: webViewContext.changeZoomCurrent(0.1)
-            onZoomOut: webViewContext.changeZoomCurrent(-0.1)
-            onResetZoomFactor: webViewContext.resetZoomCurrent()
-
-            supportsFind: _internal.currentTabSupportsFindInPage
-            onLaunchFindBar: _internal.showFindBar()
-
-            clearSiteDataSupported: _internal.currentWebView?.clearSiteDataSupported ?? false
-            clearing: _internal.currentWebView?.clearing ?? false
-            onForceReload: webViewContext.forceReloadCurrent()
-            onClearSiteData: webViewContext.clearSiteDataCurrent()
-            onClearBrowsingData: root.clearBrowsingDataOnCurrentTab()
-
-            onGoIncognito: checked => root.applyIncognitoMode(checked)
-            onSupportedFormatsRequested: _internal.openSupportedFormats()
-            onSettingsRequested: Global.changeAppSectionBySectionType(Constants.appSection.profile, Constants.settingsSubsection.browserSettings)
+        onActiveChanged: {
+            if (!active)
+                return
+            setSource(Qt.resolvedUrl("popups/MobileSettingsMenu.qml"), {
+                supportsIncognito: Qt.binding(() => _internal.currentWebView?.supportsIncognito ?? false),
+                incognitoMode: Qt.binding(() => _internal.currentTabIncognito),
+                supportsZoom: Qt.binding(() => _internal.currentWebView?.supportsZoom ?? false),
+                zoomFactor: Qt.binding(() => _internal.currentWebView?.zoomFactor ?? 1),
+                supportsFind: Qt.binding(() => _internal.currentTabSupportsFindInPage),
+                clearSiteDataSupported: Qt.binding(() => _internal.currentWebView?.clearSiteDataSupported ?? false),
+                clearing: Qt.binding(() => _internal.currentWebView?.clearing ?? false)
+            })
+        }
+        onLoaded: {
+            const menu = item
+            menu.zoomIn.connect(() => webViewContext.changeZoomCurrent(0.1))
+            menu.zoomOut.connect(() => webViewContext.changeZoomCurrent(-0.1))
+            menu.resetZoomFactor.connect(() => webViewContext.resetZoomCurrent())
+            menu.launchFindBar.connect(() => _internal.showFindBar())
+            menu.forceReload.connect(() => webViewContext.forceReloadCurrent())
+            menu.clearSiteData.connect(() => webViewContext.clearSiteDataCurrent())
+            menu.clearBrowsingData.connect(() => root.clearBrowsingDataOnCurrentTab())
+            menu.goIncognito.connect(checked => root.applyIncognitoMode(checked))
+            menu.supportedFormatsRequested.connect(() => _internal.openSupportedFormats())
+            menu.settingsRequested.connect(() => Global.changeAppSectionBySectionType(Constants.appSection.profile,
+                                                                                      Constants.settingsSubsection.browserSettings))
         }
     }
 
