@@ -190,7 +190,9 @@ real app's.
 (recording), `replay-probe/probe-<n>.tsv` (replay) or, in script-only runs,
 `$STATUS_REPLAY_PROBE_DIR`, else `probe/` in the Android package's external files dir (exported
 as `STATUS_EXTERNAL_FILES_DIR`, readable with adb without run-as), else the app data dir, at those seconds after start: the composite QML types loaded and instantiated, the
-malloc heap in use and (Linux/Android) PSS + SwapPss per mapping from the process's own smaps.
+malloc heap in use and (Linux/Android) PSS + SwapPss per mapping from the process's own smaps
+(`STATUS_REPLAY_PROBE_RAW_SMAPS=1` also keeps the whole file, `probe-<n>-smaps.txt`, to attribute
+the libraries mapped from the APK by offset).
 "Loaded" means the type loader holds the type's compiled unit; "instantiated" means the engine
 created an executable unit for it, i.e. at least one object of it was created at some point
 (not that one is alive now).
