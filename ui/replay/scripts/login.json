@@ -1,0 +1,7 @@
+[
+    { "type": "loginPasswordInput", "text": "TestPassword2026\n" },
+    { "waitFor": "Wallet-navbar", "timeout": 180000 },
+    { "click": "Wallet-navbar" },
+    { "sleep": 30000 },
+    { "moment": "wallet" }
+]

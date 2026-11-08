@@ -545,13 +545,18 @@ statusreplay: | statusq
 		$(HANDLE_OUTPUT)
 	cmake --build $(STATUSREPLAY_BUILD_PATH) --config $(COMMON_CMAKE_BUILD_TYPE) $(HANDLE_OUTPUT)
 
-# The app dlopens libStatusReplay only because STATUS_RECORD is set; RECORDING picks the directory.
+# Unattended: creates a throwaway test profile in RECORD_DATADIR on first use, then records
+# login screen -> login -> wallet. The app dlopens libStatusReplay only because STATUS_RECORD is set.
+RECORD_DATADIR ?= Status/record-profile
+RECORD_OUTPUT = $(or $(RECORDING),Status/recordings/$(shell date +%Y%m%d-%H%M%S))
+
 record-run: statusreplay
-	echo -e "\033[92mRecording:\033[39m $(or $(RECORDING),Status/recordings/<timestamp>)"
-	STATUS_RECORD="$(if $(RECORDING),$(abspath $(RECORDING)),1)" \
+	MAKE="$(MAKE)" \
+	RECORDING="$(abspath $(RECORD_OUTPUT))" \
+	RECORD_DATADIR="$(abspath $(RECORD_DATADIR))" \
 	STATUS_REPLAY_LIB="$(abspath $(STATUSREPLAY_LIB))" \
 	STATUS_RECORD_APP_COMMIT="$(shell git rev-parse HEAD)" \
-		$(MAKE) run
+		$(STATUSREPLAY_SOURCE_PATH)/scripts/record-run.sh
 
 replay-run: statusreplay rcc
 ifndef RECORDING

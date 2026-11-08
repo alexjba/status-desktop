@@ -51,6 +51,8 @@ public:
     }
 
     int balance() const { return m_balance; }
+    // Like Nim views whose slot tears the object down (e.g. a module cleanup).
+    Q_INVOKABLE void dispose() { delete this; }
     void setBalance(int balance)
     {
         m_balance = balance;

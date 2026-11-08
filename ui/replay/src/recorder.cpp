@@ -1,5 +1,7 @@
 #include <StatusReplay/recorder.h>
 
+#include <StatusReplay/fingerprint.h>
+
 #include "format.h"
 #include "schema.h"
 #include "valuecodec.h"
@@ -445,7 +447,7 @@ void RecorderPrivate::writeManifest()
         { { "formatVersion", QStringLiteral("%1.%2").arg(Format::Major).arg(Format::Minor) }, { "qt", qVersion() },
             { "platform", platform }, { "app", app }, { "startedAt", startedAt.toString(Qt::ISODate) },
             { "events", seq }, { "moments", moments }, { "fingerprint", fingerprint },
-            { "importPaths", QJsonArray::fromStringList(engine ? engine->importPathList() : QStringList()) },
+            { "importPaths", QJsonArray::fromStringList(engine ? extraImportPaths(engine) : QStringList()) },
             { "gaps", QJsonArray::fromStringList(gaps) } });
 }
 
@@ -495,6 +497,10 @@ void Recorder::metacallObserved(QObject* object, QMetaObject::Call call, int ind
         return;
     if (call == QMetaObject::ReadProperty && d->selfReads > 0)
         return;
+    // Only objects handed to QML (and still alive: `destroyed` unregisters them) are followed.
+    // The hook runs after the call, which may have deleted the object it was made on.
+    if (!d->ids.contains(object))
+        return;
     const QMetaObject* mo = object->metaObject();
     const Schema& schema = d->schemaFor(mo);
     const QMetaObject* base = Schema::baseMetaObject(schema.base);
@@ -542,8 +548,14 @@ void Recorder::metacallObserved(QObject* object, QMetaObject::Call call, int ind
 
 void Recorder::markLoaded()
 {
+    d->enumerateRootContext();
     d->loaded = true;
     d->writeEvent({ { "k", "load" } });
+}
+
+void Recorder::recordUiAction(const QJsonObject& step)
+{
+    d->writeEvent({ { "k", "ui" }, { "step", step } });
 }
 
 void Recorder::markMoment(const QString& name)

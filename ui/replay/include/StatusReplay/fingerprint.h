@@ -13,6 +13,9 @@ namespace StatusReplay {
 // helpers, rendering). The recorder stores the real app's; replay compares its own against it.
 STATUSREPLAY_EXPORT QJsonObject setupFingerprint(QQmlEngine* engine);
 
+// Absolute import paths the app added itself (Nim libraries' QML dirs), which replay re-adds.
+STATUSREPLAY_EXPORT QStringList extraImportPaths(QQmlEngine* engine);
+
 // One line per differing key, empty when both match.
 STATUSREPLAY_EXPORT QStringList fingerprintDifferences(const QJsonObject& recorded, const QJsonObject& actual);
 

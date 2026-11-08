@@ -393,6 +393,75 @@ private slots:
         QCOMPARE(fromSnapshot->moments(), (QStringList { "startup", "loggedIn" }));
     }
 
+    void valuesReadLateAreKnownFromTheStartOfTheirSegment()
+    {
+        Hooked<WalletView> wallet;
+        Hooked<Account> account;
+        account.setName(QStringLiteral("Savings"));
+        wallet.setTitle(QStringLiteral("Before"));
+        wallet.setCurrent(&account);
+        m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
+        wallet.accountsModel()->insert(0, QStringLiteral("A"), 1);
+        // QML reads the title only now, long after the object appeared; reading `current`
+        // is also when the recorder first sees that object.
+        readLikeQml(&wallet, { "title", "current" });
+        readLikeQml(&account, { "name" });
+        wallet.setTitle(QStringLiteral("After"));
+        wallet.accountsModel()->insert(1, QStringLiteral("B"), 2);
+        readLikeQml(&wallet, { "loading" });
+        wallet.setLoading(true);
+        m_recorder->markMoment(QStringLiteral("end"));
+
+        auto replayer = replayAt(QString());
+        QVERIFY(replayer);
+        QObject* replayed = nullptr;
+        connect(replayer.get(), &Replayer::contextPropertyChanged, this,
+            [&](const QString&, const QVariant& value) { replayed = objectOf(value); });
+        while (!replayed && replayer->step()) { }
+        QVERIFY(replayed);
+        // A replayed QML reading earlier than the recorded one still sees the recorded value.
+        QCOMPARE(replayed->property("title"), QVariant(QStringLiteral("Before")));
+        QCOMPARE(replayed->property("loading"), QVariant(false));
+        QObject* current = objectOf(replayed->property("current"));
+        QVERIFY(current);
+        QCOMPARE(current->property("name"), QVariant(QStringLiteral("Savings")));
+
+        QSignalSpy titleChanged(replayed, SIGNAL(titleChanged()));
+        QVERIFY(replayer->runUntilMoment(QStringLiteral("end")));
+        QCOMPARE(titleChanged.size(), 1);
+        QCOMPARE(replayed->property("title"), QVariant(QStringLiteral("After")));
+        QCOMPARE(replayed->property("loading"), QVariant(true));
+    }
+
+    void scriptedUiActionsReplayAtTheirPoint()
+    {
+        Hooked<WalletView> wallet;
+        m_recorder->setContextProperty(QStringLiteral("walletSection"), QVariant::fromValue<QObject*>(&wallet));
+        m_recorder->markLoaded();
+        m_recorder->recordUiAction({ { "click", "Wallet-navbar" } });
+        m_recorder->markMoment(QStringLiteral("wallet"));
+
+        auto replayer = replayAt(QString());
+        QVERIFY(replayer);
+        QSignalSpy actions(replayer.get(), &Replayer::uiAction);
+        QVERIFY(replayer->runUntilLoaded());
+        QCOMPARE(actions.size(), 0);
+        QVERIFY(replayer->runUntilMoment(QStringLiteral("wallet")));
+        QCOMPARE(actions.size(), 1);
+        QCOMPARE(actions[0][0].toJsonObject()["click"].toString(), QStringLiteral("Wallet-navbar"));
+    }
+
+    void slotThatDeletesItsObjectIsSafeToObserve()
+    {
+        auto account = new Hooked<Account>();
+        m_recorder->setContextProperty(QStringLiteral("account"), QVariant::fromValue<QObject*>(account));
+        call<int>(account, "dispose()");
+        m_recorder->markMoment(QStringLiteral("startup"));
+
+        auto replayer = replayAt(QStringLiteral("startup"));
+        QVERIFY(replayer);
+    }
+
     void propertiesQmlNeverReadAreNotReadByTheRecorder()
     {
         Hooked<WalletView> wallet;

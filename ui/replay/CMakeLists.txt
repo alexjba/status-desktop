@@ -22,6 +22,7 @@ add_library(StatusReplay SHARED
     include/StatusReplay/fingerprint.h
     include/StatusReplay/recorder.h
     include/StatusReplay/replayer.h
+    include/StatusReplay/scriptrunner.h
     include/StatusReplay/statusreplay.h
     src/capi.cpp
     src/fingerprint.cpp
@@ -32,6 +33,7 @@ add_library(StatusReplay SHARED
     src/replayobject.h
     src/schema.cpp
     src/schema.h
+    src/scriptrunner.cpp
     src/valuecodec.cpp
     src/valuecodec.h
 )

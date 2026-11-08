@@ -41,6 +41,23 @@ struct RecordedCall
     bool hasResult;
 };
 
+// A property keeps its value from the event that opened its segment (object init, or a notify
+// signal) until the next notify. QML may read it later than that event, so the recorded read
+// (`val`) belongs at the segment start: replayed QML can read earlier than the recorded one.
+struct Segment
+{
+    qint64 start;
+    QJsonValue value;
+    bool known;
+};
+
+struct Hoist
+{
+    int object;
+    QByteArray property;
+    QJsonValue value;
+};
+
 } // namespace
 
 class ReplayerPrivate : public ReplayHost
@@ -55,15 +72,20 @@ public:
     bool open(const QString& directory, QString* error);
     bool startAt(const QString& moment, QString* error);
     void apply(const QJsonObject& event);
+    void indexSegments();
+    void applyHoists(qint64 seq);
     void clear();
 
     const Schema* schema(const QString& id);
     QObject* create(int id, const QString& schemaId);
     QObject* object(int id) const { return objects.value(id); }
+    // An object referenced before its recorded creation existed already in the app (the
+    // recorder registers objects on first sight), so it is built early from its init state.
+    QObject* ensureObject(int id);
     DynamicPart* part(QObject* object) const;
     void setState(QObject* object, const QJsonObject& state);
-    QList<ReplayModel::Row> decodeRows(const QJsonArray& rows) const;
-    QVariant decode(const QJsonValue& value, QMetaType declared) const;
+    QList<ReplayModel::Row> decodeRows(const QJsonArray& rows);
+    QVariant decode(const QJsonValue& value, QMetaType declared);
 
     void invoke(QObject* object, const Schema::Method& method, void** argv) override;
 
@@ -80,6 +102,11 @@ public:
     QHash<QObject*, int> ids;
     QMap<QString, QVariant> contextProperties;
     QHash<QPair<int, QByteArray>, QList<RecordedCall>> recordedCalls;
+    QHash<QPair<int, QByteArray>, QList<Segment>> segments;
+    QHash<qint64, QList<Hoist>> hoists;
+    QHash<int, QPair<QString, qsizetype>> creations; // id -> schema, line of its init event
+    QSet<int> preCreated;
+    QSet<int> deleted;
     QList<Replayer::Call> calls;
 };
 
@@ -111,7 +138,67 @@ bool ReplayerPrivate::open(const QString& directory, QString* error)
         }
         lines.append(std::move(line));
     }
+    indexSegments();
     return true;
+}
+
+void ReplayerPrivate::indexSegments()
+{
+    QHash<int, QString> objectSchemas;
+    for (qsizetype lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
+        const QByteArray& line = lines[lineIndex];
+        const bool relevant = line.contains("\"k\":\"obj\"") || line.contains("\"k\":\"init\"")
+            || line.contains("\"k\":\"val\"") || line.contains("\"k\":\"sig\"");
+        if (!relevant)
+            continue;
+        const QJsonObject event = QJsonDocument::fromJson(line).object();
+        const QString kind = event["k"].toString();
+        const int o = event["o"].toInt();
+        const qint64 seq = event["q"].toInteger();
+
+        if (kind == QLatin1String("obj")) {
+            objectSchemas.insert(o, event["s"].toString());
+            continue;
+        }
+        const Schema* sc = schema(objectSchemas.value(o));
+        if (!sc)
+            continue;
+
+        if (kind == QLatin1String("init")) {
+            creations.insert(o, { objectSchemas.value(o), lineIndex });
+            for (const auto& p : sc->properties)
+                segments[{ o, p.name }].append({ seq, {}, false });
+        } else if (kind == QLatin1String("val")) {
+            auto& list = segments[{ o, event["p"].toString().toLatin1() }];
+            if (!list.isEmpty() && !list.last().known) {
+                list.last().value = event["v"];
+                list.last().known = true;
+                hoists[list.last().start].append({ o, event["p"].toString().toLatin1(), event["v"] });
+            }
+        } else {
+            const QByteArray signature = event["m"].toString().toLatin1();
+            const QJsonObject changed = event["p"].toObject();
+            for (const auto& p : sc->properties) {
+                if (p.notify < 0 || sc->methods[p.notify].signature != signature)
+                    continue;
+                const QString name = QString::fromLatin1(p.name);
+                segments[{ o, p.name }].append({ seq, changed.value(name), changed.contains(name) });
+            }
+        }
+    }
+}
+
+void ReplayerPrivate::applyHoists(qint64 seq)
+{
+    for (const auto& hoist : hoists.value(seq)) {
+        QObject* target = object(hoist.object);
+        DynamicPart* p = target ? part(target) : nullptr;
+        if (!p)
+            continue;
+        const int index = p->propertyIndex(hoist.property);
+        if (index >= 0)
+            p->setValue(index, decode(hoist.value, QMetaType::fromName(p->schema().properties[index].type)));
+    }
 }
 
 const Schema* ReplayerPrivate::schema(const QString& id)
@@ -155,12 +242,29 @@ DynamicPart* ReplayerPrivate::part(QObject* object) const
     return nullptr;
 }
 
-QVariant ReplayerPrivate::decode(const QJsonValue& value, QMetaType declared) const
+QObject* ReplayerPrivate::ensureObject(int id)
 {
-    return ValueCodec::decode(value, declared, [this](int id) { return object(id); });
+    if (QObject* existing = object(id))
+        return existing;
+    const auto creation = creations.constFind(id);
+    if (deleted.contains(id) || creation == creations.cend())
+        return nullptr;
+    QObject* created = create(id, creation->first);
+    if (!created)
+        return nullptr;
+    preCreated.insert(id);
+    const QJsonObject init = QJsonDocument::fromJson(lines[creation->second]).object();
+    setState(created, init);
+    applyHoists(init["q"].toInteger());
+    return created;
 }
 
-QList<ReplayModel::Row> ReplayerPrivate::decodeRows(const QJsonArray& rows) const
+QVariant ReplayerPrivate::decode(const QJsonValue& value, QMetaType declared)
+{
+    return ValueCodec::decode(value, declared, [this](int id) { return ensureObject(id); });
+}
+
+QList<ReplayModel::Row> ReplayerPrivate::decodeRows(const QJsonArray& rows)
 {
     QList<ReplayModel::Row> result;
     result.reserve(rows.size());
@@ -223,8 +327,31 @@ bool ReplayerPrivate::startAt(const QString& moment, QString* error)
             return false;
         }
     }
-    for (const auto& entry : entries)
-        setState(object(entry.toObject()["o"].toInt()), entry.toObject());
+    const qint64 snapshotSeq = snapshot["q"].toInteger();
+    for (const auto& entry : entries) {
+        const QJsonObject state = entry.toObject();
+        QObject* target = object(state["o"].toInt());
+        setState(target, state);
+        // Values QML read only after the moment were still valid at it.
+        DynamicPart* p = part(target);
+        const QJsonObject values = state["v"].toObject();
+        for (int i = 0; p && i < p->schema().properties.size(); ++i) {
+            const QByteArray name = p->schema().properties[i].name;
+            if (values.contains(QString::fromLatin1(name)))
+                continue;
+            const Segment* active = nullptr;
+            const auto it = segments.constFind({ state["o"].toInt(), name });
+            if (it == segments.cend())
+                continue;
+            for (const auto& segment : *it) {
+                if (segment.start > snapshotSeq)
+                    break;
+                active = &segment;
+            }
+            if (active && active->known)
+                p->setValue(i, decode(active->value, QMetaType::fromName(p->schema().properties[i].type)));
+        }
+    }
 
     const QJsonObject ctx = snapshot["ctx"].toObject();
     for (auto it = ctx.begin(); it != ctx.end(); ++it)
@@ -242,11 +369,16 @@ void ReplayerPrivate::apply(const QJsonObject& event)
     QObject* target = object(event["o"].toInt());
 
     if (kind == QLatin1String("obj")) {
-        create(event["o"].toInt(), event["s"].toString());
+        if (!target)
+            create(event["o"].toInt(), event["s"].toString());
     } else if (kind == QLatin1String("init")) {
+        if (preCreated.remove(event["o"].toInt()))
+            return;
         if (target)
             setState(target, event);
+        applyHoists(event["q"].toInteger());
     } else if (kind == QLatin1String("del")) {
+        deleted.insert(event["o"].toInt());
         if (target) {
             ids.remove(target);
             objects.remove(event["o"].toInt());
@@ -267,6 +399,7 @@ void ReplayerPrivate::apply(const QJsonObject& event)
             if (index >= 0)
                 p->setValue(index, decode(it.value(), QMetaType::fromName(p->schema().properties[index].type)));
         }
+        applyHoists(event["q"].toInteger());
         const int method = p->methodIndex(event["m"].toString().toLatin1());
         if (method < 0)
             return;
@@ -318,6 +451,8 @@ void ReplayerPrivate::apply(const QJsonObject& event)
     } else if (kind == QLatin1String("layout")) {
         if (auto model = dynamic_cast<ReplayModel*>(target))
             model->relayoutRows(decodeRows(event["rows"].toArray()));
+    } else if (kind == QLatin1String("ui")) {
+        emit q->uiAction(event["step"].toObject());
     } else if (kind == QLatin1String("load")) {
         loaded = true;
         emit q->loaded();
@@ -366,6 +501,8 @@ void ReplayerPrivate::clear()
         delete object.data();
     objects.clear();
     ids.clear();
+    preCreated.clear();
+    deleted.clear();
     contextProperties.clear();
     loaded = false;
 }

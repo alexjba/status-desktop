@@ -48,12 +48,7 @@
     "gaps": [],
     "importPaths": [
         "vendor/nim-qrscan/qml",
-        "vendor/nim-qtcamera/qml",
-        "qrc:/./app",
-        "qrc:/./imports",
-        "qrc:/",
-        "qrc:/qt-project.org/imports",
-        "qrc:/qt/qml"
+        "vendor/nim-qtcamera/qml"
     ],
     "moments": [
         {

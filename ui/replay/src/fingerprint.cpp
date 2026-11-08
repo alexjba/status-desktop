@@ -93,6 +93,16 @@ void flatten(const QJsonValue& value, const QString& prefix, QMap<QString, QStri
 
 } // namespace
 
+QStringList extraImportPaths(QQmlEngine* engine)
+{
+    QStringList paths;
+    for (const auto& path : engine->importPathList()) {
+        if (normalizedPath(path).startsWith(QLatin1String("$ABS/")))
+            paths.append(path);
+    }
+    return paths;
+}
+
 QJsonObject setupFingerprint(QQmlEngine* engine)
 {
     QJsonObject app { { "name", QCoreApplication::applicationName() },

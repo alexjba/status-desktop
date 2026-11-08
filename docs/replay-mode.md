@@ -119,9 +119,15 @@ coverage gap.
   moment the recorder writes a full snapshot of the live registry and the root context
   (so a replay can start at any moment without playing what came before) and a window
   screenshot (`screenshots/<moment>.png`) to compare with the replay.
-- **Scripted recordings**: `STATUS_RECORD_TYPE` is typed into the focused QML item right
-  after the startup moment (`\n` is Enter; e.g. a throwaway test profile's password),
-  `STATUS_RECORD_QUIT_AFTER_MS` quits the app so the exit moment is written.
+- **Unattended recordings**: `STATUS_RECORD_SCRIPT` names a JSON script
+  (`ui/replay/scripts/`) that the recorder runs after the startup moment. Steps find a
+  visible, enabled item by `objectName` and click it, type into it, set a switch, wait
+  for it, sleep or mark a moment (`ScriptRunner`); a failing step lists the named items
+  that were visible. Clicks and switches are also written to the timeline (`ui`
+  events) so replay performs them again; typed text is not recorded.
+  `STATUS_RECORD_QUIT_AFTER_SCRIPT_MS` quits after the script, `STATUS_RECORD_QUIT_AFTER_MS`
+  after a fixed time. Scripts use the throwaway test password only; all of this lives in
+  libStatusReplay, which release builds never load.
 - **Privacy**: values of parameters and properties whose name matches
   `password|passphrase|mnemonic|seedphrase|privatekey|secret`, ends in `pin`/`puk`, or is
   `seed`/`pairingCode` are replaced by a marker, including keys inside JSON string
@@ -129,6 +135,24 @@ coverage gap.
   `./Status/recordings/<timestamp>` (dev data dir, already gitignored) by default.
   Recordings from real accounts are never committed; host tests use a small synthetic
   fixture.
+
+### `make record-run` (unattended)
+
+`make record-run` needs no manual step on a clean machine:
+
+1. It uses its own data dir (`RECORD_DATADIR`, default `Status/record-profile`), so the
+   developer's profiles are never touched.
+2. Without a profile there, it runs the app with `create-profile.json`: onboarding,
+   "Create profile" with password `TestPassword2026`, "Save password" off (when the
+   platform offers it), until the main app shows. That run is itself recorded
+   (`<datadir>/onboarding-recording`).
+3. It then records a run that starts at the login screen (`startup`), logs in
+   (`login.json`), waits for the main app (`loggedIn`), opens the wallet and marks
+   `wallet` 30 s later, then quits (`exit`).
+4. It fails unless the recording has the `startup`, `loggedIn` and `exit` moments.
+
+`RECORDING=<dir>` picks the output (default `Status/recordings/<timestamp>`);
+`RECORD_SCRIPT=none` records without driving the UI.
 
 ### Format (directory, versioned, diffable)
 
@@ -163,10 +187,18 @@ indentation; the timeline is compact JSONL. The replayer refuses an unknown majo
     main gap signal.
   - models serve `rowCount`/`data`/`roleNames` from stored rows; `canFetchMore` follows
     the recording.
-- **Player**: builds the object graph from a snapshot (`--moment <name>`; without it,
-  from the beginning, applying everything up to the `load` event at once) and sets the
-  root context properties before loading `main.qml`, then plays the timeline from that
-  point in one of three modes: `realtime` (recorded timestamps, `--speed`; F10
+- **Values read late**: a property keeps its value from the event that opened its
+  segment (object init or a notify signal) until the next notify, so a recorded read is
+  applied at the segment start: replayed QML may read earlier than the recorded QML did.
+  An object referenced before its recorded creation (the recorder registers objects on
+  first sight) is built early from its init state.
+- **Player**: without `--moment`, starts from the beginning, applying everything up to
+  the `load` event at once. A moment before the load starts from its snapshot. A moment
+  after it is reached by playing the timeline up to it as fast as QML keeps up, because
+  QML keeps state of its own (current page, popups) that only follows from the events
+  that led there; `--from-snapshot` starts from the snapshot instead. Root context
+  properties are set before loading `main.qml`. The timeline then plays in one of three
+  modes: `realtime` (recorded timestamps, `--speed`; F10
   pauses), `step` (F8 next event, F9 next moment), `frozen` (snapshot only).
   `--quit-after <ms>` and `--screenshot <png>` make runs scriptable. Model ops map 1:1 to `begin*/end*` calls, so QML sees the
   same insert/remove/move/reset sequence as in the recording.
@@ -198,7 +230,7 @@ their backends replay as ordinary recorded objects. No camera frames.
 
 | Target | What it does |
 |---|---|
-| `make record-run [RECORDING=<dir>]` | builds `libStatusReplay` next to the app, `make run` with `STATUS_RECORD` set; prints the recording path on exit |
+| `make record-run [RECORDING=<dir>] [RECORD_DATADIR=<dir>] [RECORD_SCRIPT=<json>\|none]` | unattended: creates a test profile on first use, records login screen -> login -> wallet (see above) |
 | `make replay-run RECORDING=<dir> [REPLAY_MOMENT=<name>] [REPLAY_MODE=realtime\|step\|frozen]` | builds StatusQ + `libStatusReplay` + `status-replay` + `resources.rcc` (no Nim, no status-go) and runs it |
 | `make mobile-record-run [RECORDING=<dir>]` | `mobile-run` with `libStatusReplay` added to the APK (not linked) and recording on; pulls the recording on exit |
 | `make mobile-replay-run RECORDING=<dir> [...]` | builds the Android replay variant (`BUILD_VARIANT=replay`: no `libnim_status_client`, `libstatus_stub` or status-go service), pushes the recording into the app's files dir (`run-as`), launches |

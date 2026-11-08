@@ -57,6 +57,8 @@ signals:
     void contextPropertyChanged(const QString& name, const QVariant& value);
     void momentReached(const QString& name);
     void loaded();
+    // A recorded UI action (ScriptRunner step) to perform now.
+    void uiAction(const QJsonObject& step);
 
 private:
     Replayer();

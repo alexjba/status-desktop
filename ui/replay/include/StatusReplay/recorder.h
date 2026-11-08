@@ -40,6 +40,8 @@ public:
 
     // Marks the main document load: replay loads QML at the same point of the timeline.
     void markLoaded();
+    // A UI action a script performed (ScriptRunner step), replayed at the same point.
+    void recordUiAction(const QJsonObject& step);
     void markMoment(const QString& name);
     void setFingerprint(const QJsonObject& fingerprint);
 

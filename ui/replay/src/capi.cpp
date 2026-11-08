@@ -1,14 +1,16 @@
 #include <StatusReplay/fingerprint.h>
 #include <StatusReplay/recorder.h>
+#include <StatusReplay/scriptrunner.h>
 #include <StatusReplay/statusreplay.h>
 
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
 #include <QGuiApplication>
-#include <QKeyEvent>
+#include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
 #include <QQmlApplicationEngine>
-#include <QQuickItem>
 #include <QQuickWindow>
 #include <QWindow>
 #include <QTimer>
@@ -26,43 +28,6 @@ QString recordingDirectory()
         dir = QStringLiteral("Status/recordings/")
             + QDateTime::currentDateTime().toString(QStringLiteral("yyyyMMdd-HHmmss"));
     return QDir(dir).absolutePath();
-}
-
-// Scripted recordings: types STATUS_RECORD_TYPE into the focused window after the startup
-// moment ("\n" is Enter), e.g. a throwaway test profile's password at the login screen.
-void typeStartupText()
-{
-    const QString text = qEnvironmentVariable("STATUS_RECORD_TYPE").replace(QStringLiteral("\\n"), QStringLiteral("\n"));
-    if (text.isEmpty())
-        return;
-    // A window launched in the background (or on a locked screen) is not active and has no
-    // active focus item, so follow the focus scopes to the item QML gave focus to.
-    QQuickItem* target = nullptr;
-    for (QWindow* window : QGuiApplication::topLevelWindows()) {
-        auto quickWindow = qobject_cast<QQuickWindow*>(window);
-        if (!quickWindow || !quickWindow->isVisible())
-            continue;
-        target = quickWindow->activeFocusItem();
-        if (!target) {
-            for (QQuickItem* scope = quickWindow->contentItem(); scope; scope = scope->scopedFocusItem())
-                target = scope;
-        }
-        break;
-    }
-    if (!target) {
-        qWarning() << "StatusReplay: no focused item to type into";
-        return;
-    }
-    qInfo() << "StatusReplay: typing into" << target;
-    for (const QChar c : text) {
-        const bool enter = c == QLatin1Char('\n');
-        const int key = enter ? Qt::Key_Return : 0;
-        const QString keyText = enter ? QStringLiteral("\r") : QString(c);
-        QKeyEvent press(QEvent::KeyPress, key, Qt::NoModifier, keyText);
-        QCoreApplication::sendEvent(target, &press);
-        QKeyEvent release(QEvent::KeyRelease, key, Qt::NoModifier, keyText);
-        QCoreApplication::sendEvent(target, &release);
-    }
 }
 
 // Record mode keeps a picture of every moment next to its snapshot, to compare with replay.
@@ -84,6 +49,42 @@ void markMoment(const QString& moment)
 {
     g_recorder->markMoment(moment);
     saveMomentScreenshot(moment);
+}
+
+// Unattended recordings: STATUS_RECORD_SCRIPT (ui/replay/scripts/*.json) drives the UI after
+// the startup moment, e.g. onboarding a fresh profile with the test password. Test credentials
+// only. STATUS_RECORD_QUIT_AFTER_SCRIPT_MS then quits; a failed script exits with code 3.
+void runScript()
+{
+    const QString path = qEnvironmentVariable("STATUS_RECORD_SCRIPT");
+    if (path.isEmpty())
+        return;
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning().noquote() << "StatusReplay: cannot read script" << path;
+        qApp->exit(3);
+        return;
+    }
+    auto runner = new StatusReplay::ScriptRunner(QJsonDocument::fromJson(file.readAll()).array(), qApp);
+    QObject::connect(runner, &StatusReplay::ScriptRunner::momentRequested, qApp, [](const QString& name) {
+        if (g_recorder)
+            markMoment(name);
+    });
+    QObject::connect(runner, &StatusReplay::ScriptRunner::acted, qApp, [](const QJsonObject& step) {
+        if (g_recorder)
+            g_recorder->recordUiAction(step);
+    });
+    QObject::connect(runner, &StatusReplay::ScriptRunner::finished, qApp, [path](bool ok, const QString& error) {
+        if (!ok) {
+            qWarning().noquote() << "StatusReplay: script" << path << "failed:" << error;
+            qApp->exit(3);
+            return;
+        }
+        qInfo().noquote() << "StatusReplay: script" << path << "done";
+        if (const int quitAfter = qEnvironmentVariableIntValue("STATUS_RECORD_QUIT_AFTER_SCRIPT_MS"); quitAfter > 0)
+            QTimer::singleShot(quitAfter, qApp, &QCoreApplication::quit);
+    });
+    runner->start();
 }
 
 void onContextProperty(void*, const char* name, const void* value)
@@ -131,7 +132,7 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
                     if (!g_recorder)
                         return;
                     markMoment(QStringLiteral("startup"));
-                    typeStartupText();
+                    runScript();
                 });
             },
             Qt::SingleShotConnection);
