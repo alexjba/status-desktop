@@ -136,8 +136,11 @@ coverage gap.
   that were visible. Clicks and switches are also written to the timeline (`ui`
   events) so replay performs them again; typed text is not recorded.
   `STATUS_RECORD_QUIT_AFTER_SCRIPT_MS` quits after the script, `STATUS_RECORD_QUIT_AFTER_MS`
-  after a fixed time. Scripts use the throwaway test password only; all of this lives in
-  libStatusReplay, which release builds never load.
+  after a fixed time. With `STATUS_RECORD_SCRIPT` alone (no `STATUS_RECORD`) the script
+  drives the app and nothing is observed or written: that is how the real app is measured
+  at a recording's moments. Scripts use the throwaway test password only; all of this
+  lives in libStatusReplay, which release builds never load unless built with
+  `RECORDER=1` (mobile: packages the library and compiles Nim with `-d:statusRecorder`).
 - **Privacy**: values of parameters and properties whose name matches
   `password|passphrase|mnemonic|seedphrase|privatekey|secret|credential|connectionstring`,
   ends in `pin`/`puk`, or is

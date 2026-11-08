@@ -155,7 +155,7 @@ android {
             minifyEnabled = true
             shrinkResources = true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            profileable = prVariant
+            profileable = prVariant || replayVariant
             signingConfig signingConfigs.release
         }
         fdroid {

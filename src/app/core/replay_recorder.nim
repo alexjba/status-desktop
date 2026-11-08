@@ -1,6 +1,7 @@
 ## Record mode (docs/replay-mode.md): with STATUS_RECORD set, loads libStatusReplay and
-## installs its observers into nimqml. Without it nothing is loaded; production builds
-## leave it out entirely.
+## installs its observers into nimqml. With only STATUS_RECORD_SCRIPT, the library drives the
+## UI from the script and observes nothing. Without either nothing is loaded; production
+## builds leave it out entirely.
 
 import std/[dynlib, os]
 import chronicles
@@ -38,7 +39,7 @@ proc libraryPath(): string =
 
 proc recordingRequested*(): bool =
   when recorderAvailable:
-    existsEnv("STATUS_RECORD")
+    existsEnv("STATUS_RECORD") or existsEnv("STATUS_RECORD_SCRIPT")
   else:
     false
 

@@ -32,6 +32,12 @@ suite "record mode loading":
     check metacallHook == nil
     check modelDataHook == nil
 
+  test "a script alone asks for the library":
+    delEnv("STATUS_RECORD")
+    putEnv("STATUS_RECORD_SCRIPT", getTempDir() / "script.json")
+    check recordingRequested()
+    delEnv("STATUS_RECORD_SCRIPT")
+
   test "with STATUS_RECORD the recorder is loaded and installs its hooks":
     # Set by the make rule to a stand-in library with the recorder's C entry points.
     let library = getEnv("STATUS_REPLAY_TEST_LIB")

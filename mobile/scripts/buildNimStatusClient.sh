@@ -102,6 +102,8 @@ elif [ "$PROFILE" -eq 1 ]; then
 else
     NIM_FLAGS+=(-d:release -d:production)
 fi
+# RECORDER=1 (docs/replay-mode.md) keeps record mode in release builds.
+[ "${RECORDER:-0}" = 1 ] && NIM_FLAGS+=(-d:statusRecorder)
 
 # build status-client with feature flags
 env "${FEATURE_FLAGS[@]}" ./vendor/nimbus-build-system/scripts/env.sh nim c --parallelBuild:"${NPROC:-0}" "${PLATFORM_SPECIFIC[@]}" "${APP_CONFIG_DEFINES[@]}" ${QML_SERVER_DEFINES}  \

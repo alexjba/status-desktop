@@ -30,6 +30,11 @@ add_test(NAME QmlConsumerTest COMMAND QmlConsumerTest)
 set_tests_properties(QmlConsumerTest PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 
 find_package(Qt6 COMPONENTS QuickControls2 REQUIRED)
+add_executable(ScriptOnlyTest tst_scriptonly.cpp)
+target_link_libraries(ScriptOnlyTest PRIVATE Qt::Test Qt::Gui Qt::Quick Qt::QuickControls2 StatusReplay)
+add_test(NAME ScriptOnlyTest COMMAND ScriptOnlyTest)
+set_tests_properties(ScriptOnlyTest PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+
 add_executable(ScriptRunnerTest tst_scriptrunner.cpp)
 target_link_libraries(ScriptRunnerTest PRIVATE Qt::Test Qt::Gui Qt::Quick Qt::QuickControls2 StatusReplay)
 add_test(NAME ScriptRunnerTest COMMAND ScriptRunnerTest)

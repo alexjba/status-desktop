@@ -139,6 +139,36 @@ void onModelData(void* model, int row, int role, const void* value)
         g_recorder->modelDataObserved(static_cast<QObject*>(model), row, role, *static_cast<const QVariant*>(value));
 }
 
+// Runs the script once the main window is up: after the startup moment when recording.
+void runScriptAfterLoad(QQmlEngine* engine)
+{
+    auto appEngine = qobject_cast<QQmlApplicationEngine*>(engine);
+    if (!appEngine)
+        return;
+    QObject::connect(appEngine, &QQmlApplicationEngine::objectCreated, appEngine,
+        [appEngine](QObject* root, const QUrl&) {
+            if (!root)
+                return;
+            if (g_recorder) {
+                g_recorder->markLoaded();
+                g_recorder->setFingerprint(StatusReplay::setupFingerprint(appEngine));
+            }
+            const int delay = qEnvironmentVariableIntValue("STATUS_RECORD_STARTUP_DELAY_MS");
+            QTimer::singleShot(delay > 0 ? delay : 5000, qApp, [] {
+                if (g_recorder)
+                    markMoment(QStringLiteral("startup"));
+                runScript();
+            });
+        },
+        Qt::SingleShotConnection);
+}
+
+void startProbeIfAsked(QQmlEngine* engine, const QString& directory)
+{
+    if (qEnvironmentVariableIsSet("STATUS_REPLAY_PROBE_AT"))
+        StatusReplay::startProbe(engine, qEnvironmentVariable("STATUS_REPLAY_PROBE_AT"), directory);
+}
+
 } // namespace
 
 extern "C" {
@@ -147,6 +177,17 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
 {
     if (g_recorder)
         return { onContextProperty, onMetacall, onModelData };
+
+    auto engine = static_cast<QQmlEngine*>(enginePtr);
+    // Script only (STATUS_RECORD_SCRIPT without STATUS_RECORD): drives the app, e.g. to measure
+    // the real app at the moments a recording has, with nothing observed or written.
+    if (!qEnvironmentVariableIsSet("STATUS_RECORD")) {
+        qInfo() << "StatusReplay: running" << qEnvironmentVariable("STATUS_RECORD_SCRIPT") << "without recording";
+        startProbeIfAsked(engine,
+            QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + QStringLiteral("/probe"));
+        runScriptAfterLoad(engine);
+        return { nullptr, nullptr, nullptr };
+    }
 
     auto recorder = new Recorder(recordingDirectory());
     if (!recorder->isValid()) {
@@ -157,11 +198,8 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
     g_recorder = recorder;
     qInfo() << "StatusReplay: recording into" << recorder->directory();
 
-    auto engine = static_cast<QQmlEngine*>(enginePtr);
     recorder->setEngine(engine);
-    if (qEnvironmentVariableIsSet("STATUS_REPLAY_PROBE_AT"))
-        StatusReplay::startProbe(engine, qEnvironmentVariable("STATUS_REPLAY_PROBE_AT"),
-            recorder->directory() + QStringLiteral("/probe"));
+    startProbeIfAsked(engine, recorder->directory() + QStringLiteral("/probe"));
     // What QML `Settings` start from in this run; replay restores it into its own store.
     StatusReplay::snapshotSettings(recorder->directory() + QStringLiteral("/settings.ini"));
 
@@ -178,23 +216,7 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
     }
 #endif
 
-    if (auto appEngine = qobject_cast<QQmlApplicationEngine*>(engine)) {
-        QObject::connect(appEngine, &QQmlApplicationEngine::objectCreated, appEngine,
-            [appEngine](QObject* root, const QUrl&) {
-                if (!root || !g_recorder)
-                    return;
-                g_recorder->markLoaded();
-                g_recorder->setFingerprint(StatusReplay::setupFingerprint(appEngine));
-                const int delay = qEnvironmentVariableIntValue("STATUS_RECORD_STARTUP_DELAY_MS");
-                QTimer::singleShot(delay > 0 ? delay : 5000, qApp, [] {
-                    if (!g_recorder)
-                        return;
-                    markMoment(QStringLiteral("startup"));
-                    runScript();
-                });
-            },
-            Qt::SingleShotConnection);
-    }
+    runScriptAfterLoad(engine);
 
     // Scripted recordings end themselves so the exit moment is written.
     if (const int quitAfter = qEnvironmentVariableIntValue("STATUS_RECORD_QUIT_AFTER_MS"); quitAfter > 0)
