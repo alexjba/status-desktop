@@ -39,6 +39,8 @@ class NetworkAccessFactory : public QQmlNetworkAccessManagerFactory
 public:
     NetworkAccessFactory(const QString& cacheDir, qint64 maxCacheSize);
 
+    qint64 maxCacheSize() const { return m_maxCacheSize; }
+
     QNetworkAccessManager* create(QObject* parent) override;
 
 private:

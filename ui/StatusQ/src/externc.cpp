@@ -119,6 +119,10 @@ public:
         return m_gentleHints > 0;
     }
 
+    int msPerTick() const { return m_msPerTick; }
+    int gentlePeriodMs() const { return m_gentlePeriodMs; }
+    int boostGapMs() const { return m_boostGapMs; }
+
     // Debug HUD introspection (see StatusQ.IncubationHints.stats())
     int debugCount() { return incubatingObjectCount(); }
     int debugPhase() const { return m_lastPhase; }   // 0 idle, 1 gentle, 2 boost
@@ -257,6 +261,27 @@ Q_DECL_EXPORT bool statusq_incubationDebugStats(void* engine, int* count, int* p
     *hints = controller->debugHints();
     *gentleIntervalMs = controller->debugGentleIntervalMs();
     *gentleBudgetMs = controller->debugGentleBudgetMs();
+    return true;
+}
+
+// Setup values for the record/replay setup fingerprint (docs/replay-mode.md).
+Q_DECL_EXPORT bool statusq_incubationControllerSettings(void* engine, int* msPerTick, int* gentlePeriodMs,
+                                                        int* boostGapMs) {
+    const auto controller = s_incubationControllers.value(static_cast<QQmlEngine*>(engine));
+    if (!controller)
+        return false;
+    *msPerTick = controller->msPerTick();
+    *gentlePeriodMs = controller->gentlePeriodMs();
+    *boostGapMs = controller->boostGapMs();
+    return true;
+}
+
+Q_DECL_EXPORT bool statusq_networkAccessFactorySettings(void* engine, qint64* maxCacheSize) {
+    const auto factory = dynamic_cast<Status::NetworkAccessFactory*>(
+        static_cast<QQmlEngine*>(engine)->networkAccessManagerFactory());
+    if (!factory)
+        return false;
+    *maxCacheSize = factory->maxCacheSize();
     return true;
 }
 
