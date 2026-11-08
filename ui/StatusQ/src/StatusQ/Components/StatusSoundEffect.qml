@@ -1,5 +1,4 @@
 import QtQuick
-import QtMultimedia
 
 import StatusQ
 
@@ -11,8 +10,8 @@ Item {
     property url source
 
     readonly property bool playing: d.soundEffect ? d.soundEffect.playing : false
-    readonly property bool isError: d.status === SoundEffect.Error
-    readonly property string statusString: d.status
+    readonly property bool isError: d.soundEffect ? d.soundEffect.isError : false
+    readonly property string statusString: d.soundEffect ? d.soundEffect.status : 0
 
     function play() {
         if (NativeSound.available) {
@@ -23,7 +22,15 @@ Item {
 
         if (!d.soundEffect) {
             MediaBackend.ensureLoaded()
-            d.soundEffect = soundEffectComponent.createObject(root)
+            d.soundEffect = d.soundEffectComponent().createObject(root, {
+                source: Qt.binding(() => root.source),
+                volume: Qt.binding(() => root.volume),
+                muted: Qt.binding(() => root.muted)
+            })
+            d.soundEffect.playingChanged.connect(() => {
+                if (d.soundEffect && !d.soundEffect.playing)
+                    d.scheduleRelease()
+            })
         }
 
         d.soundEffect.play()
@@ -46,8 +53,12 @@ Item {
     QtObject {
         id: d
 
-        property SoundEffect soundEffect: null
-        readonly property int status: soundEffect ? soundEffect.status : SoundEffect.Null
+        // QtMultimedia's QML module is only imported when a sound is played through it
+        property QtObject soundEffect: null
+
+        function soundEffectComponent() {
+            return Qt.createComponent(Qt.resolvedUrl("private/StatusQtSoundEffect.qml"))
+        }
 
         function scheduleRelease() {
             Qt.callLater(d.releaseIfIdle)
@@ -59,21 +70,6 @@ Item {
 
             soundEffect.destroy()
             soundEffect = null
-        }
-    }
-
-    Component {
-        id: soundEffectComponent
-
-        SoundEffect {
-            source: root.source
-            volume: root.volume
-            muted: root.muted
-
-            onPlayingChanged: {
-                if (!playing)
-                    d.scheduleRelease()
-            }
         }
     }
 }
