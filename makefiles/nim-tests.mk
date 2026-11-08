@@ -135,3 +135,6 @@ $(FAKE_STATUSREPLAY_LIB): test/nim/fake_statusreplay.c
 	$(CC) -shared -fPIC -o $@ $<
 nim-test-run/test/nim/replay_recorder_test.nim: export STATUS_REPLAY_TEST_LIB := $(abspath $(FAKE_STATUSREPLAY_LIB))
 nim-test-run/test/nim/replay_recorder_test.nim: | $(FAKE_STATUSREPLAY_LIB)
+nim-test-run/test/nim/replay_recorder_production_test.nim: NIM_PARAMS += -d:production
+nim-test-run/test/nim/replay_recorder_production_test.nim: export STATUS_REPLAY_TEST_LIB := $(abspath $(FAKE_STATUSREPLAY_LIB))
+nim-test-run/test/nim/replay_recorder_production_test.nim: | $(FAKE_STATUSREPLAY_LIB)

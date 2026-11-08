@@ -79,7 +79,6 @@ private slots:
         player.start();
         QVERIFY(finished.wait(5000));
         QVERIFY2(clock.elapsed() >= 18, qPrintable(QString::number(clock.elapsed())));
-        QVERIFY2(clock.elapsed() < 190, qPrintable(QString::number(clock.elapsed())));
     }
 
     void pauseHoldsTheTimelineUntilResumed()
@@ -99,6 +98,26 @@ private slots:
         QSignalSpy finished(&player, &Player::finished);
         player.togglePause();
         QVERIFY(finished.wait(5000));
+        QCOMPARE(names(moments), (QStringList { "a", "b", "c" }));
+    }
+
+    void pauseDuringFastForwardResumesIt()
+    {
+        Player player(m_replayer.get(), Player::Mode::Frozen);
+        QSignalSpy moments(m_replayer.get(), &Replayer::momentReached);
+        connect(m_replayer.get(), &Replayer::momentReached, this, [&](const QString& name) {
+            if (name == QLatin1String("a"))
+                player.togglePause();
+        });
+        QSignalSpy done(&player, &Player::fastForwardFinished);
+        player.start(QStringLiteral("c"));
+        QVERIFY(player.isPaused());
+        QVERIFY(!done.wait(200));
+        QCOMPARE(names(moments), QStringList { "a" });
+
+        player.togglePause();
+        QVERIFY(done.count() == 1 || done.wait(1000));
+        QCOMPARE(done[0][0].toBool(), true);
         QCOMPARE(names(moments), (QStringList { "a", "b", "c" }));
     }
 

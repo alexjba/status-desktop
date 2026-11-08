@@ -126,8 +126,9 @@ coverage gap.
   loads), `loggedIn` (Nim marks it when the main module finished loading) and
   `loggedIn-settled` (`STATUS_RECORD_SETTLE_MS`, default 60 s later), `exit`. At each
   moment the recorder writes a full snapshot of the live registry and the root context
-  (so a replay can start at any moment without playing what came before) and a window
-  screenshot (`screenshots/<moment>.png`) to compare with the replay.
+  (so a replay can start at any moment without playing what came before). Scripted runs
+  also save a window screenshot (`screenshots/<moment>.png`) to compare with the replay;
+  hand-driven ones only with `STATUS_RECORD_SCREENSHOTS=1`.
 - **Unattended recordings**: `STATUS_RECORD_SCRIPT` names a JSON script
   (`ui/replay/scripts/`) that the recorder runs after the startup moment. Steps find a
   visible, enabled item by `objectName` and click it, type into it, set a switch, wait
@@ -138,10 +139,12 @@ coverage gap.
   after a fixed time. Scripts use the throwaway test password only; all of this lives in
   libStatusReplay, which release builds never load.
 - **Privacy**: values of parameters and properties whose name matches
-  `password|passphrase|mnemonic|seedphrase|privatekey|secret`, ends in `pin`/`puk`, or is
-  `seed`/`pairingCode` are replaced by a marker, including keys inside JSON string
-  payloads (the login request passes the password in a JSON argument); recordings go to
-  `./Status/recordings/<timestamp>` (dev data dir, already gitignored) by default.
+  `password|passphrase|mnemonic|seedphrase|privatekey|secret|credential|connectionstring`,
+  ends in `pin`/`puk`, or is
+  `seed`/`pairingCode` are replaced by a marker whatever their type (text by the marker
+  string, other values by a marker that replays as the type's default), including keys
+  inside JSON string payloads (the login request passes the password in a JSON argument).
+  `make record-run` writes to `Status/recordings/<timestamp>` (dev data dir, gitignored).
   Recordings from real accounts are never committed; host tests use a small synthetic
   fixture.
 
@@ -311,7 +314,8 @@ overridable), so it installs next to the real app.
   seaqt PR merges; the submodule pin points at that branch meanwhile.
 - **Setup drift**: the replay setup duplicates Nim's Qt-side startup. The fingerprint
   records the values Nim passed (incubation budget, network cache size, import paths of
-  the Nim QML libraries, env defaults), `make record-run` fails when
+  the Nim QML libraries, env defaults; StatusQ exposes the first two through
+  `statusq_incubationControllerSettings` and `statusq_networkAccessFactorySettings`), `make record-run` fails when
   `status-replay --check-setup` finds a difference, and SetupParityTest checks the
   replay setup against the committed fixture.
 - **Private Qt API** (`QMetaObjectBuilder`, `QQmlContextData`) can change between Qt

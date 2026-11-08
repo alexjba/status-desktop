@@ -265,6 +265,42 @@ private slots:
         QCOMPARE(replayed->property("filter"), QVariant(QStringLiteral("eth")));
     }
 
+    void anUncoveredNotifyClearsTheQmlWrite()
+    {
+        // Hand-written: a notify without the property's value (never read when recorded), then
+        // an equal-valued notify that must still reach QML.
+        QDir dir(m_dir.path());
+        dir.mkpath(QStringLiteral("schemas"));
+        auto write = [&](const QString& name, const QByteArray& content) {
+            QFile file(dir.filePath(name));
+            QVERIFY(file.open(QIODevice::WriteOnly));
+            file.write(content);
+        };
+        write(QStringLiteral("manifest.json"), R"({"formatVersion":"1.0"})");
+        write(QStringLiteral("schemas/0000000000000001.json"),
+            R"json({"className":"V","base":"QObject","methods":[{"type":"signal","signature":"filterChanged()"}],)json"
+            R"json("properties":[{"name":"filter","type":"QString","writable":true,"notify":0}]})json");
+        write(QStringLiteral("timeline.jsonl"),
+            "{\"k\":\"obj\",\"o\":1,\"s\":\"0000000000000001\",\"q\":0,\"t\":0}\n"
+            "{\"k\":\"init\",\"o\":1,\"v\":{},\"q\":1,\"t\":0}\n"
+            "{\"k\":\"ctx\",\"n\":\"v\",\"v\":{\"$obj\":1},\"q\":2,\"t\":0}\n"
+            "{\"k\":\"sig\",\"o\":1,\"m\":\"filterChanged()\",\"q\":3,\"t\":0}\n"
+            "{\"k\":\"sig\",\"o\":1,\"m\":\"filterChanged()\",\"p\":{\"filter\":\"eth\"},\"q\":4,\"t\":0}\n");
+
+        QString error;
+        auto replayer = Replayer::open(m_dir.path(), &error);
+        QVERIFY2(replayer, qPrintable(error));
+        QVERIFY(replayer->startAt(QString()));
+        QVERIFY(replayer->step() && replayer->step() && replayer->step());
+        QObject* replayed = objectOf(replayer->contextProperty("v"));
+        QVERIFY(replayed);
+        QSignalSpy changed(replayed, SIGNAL(filterChanged()));
+        replayed->setProperty("filter", QStringLiteral("eth"));
+        QCOMPARE(changed.size(), 1);
+        while (replayer->step()) { }
+        QCOMPARE(changed.size(), 3);
+    }
+
     void objectsQmlPassesInAreNotFollowed()
     {
         Hooked<WalletView> wallet;

@@ -3,6 +3,7 @@
 #include <StatusReplay/replayer.h>
 
 #include <QElapsedTimer>
+#include <utility>
 #include <QTimer>
 
 namespace StatusReplay {
@@ -21,6 +22,7 @@ public:
     bool momentReached = false;
     QString target;
     bool targetReached = false;
+    QString pendingFastForward; // paused during a fast-forward: resumed by togglePause()
 
     qint64 now() const { return base + qint64(clock.elapsed() * speed); }
 };
@@ -37,8 +39,11 @@ Player::Player(Replayer* replayer, Mode mode, double speed, QObject* parent)
         if (d->paused)
             return;
         const qint64 now = d->now();
-        while (!d->replayer->atEnd() && d->replayer->nextEventTime() <= now)
+        // A pause requested from inside an event (e.g. a moment handler) stops this batch.
+        while (!d->paused && !d->replayer->atEnd() && d->replayer->nextEventTime() <= now)
             d->replayer->step();
+        if (d->paused)
+            return;
         if (d->replayer->atEnd()) {
             emit finished();
             return;
@@ -58,7 +63,11 @@ void Player::start(const QString& fastForwardTo)
     if (!fastForwardTo.isEmpty()) {
         constexpr int EventsPerTurn = 20;
         d->target = fastForwardTo;
-        for (int i = 0; i < EventsPerTurn && !d->targetReached && d->replayer->step(); ++i) { }
+        for (int i = 0; i < EventsPerTurn && !d->paused && !d->targetReached && d->replayer->step(); ++i) { }
+        if (d->paused) {
+            d->pendingFastForward = fastForwardTo;
+            return;
+        }
         if (!d->targetReached && !d->replayer->atEnd()) {
             QTimer::singleShot(0, this, [this, fastForwardTo] { start(fastForwardTo); });
             return;
@@ -88,9 +97,14 @@ void Player::stepToNextMoment()
 
 void Player::togglePause()
 {
-    if (d->mode != Mode::Realtime)
+    const bool fastForwarding = !d->target.isEmpty();
+    if (d->mode != Mode::Realtime && !fastForwarding && d->pendingFastForward.isEmpty())
         return;
     d->paused = !d->paused;
+    if (!d->paused && !d->pendingFastForward.isEmpty()) {
+        start(std::exchange(d->pendingFastForward, QString()));
+        return;
+    }
     if (d->paused) {
         d->timer.stop();
         d->pausedAt = d->now();

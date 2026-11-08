@@ -31,10 +31,14 @@ QString recordingDirectory()
     return QDir(dir).absolutePath();
 }
 
-// Record mode keeps a picture of every moment next to its snapshot, to compare with replay.
+// Scripted runs (or STATUS_RECORD_SCREENSHOTS=1) keep a picture of every moment next to its
+// snapshot, to compare with replay. Hand-driven recordings don't, unless asked: the window can
+// show more than the recording itself carries.
 void saveMomentScreenshot(const QString& moment)
 {
-    if (!g_recorder)
+    if (!g_recorder
+        || (!qEnvironmentVariableIsSet("STATUS_RECORD_SCRIPT")
+            && qEnvironmentVariableIntValue("STATUS_RECORD_SCREENSHOTS") != 1))
         return;
     for (QWindow* window : QGuiApplication::topLevelWindows()) {
         if (auto quickWindow = qobject_cast<QQuickWindow*>(window); quickWindow && quickWindow->isVisible()) {

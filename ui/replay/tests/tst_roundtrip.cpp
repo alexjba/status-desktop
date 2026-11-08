@@ -273,7 +273,7 @@ private slots:
         QVERIFY(timeline.readAll().contains("login(QString)"));
     }
 
-    void sensitiveNamesOnlyHideText()
+    void sensitiveNamesHideAnyValue()
     {
         Hooked<Account> account;
         m_recorder->setContextProperty(QStringLiteral("account"), QVariant::fromValue<QObject*>(&account));
@@ -283,8 +283,9 @@ private slots:
         auto replayer = replayAt(QStringLiteral("startup"));
         QVERIFY(replayer);
         QObject* replayed = objectOf(replayer->contextProperty("account"));
-        // A flag named after a secret is not a secret (the backup banner depends on it).
-        QCOMPARE(replayed->property("mnemonicBackedUp"), QVariant(true));
+        // Everything under a secret's name is hidden: text as the marker, other values replay as
+        // their type's default (never as the marker string read as `true`).
+        QCOMPARE(replayed->property("mnemonicBackedUp"), QVariant(false));
         QCOMPARE(replayed->property("mnemonic"), QVariant(QStringLiteral("$redacted")));
     }
 

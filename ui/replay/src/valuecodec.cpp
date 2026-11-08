@@ -158,6 +158,8 @@ QVariant decode(const QJsonValue& json, QMetaType declared, const IdToObject& ob
     }
 
     const QJsonObject object = json.toObject();
+    if (object.contains("$redacted"))
+        return declaredIsVariant ? QVariant() : QVariant(declared);
     if (object.contains("$ext"))
         return isQObjectPointer(declared) ? QVariant(declared, nullptr) : QVariant();
     if (object.contains("$obj")) {

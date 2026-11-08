@@ -420,6 +420,14 @@ void ReplayerPrivate::apply(const QJsonObject& event)
             alreadyNotified = alreadyNotified && writtenByQml && value == p->value(index);
             p->setValue(index, value);
         }
+        // Properties this signal notifies that the event doesn't carry: a QML write to them is
+        // not what this notify answers, so a later equal notify must still be emitted.
+        const int signalIndex = p->methodIndex(event["m"].toString().toLatin1());
+        for (int i = 0; i < p->schema().properties.size(); ++i) {
+            if (p->schema().properties[i].notify == signalIndex
+                && !notified.contains(QString::fromLatin1(p->schema().properties[i].name)))
+                p->takeWrittenByQml(i);
+        }
         applyHoists(event["q"].toInteger());
         if (alreadyNotified)
             return;

@@ -42,6 +42,9 @@ manifest, schemas keyed by content hash, per-moment snapshots, and a JSONL timel
 
 - nimqml-seaqt gains two optional C hooks (local branch now, upstream seaqt PR and pin
   bump later); cost when off is one branch per metacall, and no added pages.
+- StatusQ exposes the incubation and network-cache settings it was given
+  (`statusq_incubationControllerSettings`, `statusq_networkAccessFactorySettings`) so the
+  fingerprint compares values, not just presence.
 - The replayer duplicates the Qt-side part of the Nim startup. Each recording stores a
   setup fingerprint of the real app; replay diffs against it and a host test asserts no
   mismatches, so a change on one side fails until the other follows.

@@ -42,10 +42,16 @@ bool isSensitive(const QByteArray& name)
     return contains.match(n).hasMatch() || exact.match(n).hasMatch();
 }
 
-// Secrets are text: a sensitive name on a flag or a count (mnemonicBackedUp) stays readable.
+// Anything under a sensitive name is hidden. Text becomes the marker; other values become a
+// marker object that replays as the type's default (so a flag like mnemonicBackedUp replays
+// as false, never as a non-empty string read as true).
 QJsonValue redactNamed(const QByteArray& name, const QJsonValue& encoded)
 {
-    return isSensitive(name) && encoded.isString() ? QJsonValue(Redacted) : encoded;
+    if (!isSensitive(name) || encoded.isNull())
+        return encoded;
+    if (encoded.isString())
+        return Redacted;
+    return QJsonObject { { "$redacted", true } };
 }
 
 QJsonValue redactJson(const QJsonValue& value);
