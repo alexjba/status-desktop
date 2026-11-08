@@ -216,6 +216,15 @@ ScriptRunner::ScriptRunner(const QJsonArray& steps, QObject* parent)
 
 ScriptRunner::~ScriptRunner() = default;
 
+void ScriptRunner::append(const QJsonObject& step)
+{
+    d->steps.append(step);
+    if (d->current == d->steps.size() - 1 && !d->timer.isActive()) {
+        d->stepClock.restart();
+        d->timer.start(0);
+    }
+}
+
 void ScriptRunner::start()
 {
     d->current = 0;

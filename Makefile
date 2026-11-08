@@ -1309,18 +1309,33 @@ mobile-clean:
 	echo -e "\033[92mCleaning:\033[39m mobile app"
 	$(MAKE) -C mobile clean
 
-# Record / replay on Android (docs/replay-mode.md). Debug packages, so the installed package
+# Record / replay on Android (docs/replay-mode.md). Debug packages by default, so the installed package
 # names get a ".debug" suffix; the defaults never collide with the regular app packages.
 MOBILE_RECORD_BUNDLE_IDENTIFIER ?= app.status.mobile.record
 MOBILE_REPLAY_BUNDLE_IDENTIFIER ?= app.status.mobile.replay
 MOBILE_APK_DIR := mobile/bin/android/qt6
+# MOBILE_REPLAY_PROFILE=release: non-debuggable, profileable builds (pr-style record side,
+# release replay), for memory numbers comparable with release builds (debuggable packages carry
+# 14-26 MB of extra ART). Needs the STATUS_APP_KEYSTORE_* signing variables.
+MOBILE_REPLAY_PROFILE ?= debug
+ifeq ($(MOBILE_REPLAY_PROFILE),release)
+MOBILE_REPLAY_BUILD := DEBUG=0 GRADLE_TARGETS=assembleRelease
+MOBILE_RECORD_VARIANT := BUILD_VARIANT=pr
+MOBILE_RECORD_APK := StatusPR.apk
+MOBILE_PKG_SUFFIX :=
+else
+MOBILE_REPLAY_BUILD := DEBUG=1 GRADLE_TARGETS=assembleDebug
+MOBILE_RECORD_VARIANT :=
+MOBILE_RECORD_APK := Status.apk
+MOBILE_PKG_SUFFIX := .debug
+endif
 
 mobile-record-run: USE_SYSTEM_NIM=1
 mobile-record-run: qt-pkgconfig | deps-common
-	$(MAKE) -C mobile all DEBUG=1 GRADLE_TARGETS=assembleDebug RECORDER=1 \
+	$(MAKE) -C mobile all $(MOBILE_REPLAY_BUILD) $(MOBILE_RECORD_VARIANT) RECORDER=1 \
 		BUNDLE_IDENTIFIER=$(MOBILE_RECORD_BUNDLE_IDENTIFIER)
-	APK="$(MOBILE_APK_DIR)/Status.apk" \
-	PKG="$(MOBILE_RECORD_BUNDLE_IDENTIFIER).debug" \
+	APK="$(MOBILE_APK_DIR)/$(MOBILE_RECORD_APK)" \
+	PKG="$(MOBILE_RECORD_BUNDLE_IDENTIFIER)$(MOBILE_PKG_SUFFIX)" \
 	RECORDING="$(abspath $(RECORD_OUTPUT))" \
 		$(STATUSREPLAY_SOURCE_PATH)/scripts/android-record.sh
 
@@ -1328,10 +1343,10 @@ mobile-replay-run: qt-pkgconfig
 ifndef RECORDING
 	$(error RECORDING=<recording dir> is required)
 endif
-	$(MAKE) -C mobile all DEBUG=1 GRADLE_TARGETS=assembleDebug BUILD_VARIANT=replay \
+	$(MAKE) -C mobile all $(MOBILE_REPLAY_BUILD) BUILD_VARIANT=replay \
 		BUNDLE_IDENTIFIER=$(MOBILE_REPLAY_BUNDLE_IDENTIFIER)
 	APK="$(MOBILE_APK_DIR)/StatusReplay.apk" \
-	PKG="$(MOBILE_REPLAY_BUNDLE_IDENTIFIER).debug" \
+	PKG="$(MOBILE_REPLAY_BUNDLE_IDENTIFIER)$(MOBILE_PKG_SUFFIX)" \
 	RECORDING="$(abspath $(RECORDING))" \
 	REPLAY_MOMENT="$(REPLAY_MOMENT)" REPLAY_MODE="$(REPLAY_MODE)" \
 		$(STATUSREPLAY_SOURCE_PATH)/scripts/android-replay.sh

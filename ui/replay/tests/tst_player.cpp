@@ -70,15 +70,26 @@ private slots:
         QVERIFY2(clock.elapsed() >= 190, qPrintable(QString::number(clock.elapsed())));
     }
 
+    // Relative to a 1x run of the same timeline, so a slow machine only makes both slower.
     void speedScalesTheTimestamps()
     {
-        Player player(m_replayer.get(), Player::Mode::Realtime, 10.0);
-        QSignalSpy finished(&player, &Player::finished);
-        QElapsedTimer clock;
-        clock.start();
-        player.start();
-        QVERIFY(finished.wait(5000));
-        QVERIFY2(clock.elapsed() >= 18, qPrintable(QString::number(clock.elapsed())));
+        auto run = [this](double speed) {
+            QString error;
+            m_replayer = Replayer::open(m_dir.path(), &error);
+            m_replayer->startAt(QString());
+            Player player(m_replayer.get(), Player::Mode::Realtime, speed);
+            QSignalSpy finished(&player, &Player::finished);
+            QElapsedTimer clock;
+            clock.start();
+            player.start();
+            finished.wait(5000);
+            return clock.elapsed();
+        };
+        const qint64 normal = run(1.0);
+        const qint64 fast = run(10.0);
+        const QString times = QStringLiteral("1x %1 ms, 10x %2 ms").arg(normal).arg(fast);
+        QVERIFY2(fast * 3 < normal, qPrintable(times));
+        QVERIFY2(fast * 30 > normal, qPrintable(times));
     }
 
     void pauseHoldsTheTimelineUntilResumed()

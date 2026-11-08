@@ -124,6 +124,25 @@ private slots:
         QCOMPARE(acted, (QStringList { "setChecked", "setChecked", "click", "click" }));
     }
 
+    // Replay feeds recorded clicks one by one into a single runner: they run in order, one tree
+    // walk at a time, and the runner picks up steps appended after it went idle.
+    void appendedStepsRunInOrderOnOneRunner()
+    {
+        ScriptRunner runner({});
+        QSignalSpy finished(&runner, &ScriptRunner::finished);
+        QStringList acted;
+        connect(&runner, &ScriptRunner::acted, this, [&](const QJsonObject& step) { acted << step["click"].toString(); });
+        runner.start();
+        QVERIFY(finished.wait(1000));
+
+        runner.append(QJsonObject { { "type", "nameInput" }, { "text", "x" } });
+        runner.append(QJsonObject { { "click", "confirmButton" } });
+        runner.append(QJsonObject { { "click", "laterButton" } });
+        QTRY_COMPARE_WITH_TIMEOUT(acted, (QStringList { "confirmButton", "laterButton" }), 5000);
+        QCOMPARE(root()->property("presses"), QVariant(11));
+        QTRY_COMPARE(finished.size(), 2);
+    }
+
     void stopsAtARequiredItemThatNeverAppears()
     {
         ScriptRunner runner(steps(R"([

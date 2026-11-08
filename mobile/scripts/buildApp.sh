@@ -25,9 +25,11 @@ mkdir -p "${BUILD_DIR}"
 cd "${BUILD_DIR}"
 
 # Objects don't depend on qmake DEFINES: switching to or from the replay variant (main.cpp
-# is built with STATUS_REPLAY_APP there) must not link the other variant's main.o.
+# is built with STATUS_REPLAY_APP there) must not link the other variant's main.o, nor package
+# the other variant's libraries (androiddeployqt only adds to android-build/libs).
 if [[ "$(cat .build-variant 2>/dev/null)" != "${BUILD_VARIANT}" ]]; then
   rm -f main.o
+  rm -rf android-build/libs
   echo "${BUILD_VARIANT}" > .build-variant
 fi
 

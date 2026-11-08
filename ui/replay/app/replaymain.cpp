@@ -184,14 +184,14 @@ extern "C" int statusreplay_main(int argc, char** argv)
         startProbe(&engine, qEnvironmentVariable("STATUS_REPLAY_PROBE_AT"),
             QDir(recording).filePath(QStringLiteral("replay-probe")));
     // Recorded responses answer the app's requests; anything not recorded goes to the network.
-    static MediaLibrary* media = nullptr;
-    MediaLibrary library(QDir(recording).filePath(QStringLiteral("media")));
-    if (library.size() > 0) {
-        media = &library;
+    // Process lifetime, never deleted (like the network access factory): QML's image threads may
+    // still be asking while the app shuts down.
+    static const MediaLibrary* media = new MediaLibrary(QDir(recording).filePath(QStringLiteral("media")));
+    if (media->size() > 0) {
         statusq_setNetworkRequestInterceptor([](const void* request, void* parent) -> void* {
             return media->reply(*static_cast<const QNetworkRequest*>(request), static_cast<QObject*>(parent));
         });
-        qInfo() << "StatusReplay:" << library.size() << "recorded network responses";
+        qInfo() << "StatusReplay:" << media->size() << "recorded network responses";
     }
 
     QQmlContext* root = engine.rootContext();
@@ -230,15 +230,17 @@ extern "C" int statusreplay_main(int argc, char** argv)
 
     // Recorded UI actions (e.g. the scripted click on the wallet button) are performed again,
     // so QML's own navigation state follows the recording.
-    QObject::connect(replayer.get(), &Replayer::uiAction, &app, [](const QJsonObject& step) {
+    // One runner for all of them: one tree walk at a time, and only while a target is missing.
+    ScriptRunner uiActions({});
+    bool fastForwarding = !fastForwardTo.isEmpty();
+    QObject::connect(&player, &Player::fastForwardFinished, &app, [&fastForwarding] { fastForwarding = false; });
+    QObject::connect(replayer.get(), &Replayer::uiAction, &app, [&uiActions, &fastForwarding](const QJsonObject& step) {
         QJsonObject single = step;
         single["optional"] = true;
         // Fast-forwarded, the event can come long before QML shows its target (a popup opened by a
-        // timer): wait as long as a scripted step would.
-        single["timeout"] = 60000;
-        auto runner = new ScriptRunner(QJsonArray { single }, qApp);
-        QObject::connect(runner, &ScriptRunner::finished, runner, &QObject::deleteLater);
-        runner->start();
+        // timer): wait as long as a scripted step would. In real time the target is there already.
+        single["timeout"] = fastForwarding ? 60000 : 5000;
+        uiActions.append(single);
     });
 
     QObject::connect(&engine, &QQmlApplicationEngine::objectCreated, &app,
@@ -269,7 +271,5 @@ extern "C" int statusreplay_main(int argc, char** argv)
     }
 
     engine.load(QUrl(QStringLiteral("qrc:///main.qml")));
-    const int result = app.exec();
-    statusq_setNetworkRequestInterceptor(nullptr);
-    return result;
+    return app.exec();
 }

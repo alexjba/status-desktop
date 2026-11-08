@@ -35,6 +35,8 @@ public:
     ~ScriptRunner() override;
 
     void start();
+    // Queues a step after the others; an idle (finished) runner goes on with it.
+    void append(const QJsonObject& step);
 
 signals:
     void momentRequested(const QString& name);
