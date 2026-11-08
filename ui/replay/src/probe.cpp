@@ -4,6 +4,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <QHash>
 #include <QPointer>
 #include <QQmlEngine>
 #include <QSet>
@@ -36,6 +37,24 @@ double mallocInUseMB()
     return info.uordblks / 1048576.0;
 #else
     return 0;
+#endif
+}
+
+void dumpSmaps(int index, const QString& directory)
+{
+#if defined(Q_OS_LINUX) || defined(Q_OS_ANDROID)
+    QFile smaps(QStringLiteral("/proc/self/smaps"));
+    if (!smaps.open(QIODevice::ReadOnly))
+        return;
+    QFile file(QDir(directory).filePath(QStringLiteral("probe-%1-smaps.tsv").arg(index)));
+    if (!file.open(QIODevice::WriteOnly))
+        return;
+    file.write("mapping\tpss_swappss_kb\n");
+    for (const auto& [name, kb] : pssPerMapping(smaps.readAll()))
+        file.write(QStringLiteral("%1\t%2\n").arg(name).arg(kb).toUtf8());
+#else
+    Q_UNUSED(index)
+    Q_UNUSED(directory)
 #endif
 }
 
@@ -78,10 +97,43 @@ void dump(QQmlEngine* engine, int index, const QString& directory)
                    .arg(mallocInUseMB(), 0, 'f', 2)
                    .toUtf8());
     file.write(rows.toUtf8());
+    file.close();
+    dumpSmaps(index, directory);
     qInfo().noquote() << "StatusReplay: probe" << file.fileName() << "loaded" << loaded << "instantiated" << created;
 }
 
 } // namespace
+
+QList<QPair<QString, qint64>> pssPerMapping(const QByteArray& smaps)
+{
+    QHash<QString, qint64> sums;
+    QString current;
+    for (const QByteArray& line : smaps.split('\n')) {
+        if (line.isEmpty())
+            continue;
+        const int colon = line.indexOf(':');
+        const int space = line.indexOf(' ');
+        // Mapping headers start with "<from>-<to> perms"; fields with "Name:".
+        if (colon < 0 || (space >= 0 && space < colon)) {
+            const QList<QByteArray> parts = line.simplified().split(' ');
+            if (parts.size() < 6) {
+                current = QStringLiteral("[anon]");
+            } else {
+                const QString path = QString::fromUtf8(parts.mid(5).join(' '));
+                current = path.startsWith(QLatin1Char('/')) ? path.section(QLatin1Char('/'), -1) : path;
+            }
+            continue;
+        }
+        const QByteArray key = line.left(colon);
+        if (key == "Pss" || key == "SwapPss")
+            sums[current] += line.mid(colon + 1).simplified().split(' ').value(0).toLongLong();
+    }
+    QList<QPair<QString, qint64>> result;
+    for (auto it = sums.cbegin(); it != sums.cend(); ++it)
+        result.append({ it.key(), it.value() });
+    std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) { return a.second > b.second; });
+    return result;
+}
 
 void startProbe(QQmlEngine* engine, const QString& seconds, const QString& directory)
 {

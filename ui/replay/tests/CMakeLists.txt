@@ -10,6 +10,10 @@ add_executable(SettingsTest tst_settings.cpp)
 target_link_libraries(SettingsTest PRIVATE Qt::Test StatusReplay)
 add_test(NAME SettingsTest COMMAND SettingsTest)
 
+add_executable(ProbeTest tst_probe.cpp)
+target_link_libraries(ProbeTest PRIVATE Qt::Test StatusReplay)
+add_test(NAME ProbeTest COMMAND ProbeTest)
+
 add_executable(MediaTest tst_media.cpp)
 target_link_libraries(MediaTest PRIVATE Qt::Test StatusReplay)
 add_test(NAME MediaTest COMMAND MediaTest)

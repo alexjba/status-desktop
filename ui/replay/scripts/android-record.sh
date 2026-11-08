@@ -38,8 +38,9 @@ run_app() {
     local device_dir="$1" script="$2" quit_after="$3" timeout="$4"
     adb shell am force-stop "$PKG"
     adb push "$script" "$files/record-script.json" > /dev/null
-    printf 'STATUS_RECORD=%s\nSTATUS_RECORD_SCRIPT=%s\nSTATUS_RECORD_QUIT_AFTER_SCRIPT_MS=%s\nSTATUS_RECORD_SETTLE_MS=%s\n' \
+    printf 'STATUS_RECORD=%s\nSTATUS_RECORD_SCRIPT=%s\nSTATUS_RECORD_QUIT_AFTER_SCRIPT_MS=%s\nSTATUS_RECORD_SETTLE_MS=%s\nSTATUS_RECORD_STARTUP_DELAY_MS=%s\n' \
         "$device_dir" "$files/record-script.json" "$quit_after" "${STATUS_RECORD_SETTLE_MS:-20000}" \
+        "${STATUS_RECORD_STARTUP_DELAY_MS:-5000}" \
         | adb shell "cat > $files/status-env.txt"
     adb shell rm -rf "$device_dir"
     adb shell am start -n "$activity" > /dev/null
