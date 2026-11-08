@@ -227,21 +227,28 @@ Item {
 
         // The center StackView is behind a Loader now, so a navigation request
         // can arrive before it exists. Hold it and replay on load.
-        property Component pendingStackComponent: null
+        property var pendingStackComponent: null
         property int pendingTabIndex: -1
 
         readonly property StackView rightPanelStack: centerPanelLoader.item as StackView
 
         function replaceRightPanel(cmp) {
             if (rightPanelStack)
-                rightPanelStack.replace(cmp)
+                replaceInStack(cmp)
             else
                 pendingStackComponent = cmp
         }
 
+        function replaceInStack(cmp) {
+            if (typeof cmp.adopt === "function")
+                cmp.adopt(rightPanelStack.replace(cmp.component(), cmp.properties))
+            else
+                rightPanelStack.replace(cmp)
+        }
+
         function flushPendingStackOps() {
             if (pendingStackComponent) {
-                rightPanelStack.replace(pendingStackComponent)
+                replaceInStack(pendingStackComponent)
                 pendingStackComponent = null
             }
             if (pendingTabIndex >= 0) {
@@ -329,18 +336,16 @@ Item {
         }
     }
 
-    Component {
+    StatusQUtils.DeferredComponent {
         id: cmpSavedAddresses
 
-        SavedAddressesView {
-            rootStore: RootStore
-            networkConnectionStore: root.networkConnectionStore
-            networksStore: root.networksStore
-
-            onSendToAddressRequested: {
-                Global.sendToRecipientRequested(address)
-            }
-        }
+        source: Qt.resolvedUrl("views/SavedAddressesView.qml")
+        properties: ({
+            rootStore: RootStore,
+            networkConnectionStore: Qt.binding(() => root.networkConnectionStore),
+            networksStore: Qt.binding(() => root.networksStore)
+        })
+        onCreated: view => view.sendToAddressRequested.connect(address => Global.sendToRecipientRequested(address))
     }
 
     Component {
