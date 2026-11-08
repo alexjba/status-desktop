@@ -128,6 +128,10 @@ tests-nim-linux: export BENCH_QUICK := 1
 tests-nim-linux:
 	+ "$(MAKE)" --no-print-directory -j1 NIM_TESTS_SHARED_CACHE=1 tests-nim benches-nim
 
-# Loads the built libStatusReplay to check record mode only loads it on demand.
-nim-test-run/test/nim/replay_recorder_test.nim: export STATUS_REPLAY_TEST_LIB := $(abspath $(STATUSREPLAY_LIB))
-nim-test-run/test/nim/replay_recorder_test.nim: | statusreplay
+# Loads a stand-in recorder library (plain C, no Qt): the Nim tests don't depend on libStatusReplay.
+FAKE_STATUSREPLAY_LIB := build/libFakeStatusReplay.$(LIB_EXT)
+$(FAKE_STATUSREPLAY_LIB): test/nim/fake_statusreplay.c
+	mkdir -p $(dir $@)
+	$(CC) -shared -fPIC -o $@ $<
+nim-test-run/test/nim/replay_recorder_test.nim: export STATUS_REPLAY_TEST_LIB := $(abspath $(FAKE_STATUSREPLAY_LIB))
+nim-test-run/test/nim/replay_recorder_test.nim: | $(FAKE_STATUSREPLAY_LIB)

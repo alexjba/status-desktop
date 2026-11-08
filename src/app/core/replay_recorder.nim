@@ -1,5 +1,6 @@
 ## Record mode (docs/replay-mode.md): with STATUS_RECORD set, loads libStatusReplay and
-## installs its observers into nimqml. Without it nothing is loaded.
+## installs its observers into nimqml. Without it nothing is loaded; production builds
+## leave it out entirely.
 
 import std/[dynlib, os]
 import chronicles
@@ -12,9 +13,13 @@ type
   RecorderHooks {.bycopy.} = object
     contextProperty: ContextPropertyHook
     metacall: MetacallHook
+    modelData: ModelDataHook
 
   AttachProc = proc(engine: pointer): RecorderHooks {.cdecl, gcsafe, raises: [].}
   MarkMomentProc = proc(name: cstring) {.cdecl, gcsafe, raises: [].}
+
+# Compiled out of production builds unless -d:statusRecorder.
+const recorderAvailable = not defined(production) or defined(statusRecorder)
 
 var markMomentProc: MarkMomentProc
 
@@ -32,22 +37,26 @@ proc libraryPath(): string =
     result = getAppDir() / "libStatusReplay.so"
 
 proc recordingRequested*(): bool =
-  existsEnv("STATUS_RECORD")
+  when recorderAvailable:
+    existsEnv("STATUS_RECORD")
+  else:
+    false
 
 proc startRecording*(engine: pointer) =
-  let path = libraryPath()
-  let lib = loadLib(path)
-  if lib == nil:
-    warn "STATUS_RECORD is set but the recorder library is missing", path
-    return
-  let attach = cast[AttachProc](lib.symAddr("statusreplay_recorder_attach"))
-  markMomentProc = cast[MarkMomentProc](lib.symAddr("statusreplay_recorder_markMoment"))
-  if attach == nil:
-    warn "recorder library has no attach entry point", path
-    return
-  let hooks = attach(engine)
-  setTraceHooks(hooks.contextProperty, hooks.metacall)
-  info "recording Nim to QML state", path
+  when recorderAvailable:
+    let path = libraryPath()
+    let lib = loadLib(path)
+    if lib == nil:
+      warn "STATUS_RECORD is set but the recorder library is missing", path
+      return
+    let attach = cast[AttachProc](lib.symAddr("statusreplay_recorder_attach"))
+    markMomentProc = cast[MarkMomentProc](lib.symAddr("statusreplay_recorder_markMoment"))
+    if attach == nil:
+      warn "recorder library has no attach entry point", path
+      return
+    let hooks = attach(engine)
+    setTraceHooks(hooks.contextProperty, hooks.metacall, hooks.modelData)
+    info "recording Nim to QML state", path
 
 proc markRecordingMoment*(name: string) =
   if markMomentProc != nil:

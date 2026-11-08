@@ -30,9 +30,10 @@ suite "record mode loading":
     check not recorderLoaded()
     check contextPropertyHook == nil
     check metacallHook == nil
+    check modelDataHook == nil
 
   test "with STATUS_RECORD the recorder is loaded and installs its hooks":
-    # Set by the make rule to the built libStatusReplay.
+    # Set by the make rule to a stand-in library with the recorder's C entry points.
     let library = getEnv("STATUS_REPLAY_TEST_LIB")
     require library.len > 0
     putEnv("STATUS_RECORD", getTempDir() / "replay_recorder_test")
@@ -42,4 +43,5 @@ suite "record mode loading":
     check recorderLoaded()
     check contextPropertyHook != nil
     check metacallHook != nil
-    setTraceHooks(nil, nil)
+    check modelDataHook != nil
+    setTraceHooks(nil, nil, nil)
