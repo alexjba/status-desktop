@@ -9,6 +9,7 @@
 #include <QQuickWindow>
 #include <QSignalSpy>
 #include <QTest>
+#include <QTimer>
 
 using namespace StatusReplay;
 
@@ -159,9 +160,59 @@ private slots:
         clock.start();
         runner.append(QJsonObject { { "click", "missingButton" }, { "optional", true }, { "timeout", 60000 } });
         runner.append(QJsonObject { { "click", "laterButton" }, { "optional", true }, { "timeout", 60000 } });
-        root()->findChild<QObject*>("laterButton")->setProperty("visible", true);
+        QTimer::singleShot(300, this, [this] { root()->findChild<QObject*>("laterButton")->setProperty("visible", true); });
         QTRY_COMPARE_WITH_TIMEOUT(acted, QStringList { "laterButton" }, 5000);
         QVERIFY2(clock.elapsed() < 5000, qPrintable(QString::number(clock.elapsed())));
+    }
+
+    // A click on something a timer opens is not given up because the next queued step's item was
+    // already on screen: only an item that shows up while this step waits makes it give way.
+    void aStepWaitsForItsItemWhenTheNextOneWasAlreadyThere()
+    {
+        ScriptRunner runner({});
+        runner.start();
+        QStringList acted;
+        connect(&runner, &ScriptRunner::acted, this, [&](const QJsonObject& step) { acted << step["click"].toString(); });
+        root()->findChild<QObject*>("nameInput")->setProperty("text", "x");
+        runner.append(QJsonObject { { "click", "laterButton" }, { "optional", true }, { "timeout", 5000 } });
+        runner.append(QJsonObject { { "click", "confirmButton" }, { "optional", true }, { "timeout", 5000 } });
+        QTimer::singleShot(600, this, [this] { root()->findChild<QObject*>("laterButton")->setProperty("visible", true); });
+        QTRY_COMPARE_WITH_TIMEOUT(acted, (QStringList { "laterButton", "confirmButton" }), 5000);
+    }
+
+    // Steps queued in a burst (fast-forward) each get their whole timeout from when they become
+    // current, not one budget counted from when they were queued.
+    void eachQueuedStepTimesOutFromWhenItBecomesCurrent()
+    {
+        ScriptRunner runner({});
+        runner.start();
+        QStringList acted;
+        connect(&runner, &ScriptRunner::acted, this, [&](const QJsonObject& step) { acted << step["click"].toString(); });
+        QTest::ignoreMessage(QtInfoMsg, QRegularExpression("skipped optional step 0.*missingButton"));
+        runner.append(QJsonObject { { "click", "missingButton" }, { "optional", true }, { "timeout", 400 } });
+        runner.append(QJsonObject { { "click", "laterButton" }, { "optional", true }, { "timeout", 600 } });
+        QTimer::singleShot(800, this, [this] { root()->findChild<QObject*>("laterButton")->setProperty("visible", true); });
+        QTRY_COMPARE_WITH_TIMEOUT(acted, QStringList { "laterButton" }, 5000);
+    }
+
+    // A required step keeps waiting its whole timeout even when the next item is there; then it
+    // is reported and the step behind it runs.
+    void aStepQueuedBehindAFailingOneRunsAfterIt()
+    {
+        ScriptRunner runner({});
+        QSignalSpy finished(&runner, &ScriptRunner::finished);
+        runner.start();
+        QVERIFY(finished.wait(1000));
+        root()->findChild<QObject*>("laterButton")->setProperty("visible", true);
+        QTest::ignoreMessage(QtWarningMsg, QRegularExpression("step 0: no visible, enabled item 'missingButton'"));
+        QElapsedTimer clock;
+        clock.start();
+        runner.append(QJsonObject { { "click", "missingButton" }, { "timeout", 500 } });
+        runner.append(QJsonObject { { "click", "laterButton" } });
+        QTRY_COMPARE_WITH_TIMEOUT(root()->property("presses"), QVariant(10), 5000);
+        QVERIFY2(clock.elapsed() >= 500, qPrintable(QString::number(clock.elapsed())));
+        QTRY_COMPARE(finished.size(), 2);
+        QCOMPARE(finished[1][0].toBool(), false);
     }
 
     // A queued step that fails is reported, and the steps queued after it still run.

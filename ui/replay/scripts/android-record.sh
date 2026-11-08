@@ -28,14 +28,14 @@ ensure_files_dir() {
 ensure_files_dir
 
 # Debuggable packages are checked with run-as. Non-debuggable (release) ones are asked: a short
-# scripted run reaches the login screen (and writes its exit moment) only with a profile.
+# scripted run reaches the login screen, and marks 'profileFound', only with a profile.
 has_profile() {
     if adb shell run-as "$PKG" true > /dev/null 2>&1; then
         adb shell run-as "$PKG" find . -name "'*-v4.db'" 2>/dev/null | grep -q -- '-v4.db'
         return
     fi
     run_app "$files/profile-check" "$scripts/has-profile.json" 1 180
-    adb shell "grep -q '\"name\": \"exit\"' $files/profile-check/manifest.json 2>/dev/null"
+    adb shell "grep -q '\"name\": \"profileFound\"' $files/profile-check/manifest.json 2>/dev/null"
 }
 
 # <device recording dir> <script> <quit after script ms> <timeout s>

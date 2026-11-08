@@ -35,9 +35,9 @@ public:
     ~ScriptRunner() override;
 
     void start();
-    // Queues a step after the others; an idle (finished) runner goes on with it. A queued step's
-    // timeout counts from when it was queued; an optional one gives way as soon as the next
-    // queued step's item is there; a failing one is logged and the rest still run (finished()
+    // Queues a step after the others; an idle (finished) runner goes on with it. Its timeout
+    // counts from when it becomes current; an optional one gives way when the next queued step's
+    // item shows up while it waits; a failing one is logged and the rest still run (finished()
     // reports it once the queue runs dry).
     void append(const QJsonObject& step);
 

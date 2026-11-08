@@ -344,8 +344,8 @@ and service in `StatusQtActivity` (`BuildConfig.REPLAY_VARIANT`).
 - Replaying hand-driven user input. Scripted recordings replay exactly (their clicks are
   `ui` events, performed in order by a single runner that only walks the item tree while a
   target is missing: up to 60 s while fast-forwarding, 5 s in real time, each counted from
-  when the event was played; a click whose target never shows is skipped, and logged, as soon
-  as the next one's target is there); a recording driven by hand (`RECORD_SCRIPT=none`) replays the Nim state,
+  when it becomes current; a click whose target doesn't show is skipped, and logged, as soon
+  as the next one's target shows up while it waits); a recording driven by hand (`RECORD_SCRIPT=none`) replays the Nim state,
   but QML-only state (current page, scroll position, popups) diverges where QML does not
   derive it from Nim.
 - Driving the backend from replay: slot calls never change replayed state, they only
