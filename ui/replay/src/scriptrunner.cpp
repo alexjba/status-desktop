@@ -12,6 +12,8 @@
 #include <QQuickWindow>
 #include <QTimer>
 
+#include <utility>
+
 namespace StatusReplay {
 
 namespace {
@@ -130,8 +132,14 @@ class ScriptRunnerPrivate
 {
 public:
     QJsonArray steps;
+    // When each appended step was queued (its timeout counts from then); -1 for script steps,
+    // whose timeout counts from when they become current.
+    QList<qint64> queuedAt;
     int current = 0;
-    QElapsedTimer stepClock;
+    // A queued step that failed since the queue last ran dry.
+    QString queuedError;
+    QElapsedTimer clock;
+    qint64 stepStartedAt = 0;
     QTimer timer;
     // An item is acted on once it was found at the same place on two polls in a row, so page
     // transitions (StackView pushes ignore input while animating) have settled.
@@ -144,18 +152,27 @@ ScriptRunner::ScriptRunner(const QJsonArray& steps, QObject* parent)
     , d(std::make_unique<ScriptRunnerPrivate>())
 {
     d->steps = steps;
+    d->queuedAt = QList<qint64>(steps.size(), -1);
+    d->clock.start();
     d->timer.setSingleShot(true);
     connect(&d->timer, &QTimer::timeout, this, [this] {
         if (d->current >= d->steps.size()) {
-            emit finished(true, {});
+            const QString error = std::exchange(d->queuedError, {});
+            emit finished(error.isEmpty(), error);
             return;
         }
         const QJsonObject step = d->steps.at(d->current).toObject();
         auto next = [this](int delay) {
             d->candidate = nullptr;
             ++d->current;
-            d->stepClock.restart();
+            d->stepStartedAt = d->clock.elapsed();
             d->timer.start(delay);
+        };
+        auto skip = [this, &next](const QString& name, const QString& why) {
+            qInfo().noquote() << QStringLiteral("StatusReplay: skipped optional step %1 ('%2'): %3")
+                                     .arg(d->current)
+                                     .arg(name, why);
+            next(0);
         };
 
         if (step.contains("sleep"))
@@ -178,15 +195,34 @@ ScriptRunner::ScriptRunner(const QJsonArray& steps, QObject* parent)
                                                      : step[action].toString();
         QQuickItem* item = findItem(step[action]);
         if (!item) {
-            if (d->stepClock.elapsed() < step["timeout"].toInt(DefaultTimeoutMs))
-                return d->timer.start(PollIntervalMs);
-            if (step["optional"].toBool())
+            const bool optional = step["optional"].toBool();
+            const qint64 queued = d->queuedAt.value(d->current, -1);
+            const qint64 waited = d->clock.elapsed() - (queued >= 0 ? queued : d->stepStartedAt);
+            if (waited >= step["timeout"].toInt(DefaultTimeoutMs)) {
+                if (optional)
+                    return skip(name, QStringLiteral("no visible, enabled item"));
+                const QString error = QStringLiteral("step %1: no visible, enabled item '%2'; visible named items: %3")
+                                          .arg(d->current)
+                                          .arg(name, visibleNames().join(QStringLiteral(", ")));
+                // A script stops here; queued steps after it still run, and the failure is
+                // reported when the queue runs dry.
+                if (queued < 0) {
+                    emit finished(false, error);
+                    return;
+                }
+                qWarning().noquote() << "StatusReplay:" << error;
+                d->queuedError = error;
                 return next(0);
-            emit finished(false,
-                QStringLiteral("step %1: no visible, enabled item '%2'; visible named items: %3")
-                    .arg(d->current)
-                    .arg(name, visibleNames().join(QStringLiteral(", "))));
-            return;
+            }
+            // Queued input: once the next step's target is there, this one is not coming.
+            if (optional && queued >= 0 && d->current + 1 < d->steps.size()) {
+                const QJsonObject following = d->steps.at(d->current + 1).toObject();
+                for (const char* key : { "click", "setChecked", "type", "waitFor" }) {
+                    if (following.contains(QLatin1String(key)) && findItem(following[QLatin1String(key)]))
+                        return skip(name, QStringLiteral("the next step's item is there"));
+                }
+            }
+            return d->timer.start(PollIntervalMs);
         }
 
         const QPointF position = item->mapToScene(QPointF(0, 0));
@@ -219,8 +255,9 @@ ScriptRunner::~ScriptRunner() = default;
 void ScriptRunner::append(const QJsonObject& step)
 {
     d->steps.append(step);
+    d->queuedAt.append(d->clock.elapsed());
     if (d->current == d->steps.size() - 1 && !d->timer.isActive()) {
-        d->stepClock.restart();
+        d->stepStartedAt = d->clock.elapsed();
         d->timer.start(0);
     }
 }
@@ -228,7 +265,7 @@ void ScriptRunner::append(const QJsonObject& step)
 void ScriptRunner::start()
 {
     d->current = 0;
-    d->stepClock.start();
+    d->stepStartedAt = d->clock.elapsed();
     d->timer.start(0);
 }
 

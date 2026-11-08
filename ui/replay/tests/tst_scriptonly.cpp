@@ -1,6 +1,8 @@
 #include <StatusReplay/statusreplay.h>
 
 #include <QDir>
+#include <QEventLoop>
+#include <QTimer>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QStandardPaths>
@@ -27,7 +29,10 @@ private slots:
         qputenv("STATUS_RECORD_SCRIPT", script.toUtf8());
         qputenv("STATUS_RECORD_STARTUP_DELAY_MS", "1");
         qputenv("STATUS_REPLAY_PROBE_AT", "1");
-        qputenv("STATUS_REPLAY_PROBE_DIR", dir.filePath(QStringLiteral("probe")).toUtf8());
+        // Android packages export their external files dir, which adb can read without run-as.
+        qputenv("STATUS_EXTERNAL_FILES_DIR", dir.path().toUtf8());
+        qputenv("STATUS_RECORD_QUIT_AFTER_MS", "3000");
+
 
         const QDir recordings(
             QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + QStringLiteral("/recordings"));
@@ -50,8 +55,12 @@ ApplicationWindow {
         QVERIFY(!engine.rootObjects().isEmpty());
         QTRY_VERIFY_WITH_TIMEOUT(engine.rootObjects().first()->property("agreed").toBool(), 5000);
         QCOMPARE(recordings.entryList(QDir::Dirs | QDir::NoDotAndDotDot), before);
-        // The calibration probe still runs, where it is told to write.
+        // The calibration probe still runs.
         QTRY_VERIFY_WITH_TIMEOUT(QFile::exists(dir.filePath(QStringLiteral("probe/probe-1.tsv"))), 5000);
+        // And the run ends itself when asked to: quitting ends a running event loop early.
+        QEventLoop loop;
+        QTimer::singleShot(10000, &loop, [&loop] { loop.exit(1); });
+        QCOMPARE(loop.exec(), 0);
     }
 };
 

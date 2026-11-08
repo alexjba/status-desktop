@@ -212,10 +212,15 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
     // the real app at the moments a recording has, with nothing observed or written.
     if (!qEnvironmentVariableIsSet("STATUS_RECORD")) {
         qInfo() << "StatusReplay: running" << qEnvironmentVariable("STATUS_RECORD_SCRIPT") << "without recording";
+        // Android packages export their external files dir, which adb reads without run-as.
+        const QString external = qEnvironmentVariable("STATUS_EXTERNAL_FILES_DIR");
         startProbeIfAsked(engine,
             qEnvironmentVariable("STATUS_REPLAY_PROBE_DIR",
-                QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) + QStringLiteral("/probe")));
+                (external.isEmpty() ? QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation) : external)
+                    + QStringLiteral("/probe")));
         runScriptAfterLoad(engine);
+        if (const int quitAfter = qEnvironmentVariableIntValue("STATUS_RECORD_QUIT_AFTER_MS"); quitAfter > 0)
+            QTimer::singleShot(quitAfter, qApp, [] { QCoreApplication::exit(0); });
         return { nullptr, nullptr, nullptr };
     }
 

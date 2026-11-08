@@ -37,6 +37,12 @@ public class StatusApplication extends QtApplication {
     private static void applyEnvFile(Context context) {
         final File dir = context.getExternalFilesDir(null);
         if (dir == null) return;
+        // Where dev tooling (docs/replay-mode.md) writes what adb must read without run-as.
+        try {
+            Os.setenv("STATUS_EXTERNAL_FILES_DIR", dir.getAbsolutePath(), true);
+        } catch (Exception e) {
+            Log.w(TAG, "cannot export STATUS_EXTERNAL_FILES_DIR", e);
+        }
         final File file = new File(dir, ENV_FILE);
         if (!file.isFile()) return;
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {

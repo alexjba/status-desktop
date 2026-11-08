@@ -140,7 +140,7 @@ coverage gap.
   `STATUS_RECORD_QUIT_AFTER_SCRIPT_MS` quits after the script, `STATUS_RECORD_QUIT_AFTER_MS`
   after a fixed time. With `STATUS_RECORD_SCRIPT` alone (no `STATUS_RECORD`) the script
   drives the app and nothing is observed or written: that is how the real app is measured
-  at a recording's moments. Scripts use the throwaway test password only; all of this
+  at a recording's moments (`STATUS_RECORD_QUIT_AFTER_MS` still ends the run). Scripts use the throwaway test password only; all of this
   lives in libStatusReplay, which release builds never load unless built with
   `RECORDER=1` (mobile: packages the library and compiles Nim with `-d:statusRecorder`).
 - **Privacy**: values of parameters and properties whose name matches
@@ -187,8 +187,9 @@ real app's.
 ### Calibration probe
 
 `STATUS_REPLAY_PROBE_AT=<s>,<s>...` (record or replay) writes `probe/probe-<n>.tsv`
-(recording), `replay-probe/probe-<n>.tsv` (replay) or `$STATUS_REPLAY_PROBE_DIR` (script-only
-runs) at those seconds after start: the composite QML types loaded and instantiated, the
+(recording), `replay-probe/probe-<n>.tsv` (replay) or, in script-only runs,
+`$STATUS_REPLAY_PROBE_DIR`, else `probe/` in the Android package's external files dir (exported
+as `STATUS_EXTERNAL_FILES_DIR`, readable with adb without run-as), else the app data dir, at those seconds after start: the composite QML types loaded and instantiated, the
 malloc heap in use and (Linux/Android) PSS + SwapPss per mapping from the process's own smaps.
 "Loaded" means the type loader holds the type's compiled unit; "instantiated" means the engine
 created an executable unit for it, i.e. at least one object of it was created at some point
@@ -233,7 +234,7 @@ int64, double) and tagged when it is `QVariant` or a container: `{"$obj":17}`,
 `{"$t":"QUrl","v":"..."}`, `{"$list":[...]}`, `{"$map":{...}}`, `{"$t":"bytes","v":
 "<base64>"}`, `null` for an invalid variant. Snapshots are written with sorted keys and
 indentation; the timeline is compact JSONL. The replayer refuses an unknown major
-`formatVersion`.
+`formatVersion`. 1.1 keys media by hash; 1.0 recordings (plain keys) still replay.
 
 ### Replayer (`libStatusReplay`)
 
@@ -294,9 +295,9 @@ their backends replay as ordinary recorded objects. No camera frames.
 |---|---|
 | `make record-run [RECORDING=<dir>] [RECORD_DATADIR=<dir>] [RECORD_SCRIPT=<json>\|none]` | unattended: creates a test profile on first use, records login screen -> login -> wallet (see above) |
 | `make replay-run RECORDING=<dir> [REPLAY_MOMENT=<name>] [REPLAY_MODE=realtime\|step\|frozen]` | builds StatusQ + `libStatusReplay` + `status-replay` + `resources.rcc` (no Nim, no status-go) and runs it |
-| `make mobile-record-run [RECORDING=<dir>]` | Android, unattended like `record-run`: a debug build with `libStatusReplay` packaged but not linked (`RECORDER=1`); creates the test profile on first use, records login screen -> login -> wallet in-process, pulls the recording |
+| `make mobile-record-run [RECORDING=<dir>]` | Android, unattended like `record-run`: a debug build with `libStatusReplay` packaged but not linked (`RECORDER=1`); creates the test profile when the package has none (checked with run-as, or for non-debuggable packages by a short scripted run that must reach the login screen), records login screen -> login -> wallet in-process, pulls the recording |
 | `make mobile-replay-run RECORDING=<dir> [REPLAY_MOMENT=..] [REPLAY_MODE=..]` | builds the Android replay variant (`BUILD_VARIANT=replay`: no `libnim_status_client`, `libstatus_stub`, status-go or service), pushes the recording and launches it |
-| `MOBILE_REPLAY_PROFILE=release` (both mobile targets) | non-debuggable, profileable packages (record side pr-style, `RECORDER=1` keeps record mode via `-d:statusRecorder`); needs the `STATUS_APP_KEYSTORE_*` signing variables. Use it for memory numbers: a debuggable package carries 14-26 MB of extra ART on both sides, so debug replay numbers don't line up with release ones |
+| `MOBILE_REPLAY_PROFILE=release` (both mobile targets) | non-debuggable, profileable packages (record side pr-style, `RECORDER=1` keeps record mode via `-d:statusRecorder`; recorder APKs are `StatusRecord.apk` / `StatusPRRecord.apk`, and a build without `RECORDER=1` fails if it would package the recorder); always signed with the Android debug keystore (`MOBILE_REPLAY_DEBUG_KEYSTORE`, default `~/.android/debug.keystore`), never the production one. Use it for memory numbers: a debuggable package carries 14-26 MB of extra ART on both sides, so debug replay numbers don't line up with release ones |
 | `make run-replay-tests` | host round-trip and parity tests for `libStatusReplay` |
 
 Android packages: both targets build debug packages, so the installed names get a
@@ -342,7 +343,9 @@ and service in `StatusQtActivity` (`BuildConfig.REPLAY_VARIANT`).
 
 - Replaying hand-driven user input. Scripted recordings replay exactly (their clicks are
   `ui` events, performed in order by a single runner that only walks the item tree while a
-  target is missing: up to 60 s while fast-forwarding, 5 s in real time); a recording driven by hand (`RECORD_SCRIPT=none`) replays the Nim state,
+  target is missing: up to 60 s while fast-forwarding, 5 s in real time, each counted from
+  when the event was played; a click whose target never shows is skipped, and logged, as soon
+  as the next one's target is there); a recording driven by hand (`RECORD_SCRIPT=none`) replays the Nim state,
   but QML-only state (current page, scroll position, popups) diverges where QML does not
   derive it from Nim.
 - Driving the backend from replay: slot calls never change replayed state, they only

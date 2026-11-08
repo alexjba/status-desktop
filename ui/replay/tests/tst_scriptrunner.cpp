@@ -1,6 +1,8 @@
 #include <StatusReplay/scriptrunner.h>
 
+#include <QElapsedTimer>
 #include <QGuiApplication>
+#include <QRegularExpression>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QQmlApplicationEngine>
@@ -110,6 +112,7 @@ private slots:
         QStringList acted;
         connect(&runner, &ScriptRunner::acted, this, [&](const QJsonObject& step) { acted << step.keys().first(); });
         QSignalSpy finished(&runner, &ScriptRunner::finished);
+        QTest::ignoreMessage(QtInfoMsg, QRegularExpression("skipped optional step 6.*missingButton"));
         runner.start();
         QVERIFY(finished.wait(10000));
 
@@ -141,6 +144,40 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(acted, (QStringList { "confirmButton", "laterButton" }), 5000);
         QCOMPARE(root()->property("presses"), QVariant(11));
         QTRY_COMPARE(finished.size(), 2);
+    }
+
+    // A queued optional click whose target never shows gives way as soon as the next queued
+    // step's target is there, instead of holding everything behind it for its whole timeout.
+    void aMissingOptionalStepDoesNotHoldLaterOnes()
+    {
+        ScriptRunner runner({});
+        runner.start();
+        QStringList acted;
+        connect(&runner, &ScriptRunner::acted, this, [&](const QJsonObject& step) { acted << step["click"].toString(); });
+        QTest::ignoreMessage(QtInfoMsg, QRegularExpression("skipped optional step 0.*missingButton"));
+        QElapsedTimer clock;
+        clock.start();
+        runner.append(QJsonObject { { "click", "missingButton" }, { "optional", true }, { "timeout", 60000 } });
+        runner.append(QJsonObject { { "click", "laterButton" }, { "optional", true }, { "timeout", 60000 } });
+        root()->findChild<QObject*>("laterButton")->setProperty("visible", true);
+        QTRY_COMPARE_WITH_TIMEOUT(acted, QStringList { "laterButton" }, 5000);
+        QVERIFY2(clock.elapsed() < 5000, qPrintable(QString::number(clock.elapsed())));
+    }
+
+    // A queued step that fails is reported, and the steps queued after it still run.
+    void aFailedQueuedStepIsReportedAndTheRestRun()
+    {
+        ScriptRunner runner({});
+        QSignalSpy finished(&runner, &ScriptRunner::finished);
+        runner.start();
+        QVERIFY(finished.wait(1000));
+        QTest::ignoreMessage(QtWarningMsg, QRegularExpression("step 0: no visible, enabled item 'missingButton'"));
+        runner.append(QJsonObject { { "click", "missingButton" }, { "timeout", 200 } });
+        QTRY_COMPARE_WITH_TIMEOUT(finished.size(), 2, 5000);
+        QCOMPARE(finished[1][0].toBool(), false);
+        root()->findChild<QObject*>("laterButton")->setProperty("visible", true);
+        runner.append(QJsonObject { { "click", "laterButton" } });
+        QTRY_COMPARE_WITH_TIMEOUT(root()->property("presses"), QVariant(10), 5000);
     }
 
     void stopsAtARequiredItemThatNeverAppears()

@@ -1,0 +1,3 @@
+[
+    {"waitFor": "loginPasswordInput", "timeout": 90000}
+]

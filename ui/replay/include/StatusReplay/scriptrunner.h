@@ -25,7 +25,7 @@ class ScriptRunnerPrivate;
 //   { "moment": name }                   emits momentRequested(name)
 //   { "sleep": ms }
 // "timeout" (ms, default 60000) bounds the wait; "optional": true skips a step whose item
-// never appears instead of failing the script.
+// never appears instead of failing the script (logged). Skipped and failed steps are logged.
 class STATUSREPLAY_EXPORT ScriptRunner : public QObject
 {
     Q_OBJECT
@@ -35,7 +35,10 @@ public:
     ~ScriptRunner() override;
 
     void start();
-    // Queues a step after the others; an idle (finished) runner goes on with it.
+    // Queues a step after the others; an idle (finished) runner goes on with it. A queued step's
+    // timeout counts from when it was queued; an optional one gives way as soon as the next
+    // queued step's item is there; a failing one is logged and the rest still run (finished()
+    // reports it once the queue runs dry).
     void append(const QJsonObject& step);
 
 signals:

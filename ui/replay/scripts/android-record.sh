@@ -27,10 +27,15 @@ ensure_files_dir() {
 }
 ensure_files_dir
 
-# Non-debuggable (PR) packages have no run-as: they rely on the marker left by onboarding.
+# Debuggable packages are checked with run-as. Non-debuggable (release) ones are asked: a short
+# scripted run reaches the login screen (and writes its exit moment) only with a profile.
 has_profile() {
-    adb shell run-as "$PKG" find . -name "'*-v4.db'" 2>/dev/null | grep -q -- '-v4.db' \
-        || adb shell ls "$files/test-profile-created" > /dev/null 2>&1
+    if adb shell run-as "$PKG" true > /dev/null 2>&1; then
+        adb shell run-as "$PKG" find . -name "'*-v4.db'" 2>/dev/null | grep -q -- '-v4.db'
+        return
+    fi
+    run_app "$files/profile-check" "$scripts/has-profile.json" 1 180
+    adb shell "grep -q '\"name\": \"exit\"' $files/profile-check/manifest.json 2>/dev/null"
 }
 
 # <device recording dir> <script> <quit after script ms> <timeout s>
@@ -64,9 +69,6 @@ run_app() {
 if ! has_profile; then
     echo "Creating the test profile in $PKG"
     run_app "$files/onboarding-recording" "$scripts/create-profile.json" 5000 600
-    adb shell "grep -q '\"name\": \"exit\"' $files/onboarding-recording/manifest.json" \
-        || { echo "onboarding did not finish (adb logcat)"; exit 1; }
-    adb shell touch "$files/test-profile-created"
     has_profile || { echo "onboarding did not create a profile (adb logcat)"; exit 1; }
 fi
 
