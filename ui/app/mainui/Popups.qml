@@ -140,25 +140,34 @@ QtObject {
         }
     }
 
-    readonly property var communityFetchPopup: CommunityFetchPopup {
-        parent: root.popupParent
-        state: root.communitiesStore.communityFetchState
-        timeoutSeconds: root.communitiesStore.communityFetchTimeoutSeconds
+    property var communityFetchPopup: null
 
-        onCancelRequested: root.communitiesStore.cancelPendingCommunityFetch()
-        onTimeoutRequested: root.communitiesStore.timeoutPendingCommunityFetch()
-        onDismissFailedRequested: root.communitiesStore.clearCommunityFetchFailure()
-        onRetryRequested: root.communitiesStore.retryCommunityFetch()
+    readonly property SQUtils.DeferredComponent communityFetchPopupComponent: SQUtils.DeferredComponent {
+        source: Qt.resolvedUrl("../AppLayouts/Communities/popups/CommunityFetchPopup.qml")
+        properties: ({
+            parent: root.popupParent,
+            state: Qt.binding(() => root.communitiesStore.communityFetchState),
+            timeoutSeconds: Qt.binding(() => root.communitiesStore.communityFetchTimeoutSeconds)
+        })
+        onCreated: popup => {
+            popup.cancelRequested.connect(() => root.communitiesStore.cancelPendingCommunityFetch())
+            popup.timeoutRequested.connect(() => root.communitiesStore.timeoutPendingCommunityFetch())
+            popup.dismissFailedRequested.connect(() => root.communitiesStore.clearCommunityFetchFailure())
+            popup.retryRequested.connect(() => root.communitiesStore.retryCommunityFetch())
+        }
     }
 
     readonly property Connections communityFetchConnections: Connections {
         target: root.communitiesStore
 
         function onCommunityFetchStateChanged() {
-            if (root.communitiesStore.communityFetchState === Constants.CommunityFetchState.Idle)
-                root.communityFetchPopup.close()
-            else
-                root.communityFetchPopup.open()
+            if (root.communitiesStore.communityFetchState === Constants.CommunityFetchState.Idle) {
+                root.communityFetchPopup?.close()
+                return
+            }
+            if (!root.communityFetchPopup)
+                root.communityFetchPopup = root.communityFetchPopupComponent.createObject(root)
+            root.communityFetchPopup?.open()
         }
     }
 

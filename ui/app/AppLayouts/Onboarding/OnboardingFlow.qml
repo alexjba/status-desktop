@@ -95,7 +95,10 @@ OnboardingStackView {
     signal skippedBiometricFlow()
 
     function restart() : void {
-        replace(null, loginAccountsModel.ModelCount.empty ? welcomePage : loginScreenComponent)
+        if (loginAccountsModel.ModelCount.empty)
+            d.replaceDeferred(welcomePage)
+        else
+            replace(null, loginScreenComponent)
     }
 
     function setBiometricResponse(secret: string, error: string) : void {
@@ -105,7 +108,12 @@ OnboardingStackView {
         loginScreen.setBiometricResponse(secret, error)
     }
 
-    initialItem: loginAccountsModel.ModelCount.empty ? welcomePage : loginScreenComponent
+    initialItem: loginAccountsModel.ModelCount.empty ? null : loginScreenComponent
+
+    Component.onCompleted: {
+        if (loginAccountsModel.ModelCount.empty)
+            d.replaceDeferred(welcomePage)
+    }
 
     Connections {
         target: root.loginAccountsModel?.ModelCount ?? null
@@ -122,6 +130,12 @@ OnboardingStackView {
 
         function pushDeferred(deferred, params = {}) {
             const item = root.push(deferred.component(), Object.assign({}, deferred.properties, params))
+            deferred.adopt(item)
+            return item
+        }
+
+        function replaceDeferred(deferred) {
+            const item = root.replace(null, deferred.component(), deferred.properties)
             deferred.adopt(item)
             return item
         }
@@ -163,7 +177,7 @@ OnboardingStackView {
             if (d.manageProfilesDialog)
                 d.manageProfilesDialog.close()
 
-            root.replace(null, welcomePage)
+            d.replaceDeferred(welcomePage)
         }
 
         function openDeleteMultiaccountConfirmationDialog(keyUid: string, username: string) : void {
@@ -171,23 +185,24 @@ OnboardingStackView {
         }
     }
 
-    Component {
+    SQUtils.DeferredComponent {
         id: welcomePage
 
-        WelcomePage {
-            availableLanguages: root.availableLanguages
-            currentLanguage: root.currentLanguage
-            onChangeLanguageRequested: (newLanguageCode) => root.changeLanguageRequested(newLanguageCode)
-
-            privacyModeFeatureEnabled: root.privacyModeFeatureEnabled
-            thirdpartyServicesEnabled: root.thirdpartyServicesEnabled
-
-            onCreateProfileRequested: d.pushDeferred(createProfilePage)
-            onLoginRequested: d.pushDeferred(loginPage)
-
-            onPrivacyPolicyRequested: d.openPrivacyPolicyPopup()
-            onTermsOfUseRequested: d.openTermsOfUsePopup()
-            onOpenThirdpartyServicesInfoPopupRequested: d.openThirdpartyServicesPopup()
+        module: "AppLayouts.Onboarding.pages"
+        typeName: "WelcomePage"
+        properties: ({
+            availableLanguages: Qt.binding(() => root.availableLanguages),
+            currentLanguage: Qt.binding(() => root.currentLanguage),
+            privacyModeFeatureEnabled: Qt.binding(() => root.privacyModeFeatureEnabled),
+            thirdpartyServicesEnabled: Qt.binding(() => root.thirdpartyServicesEnabled)
+        })
+        onCreated: page => {
+            page.changeLanguageRequested.connect(newLanguageCode => root.changeLanguageRequested(newLanguageCode))
+            page.createProfileRequested.connect(() => d.pushDeferred(createProfilePage))
+            page.loginRequested.connect(() => d.pushDeferred(loginPage))
+            page.privacyPolicyRequested.connect(() => d.openPrivacyPolicyPopup())
+            page.termsOfUseRequested.connect(() => d.openTermsOfUsePopup())
+            page.openThirdpartyServicesInfoPopupRequested.connect(() => d.openThirdpartyServicesPopup())
         }
     }
 
@@ -559,16 +574,18 @@ OnboardingStackView {
         }
     }
 
-    Component {
+    SQUtils.DeferredComponent {
         id: thirdpartyServicesPopup
 
-        ThirdpartyServicesPopup {
-            isOnboardingFlow: true
-            thirdPartyServicesEnabled: root.thirdpartyServicesEnabled
-
-            onToggleThirdpartyServicesEnabledRequested: root.toggleThirdpartyServicesEnabledRequested()
-            onOpenDiscussPageRequested: Qt.openUrlExternally(Constants.statusDiscussPageUrl)
-            onOpenThirdpartyServicesArticleRequested: Qt.openUrlExternally(Constants.statusThirdpartyServicesArticle)
+        source: Qt.resolvedUrl("../../../imports/shared/popups/ThirdpartyServicesPopup.qml")
+        properties: ({
+            isOnboardingFlow: true,
+            thirdPartyServicesEnabled: Qt.binding(() => root.thirdpartyServicesEnabled)
+        })
+        onCreated: popup => {
+            popup.toggleThirdpartyServicesEnabledRequested.connect(() => root.toggleThirdpartyServicesEnabledRequested())
+            popup.openDiscussPageRequested.connect(() => Qt.openUrlExternally(Constants.statusDiscussPageUrl))
+            popup.openThirdpartyServicesArticleRequested.connect(() => Qt.openUrlExternally(Constants.statusThirdpartyServicesArticle))
         }
     }
 
