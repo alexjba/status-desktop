@@ -93,27 +93,40 @@ coverage gap.
 - **Object registry**: every QObject reachable from context properties, QObject-valued
   properties, role data, slot returns and signal args gets a stable id in discovery
   order (deterministic traversal, so diffs between recordings stay small). On first
-  sight: schema (if new), full snapshot of its properties (and rows for models), generic
-  connections to all its signals, `destroyed` tracking.
+  sight: schema (if new), rows and roles for models, generic connections to all its
+  signals, `destroyed` tracking.
+- **Read-driven values**: the recorder never calls a property getter QML has not called.
+  Property values come from the metacall hook when QML reads them (`val` events when a
+  read returns something new); after that the recorder re-reads them on their notify
+  signal and at each moment. Calling every getter eagerly crashed the first desktop
+  recording (a Nim getter that is only valid once its module finished loading), and
+  values QML never read are not needed to replay what QML showed.
 - **Schemas** are keyed by a content hash, not class name: many Nim types share a name
   (`View`, `Model`). Schema = class name, base kind (`QObject`, `QAbstractListModel`,
   `QAbstractItemModel`), the full metaobject chain below the base (properties with type,
   flags, notify; signals and slots with parameter types and names; enums), and
   `roleNames()` for models.
 - **Timeline** events, in emission order, with a monotonic sequence and a timestamp:
-  `ctx` (context property set), `obj` (new object + snapshot), `del`, `prop` (notify
-  fired: new value read back), `sig` (non-notify signal + args), `call` (slot from QML:
-  args, return), `write` (property written from QML), model ops `ins`/`rem`/`mov`/
-  `data`/`reset`/`layout` (with the new row values for inserts, changed roles for
-  `dataChanged`, full rows after reset/layout change), `fetch` (`fetchMore`), `moment`.
-- **Moments**: `startup` (after `main.qml` loads and the first frame is swapped),
-  `loggedIn` (Nim marks it after the main module finishes loading), any named moment
-  through `statusq_recorder_markMoment`, plus a record-mode shortcut for manual marks.
-  At each moment the recorder writes a full snapshot of the live registry and the root
-  context, so a replay can start at any moment without playing what came before.
-- **Privacy**: slot arguments whose parameter name matches
-  `password|pin|puk|mnemonic|seed|privateKey|key` are replaced by a marker; recordings go
-  to `./Status/recordings/<timestamp>` (dev data dir, already gitignored) by default.
+  `ctx` (context property set), `obj` (new object) + `init` (its rows), `del`, `val`
+  (a property value QML read), `sig` (any signal: args, plus the new values of the
+  properties it notifies), `call` (slot from QML: args, return), `write` (property
+  written from QML), model ops `ins`/`rem`/`mov`/`data`/`reset`/`layout` (with the new
+  row values for inserts, changed roles for `dataChanged`, full rows after reset/layout
+  change), `load` (main document loaded), `moment`.
+- **Moments**: `startup` (`STATUS_RECORD_STARTUP_DELAY_MS`, default 5 s after `main.qml`
+  loads), `loggedIn` (Nim marks it when the main module finished loading) and
+  `loggedIn-settled` (`STATUS_RECORD_SETTLE_MS`, default 60 s later), `exit`. At each
+  moment the recorder writes a full snapshot of the live registry and the root context
+  (so a replay can start at any moment without playing what came before) and a window
+  screenshot (`screenshots/<moment>.png`) to compare with the replay.
+- **Scripted recordings**: `STATUS_RECORD_TYPE` is typed into the focused QML item right
+  after the startup moment (`\n` is Enter; e.g. a throwaway test profile's password),
+  `STATUS_RECORD_QUIT_AFTER_MS` quits the app so the exit moment is written.
+- **Privacy**: values of parameters and properties whose name matches
+  `password|passphrase|mnemonic|seedphrase|privatekey|secret`, ends in `pin`/`puk`, or is
+  `seed`/`pairingCode` are replaced by a marker, including keys inside JSON string
+  payloads (the login request passes the password in a JSON argument); recordings go to
+  `./Status/recordings/<timestamp>` (dev data dir, already gitignored) by default.
   Recordings from real accounts are never committed; host tests use a small synthetic
   fixture.
 
@@ -146,14 +159,16 @@ indentation; the timeline is compact JSONL. The replayer refuses an unknown majo
   - slots → recorded return for the same object, slot and argument values, taking the
     latest one at or before the current timeline position; else the latest for the slot
     with any args; else the type's default. Every call is logged
-    (`replay-calls.jsonl`) with whether it matched, which is the main gap signal.
+    (`<recording>/replay-logs/<time>-calls.jsonl`) with whether it matched, which is the
+    main gap signal.
   - models serve `rowCount`/`data`/`roleNames` from stored rows; `canFetchMore` follows
     the recording.
-- **Player**: builds the object graph from a snapshot (`--moment <name>`, default
-  `startup`) and sets the root context properties before loading `main.qml`, then plays
-  the timeline from that point in one of three modes: `realtime` (recorded timestamps),
-  `step` (advance one event, or to the next moment, from a control shortcut or stdin),
-  `frozen` (snapshot only). Model ops map 1:1 to `begin*/end*` calls, so QML sees the
+- **Player**: builds the object graph from a snapshot (`--moment <name>`; without it,
+  from the beginning, applying everything up to the `load` event at once) and sets the
+  root context properties before loading `main.qml`, then plays the timeline from that
+  point in one of three modes: `realtime` (recorded timestamps, `--speed`; F10
+  pauses), `step` (F8 next event, F9 next moment), `frozen` (snapshot only).
+  `--quit-after <ms>` and `--screenshot <png>` make runs scriptable. Model ops map 1:1 to `begin*/end*` calls, so QML sees the
   same insert/remove/move/reset sequence as in the recording.
 - **Entry point**: `statusreplay_main(argc, argv)` builds the app with the replay setup
   and runs the player. Desktop: a small `status-replay` executable linking
