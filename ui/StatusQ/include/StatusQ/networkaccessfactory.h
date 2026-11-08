@@ -1,12 +1,12 @@
 #pragma once
 
-#include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QQmlNetworkAccessManagerFactory>
 #include <QString>
 #include <QtGlobal>
 
 class QNetworkAccessManager;
+class QNetworkReply;
 class QQmlEngine;
 
 namespace Status {

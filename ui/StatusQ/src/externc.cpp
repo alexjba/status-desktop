@@ -283,18 +283,30 @@ Q_DECL_EXPORT bool statusq_incubationControllerSettings(void* engine, int* msPer
 static std::atomic<void (*)(void*)> s_cReplyTap { nullptr };
 static std::atomic<void* (*)(const void*, void*)> s_cRequestInterceptor { nullptr };
 
+// Installing: the C pointer first, then the wrapper. Removing: the wrapper first. A call already
+// in flight still finds a valid pointer or none.
 Q_DECL_EXPORT void statusq_setNetworkReplyTap(void (*tap)(void* reply)) {
+    if (!tap)
+        Status::setNetworkReplyTap(nullptr);
     s_cReplyTap = tap;
-    Status::setNetworkReplyTap(tap ? [](QNetworkReply* reply) { s_cReplyTap.load()(reply); } : nullptr);
+    if (tap) {
+        Status::setNetworkReplyTap([](QNetworkReply* reply) {
+            if (const auto current = s_cReplyTap.load())
+                current(reply);
+        });
+    }
 }
 
 Q_DECL_EXPORT void statusq_setNetworkRequestInterceptor(void* (*interceptor)(const void* request, void* parent)) {
+    if (!interceptor)
+        Status::setNetworkRequestInterceptor(nullptr);
     s_cRequestInterceptor = interceptor;
-    Status::setNetworkRequestInterceptor(
-        interceptor ? [](const QNetworkRequest& request, QObject* parent) {
-            return static_cast<QNetworkReply*>(s_cRequestInterceptor.load()(&request, parent));
-        }
-                    : nullptr);
+    if (interceptor) {
+        Status::setNetworkRequestInterceptor([](const QNetworkRequest& request, QObject* parent) -> QNetworkReply* {
+            const auto current = s_cRequestInterceptor.load();
+            return current ? static_cast<QNetworkReply*>(current(&request, parent)) : nullptr;
+        });
+    }
 }
 
 Q_DECL_EXPORT bool statusq_networkAccessFactorySettings(void* engine, qint64* maxCacheSize) {

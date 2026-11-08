@@ -22,10 +22,41 @@ namespace {
 
 const QString IndexFile = QStringLiteral("index.jsonl");
 
-QString fileFor(const QString& key)
+// Recordings name resources by a hash of their key, not their URL (which can carry ids).
+QString storedKey(const QUrl& url)
 {
-    return QString::fromLatin1(QCryptographicHash::hash(key.toUtf8(), QCryptographicHash::Sha1).toHex())
-        + QStringLiteral(".bin");
+    return QString::fromLatin1(QCryptographicHash::hash(mediaKey(url).toUtf8(), QCryptographicHash::Sha256).toHex());
+}
+
+// Whether a GIF's first frame has a transparent index (its graphic control extension's flag):
+// that decides between RGB32 and ARGB32 frames, and the header alone doesn't say.
+bool gifTransparent(const QByteArray& gif)
+{
+    const qsizetype at = gif.indexOf(QByteArray::fromHex("21f904"));
+    return at >= 0 && at + 3 < gif.size() && (gif.at(at + 3) & 0x01);
+}
+
+// What a placeholder needs, from the image header only: recording runs on QML's image reader
+// thread and must not decode.
+void describeImage(const QByteArray& body, QJsonObject& entry)
+{
+    QBuffer buffer;
+    buffer.setData(body);
+    QImageReader reader(&buffer);
+    if (!reader.canRead())
+        return;
+    const QByteArray format = reader.format();
+    const QSize size = reader.size();
+    if (!size.isValid())
+        return;
+    entry["format"] = QString::fromLatin1(format);
+    entry["width"] = size.width();
+    entry["height"] = size.height();
+    entry["frames"] = qMax(1, reader.imageCount());
+    if (format == "gif")
+        entry["transparent"] = gifTransparent(body);
+    else
+        entry["pixelFormat"] = int(reader.imageFormat());
 }
 
 // GIF with `frames` solid frames (palette index 0), the shape QGifHandler decodes to frames of
@@ -101,19 +132,27 @@ QByteArray placeholderImage(const QJsonObject& entry)
     const int height = entry["height"].toInt();
     const int frames = entry["frames"].toInt(1);
     const QByteArray format = entry["format"].toString().toLatin1();
-    const auto pixelFormat = QImage::Format(entry["pixelFormat"].toInt(int(QImage::Format_ARGB32)));
-    const bool alpha = QImage::toPixelFormat(pixelFormat).alphaUsage() == QPixelFormat::UsesAlpha;
-
     if (format == "gif" || frames > 1)
-        return solidGif(width, height, frames, alpha);
+        return solidGif(width, height, frames, entry["transparent"].toBool());
+    auto pixelFormat = QImage::Format(entry["pixelFormat"].toInt(int(QImage::Format_ARGB32)));
+    if (pixelFormat == QImage::Format_Invalid)
+        pixelFormat = QImage::Format_ARGB32;
+    const bool alpha = QImage::toPixelFormat(pixelFormat).alphaUsage() == QPixelFormat::UsesAlpha;
     if (format == "svg" || format == "svgz")
         return QStringLiteral(R"(<svg xmlns="http://www.w3.org/2000/svg" width="%1" height="%2"/>)")
             .arg(width)
             .arg(height)
             .toUtf8();
 
-    QImage image(width, height, pixelFormat == QImage::Format_Invalid ? QImage::Format_ARGB32 : pixelFormat);
-    image.fill(alpha ? QColor(Qt::transparent) : QColor(Qt::gray));
+    QImage image(width, height, pixelFormat);
+    if (pixelFormat == QImage::Format_Indexed8) {
+        // Paletted: a one-entry table (transparent if the original's was) keeps the PNG paletted;
+        // without one it would be written, and read back, as opaque grayscale.
+        image.setColorTable({ alpha ? qRgba(0, 0, 0, 0) : qRgb(128, 128, 128) });
+        image.fill(0);
+    } else {
+        image.fill(alpha ? QColor(Qt::transparent) : QColor(Qt::gray));
+    }
     QByteArray bytes;
     QBuffer buffer(&bytes);
     buffer.open(QIODevice::WriteOnly);
@@ -213,38 +252,32 @@ void MediaRecorder::observe(QNetworkReply* reply)
     QObject::connect(reply, &QNetworkReply::finished, reply, [this, reply] {
         if (reply->error() != QNetworkReply::NoError)
             return;
-        const QString key = mediaKey(reply->url());
+        // Replay looks up what the app asked for, not where a redirect ended.
+        const QUrl requested = reply->request().url();
+        const QString key = storedKey(requested);
         const QByteArray body = reply->peek(reply->bytesAvailable());
+        // Drained by a consumer that read as data arrived (XHR): nothing left to describe.
+        if (body.isEmpty())
+            return;
         const QString contentType = reply->header(QNetworkRequest::ContentTypeHeader).toString();
         const QVariant status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
 
         QJsonObject entry { { "key", key }, { "contentType", contentType }, { "size", body.size() },
             { "status", status.isValid() ? status.toInt() : 200 } };
-        QBuffer buffer;
-        buffer.setData(body);
-        QImageReader reader(&buffer);
-        if (reader.canRead()) {
-            entry["format"] = QString::fromLatin1(reader.format());
-            entry["frames"] = qMax(1, reader.imageCount());
-            // Decoded, not declared: handlers report e.g. ARGB32 up front and decode to RGB32.
-            const QImage first = reader.read();
-            entry["width"] = first.width();
-            entry["height"] = first.height();
-            entry["pixelFormat"] = int(first.format());
-        }
+        describeImage(body, entry);
 
         QMutexLocker lock(&d->mutex);
         if (d->files.contains(key))
             return;
         QString file;
         if (d->mode == MediaRecorder::Mode::Bytes) {
-            file = fileFor(key);
+            file = key + QStringLiteral(".bin");
             QFile out(d->dir.filePath(file));
             if (!out.open(QIODevice::WriteOnly))
                 return;
             out.write(body);
             entry["file"] = file;
-            entry["url"] = reply->url().toString();
+            entry["url"] = requested.toString();
         }
         d->files.insert(key, file);
         d->index.write(QJsonDocument(entry).toJson(QJsonDocument::Compact) + '\n');
@@ -288,12 +321,12 @@ int MediaLibrary::size() const
 
 bool MediaLibrary::contains(const QUrl& url) const
 {
-    return d->entries.contains(mediaKey(url));
+    return d->entries.contains(storedKey(url));
 }
 
 QNetworkReply* MediaLibrary::reply(const QNetworkRequest& request, QObject* parent) const
 {
-    const auto it = d->entries.constFind(mediaKey(request.url()));
+    const auto it = d->entries.constFind(storedKey(request.url()));
     if (it == d->entries.cend())
         return nullptr;
     const QJsonObject& entry = *it;

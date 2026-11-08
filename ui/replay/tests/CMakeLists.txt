@@ -51,4 +51,9 @@ if(STATUSQ_LIBRARY)
         STATUSREPLAY_FIXTURE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/fixtures/minimal"
         STATUSREPLAY_REPO_ROOT="${CMAKE_CURRENT_SOURCE_DIR}/../../..")
     add_test(NAME SetupParityTest COMMAND SetupParityTest)
+
+    add_executable(MediaHooksTest tst_mediahooks.cpp)
+    target_include_directories(MediaHooksTest PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../StatusQ/include)
+    target_link_libraries(MediaHooksTest PRIVATE Qt::Test Qt::Gui Qt::Network Qt::Qml StatusReplay ${STATUSQ_LIBRARY})
+    add_test(NAME MediaHooksTest COMMAND MediaHooksTest)
 endif()

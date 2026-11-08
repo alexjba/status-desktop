@@ -70,6 +70,8 @@ when off is one branch per metacall or data() call. They are developed on a loca
 nimqml-seaqt branch (`replay-hooks`) that the submodule pin points at. **That commit
 exists only locally: the pin is unreachable for anyone else until the seaqt PR is
 merged and the pin is bumped (owner's go). This blocks merging this work upstream.**
+Earlier pins of this branch stay reachable locally as `replay-hooks-v0` (6c78457) and
+`replay-hooks-v1` (f2caa4f), so older commits of this work still check out.
 
 1. **Context property hook** in `setRootContextProperty`: `(engine, name, QVariant*)`.
    Needed for ordering: login sets `mainModule` and friends mid-run, and QML reacts to
@@ -186,23 +188,30 @@ real app's.
 
 `STATUS_REPLAY_PROBE_AT=<s>,<s>...` (record or replay) writes `probe/probe-<n>.tsv`
 (recording), `replay-probe/probe-<n>.tsv` (replay) or `$STATUS_REPLAY_PROBE_DIR` (script-only
-runs) at those seconds after start: the
-composite QML types loaded and instantiated, and the malloc heap in use.
+runs) at those seconds after start: the composite QML types loaded and instantiated, the
+malloc heap in use and (Linux/Android) PSS + SwapPss per mapping from the process's own smaps.
+"Loaded" means the type loader holds the type's compiled unit; "instantiated" means the engine
+created an executable unit for it, i.e. at least one object of it was created at some point
+(not that one is alive now).
 
 ### Media
 
 StatusQ's network managers expose two hooks (`statusq_setNetworkReplyTap`,
 `statusq_setNetworkRequestInterceptor`). The recorder taps every reply and describes each
 successful GET in `media/index.jsonl` (body peeked at when the reply finishes, so QML still
-reads all of it), keyed by URL; status-go's media server URLs (`localhost`/`127.0.0.1`, a new
-port every run) are keyed without host and port.
+reads all of it), keyed by a SHA-256 of the URL the app requested (not where a redirect
+ended); status-go's media server URLs (`localhost`/`127.0.0.1`, a new port every run) are
+hashed without host and port. Only image headers are read (size, format, frame count; for GIFs
+whether the first frame is transparent): recording runs on QML's image reader thread and does
+not decode. A response the consumer drained before it finished (XHR reads as data arrives)
+can't be described and is left out.
 
 By default only metadata is kept: HTTP status, content type, size and, for images, pixel
 size, image format, decoded pixel format and frame count. Replay serves a generated image
 with the same size, format, pixel format and frame count (a solid GIF for GIFs and other
 animations, which Qt cannot write; an empty SVG of the same size for SVGs), so decoded images
 and textures cost what the originals did, and non-image responses as filler of the same size.
-`STATUS_RECORD_MEDIA=bytes` keeps the real bodies instead, for visual checks: **such
+`STATUS_RECORD_MEDIA=bytes` keeps the real bodies and URLs instead, for visual checks: **such
 recordings contain personal images** (avatars, chat images) and must stay local.
 `STATUS_RECORD_MEDIA=0` leaves media out. Replay lets requests it has nothing recorded for
 go to the network.
@@ -287,6 +296,7 @@ their backends replay as ordinary recorded objects. No camera frames.
 | `make replay-run RECORDING=<dir> [REPLAY_MOMENT=<name>] [REPLAY_MODE=realtime\|step\|frozen]` | builds StatusQ + `libStatusReplay` + `status-replay` + `resources.rcc` (no Nim, no status-go) and runs it |
 | `make mobile-record-run [RECORDING=<dir>]` | Android, unattended like `record-run`: a debug build with `libStatusReplay` packaged but not linked (`RECORDER=1`); creates the test profile on first use, records login screen -> login -> wallet in-process, pulls the recording |
 | `make mobile-replay-run RECORDING=<dir> [REPLAY_MOMENT=..] [REPLAY_MODE=..]` | builds the Android replay variant (`BUILD_VARIANT=replay`: no `libnim_status_client`, `libstatus_stub`, status-go or service), pushes the recording and launches it |
+| `MOBILE_REPLAY_PROFILE=release` (both mobile targets) | non-debuggable, profileable packages (record side pr-style, `RECORDER=1` keeps record mode via `-d:statusRecorder`); needs the `STATUS_APP_KEYSTORE_*` signing variables. Use it for memory numbers: a debuggable package carries 14-26 MB of extra ART on both sides, so debug replay numbers don't line up with release ones |
 | `make run-replay-tests` | host round-trip and parity tests for `libStatusReplay` |
 
 Android packages: both targets build debug packages, so the installed names get a
@@ -331,7 +341,8 @@ and service in `StatusQtActivity` (`BuildConfig.REPLAY_VARIANT`).
 ## Out of scope
 
 - Replaying hand-driven user input. Scripted recordings replay exactly (their clicks are
-  `ui` events); a recording driven by hand (`RECORD_SCRIPT=none`) replays the Nim state,
+  `ui` events, performed in order by a single runner that only walks the item tree while a
+  target is missing: up to 60 s while fast-forwarding, 5 s in real time); a recording driven by hand (`RECORD_SCRIPT=none`) replays the Nim state,
   but QML-only state (current page, scroll position, popups) diverges where QML does not
   derive it from Nim.
 - Driving the backend from replay: slot calls never change replayed state, they only
