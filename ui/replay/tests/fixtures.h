@@ -39,6 +39,8 @@ class Account : public QObject
     Q_OBJECT
     Q_PROPERTY(QString name READ name NOTIFY nameChanged)
     Q_PROPERTY(int balance READ balance NOTIFY balanceChanged)
+    Q_PROPERTY(bool mnemonicBackedUp READ mnemonicBackedUp CONSTANT)
+    Q_PROPERTY(QString mnemonic READ mnemonic CONSTANT)
 
 public:
     using QObject::QObject;
@@ -51,6 +53,8 @@ public:
     }
 
     int balance() const { return m_balance; }
+    bool mnemonicBackedUp() const { return true; }
+    QString mnemonic() const { return QStringLiteral("apple banana cherry"); }
     // Like Nim views whose slot tears the object down (e.g. a module cleanup).
     Q_INVOKABLE void dispose() { delete this; }
     void setBalance(int balance)

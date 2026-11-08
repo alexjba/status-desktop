@@ -40,6 +40,12 @@ bool isSensitive(const QByteArray& name)
     return contains.match(n).hasMatch() || exact.match(n).hasMatch();
 }
 
+// Secrets are text: a sensitive name on a flag or a count (mnemonicBackedUp) stays readable.
+QJsonValue redactNamed(const QByteArray& name, const QJsonValue& encoded)
+{
+    return isSensitive(name) && encoded.isString() ? QJsonValue(Redacted) : encoded;
+}
+
 QJsonValue redactJson(const QJsonValue& value);
 
 // Nim passes structured data as JSON strings (e.g. the login payload); redact inside them too.
@@ -77,8 +83,8 @@ QJsonValue redactJson(const QJsonValue& value)
     const QJsonObject object = value.toObject();
     for (auto it = object.begin(); it != object.end(); ++it)
         result.insert(it.key(),
-            isSensitive(it.key().toLatin1()) && !it.key().startsWith(QLatin1Char('$')) ? QJsonValue(Redacted)
-                                                                                     : redactJson(it.value()));
+            it.key().startsWith(QLatin1Char('$')) ? redactJson(it.value())
+                                                  : redactNamed(it.key().toLatin1(), redactJson(it.value())));
     return result;
 }
 
@@ -214,14 +220,12 @@ int RecorderPrivate::idFor(QObject* object)
 
 QJsonValue RecorderPrivate::readValue(QObject* object, const QByteArray& name)
 {
-    if (isSensitive(name))
-        return Redacted;
     const QMetaObject* mo = object->metaObject();
     const QMetaProperty property = mo->property(mo->indexOfProperty(name));
     ++selfReads;
     const QVariant value = property.read(object);
     --selfReads;
-    const QJsonValue encoded = encode(value, property.metaType());
+    const QJsonValue encoded = redactNamed(name, encode(value, property.metaType()));
     readValues[object].insert(name, encoded);
     return encoded;
 }
@@ -232,7 +236,7 @@ void RecorderPrivate::propertyRead(QObject* object, const QMetaProperty& propert
         return;
     const QByteArray name = property.name();
     const QJsonValue encoded =
-        isSensitive(name) ? QJsonValue(Redacted) : encode(ValueCodec::read(storage, property.metaType()), property.metaType());
+        redactNamed(name, encode(ValueCodec::read(storage, property.metaType()), property.metaType()));
     auto& values = readValues[object];
     const auto known = values.constFind(name);
     if (known != values.cend() && *known == encoded)
@@ -516,9 +520,8 @@ void Recorder::metacallObserved(QObject* object, QMetaObject::Call call, int ind
         if (index < base->propertyCount())
             return;
         const QMetaProperty property = mo->property(index);
-        const QJsonValue value = isSensitive(property.name())
-            ? QJsonValue(Redacted)
-            : d->encode(ValueCodec::read(argv[0], property.metaType()), property.metaType());
+        const QJsonValue value =
+            redactNamed(property.name(), d->encode(ValueCodec::read(argv[0], property.metaType()), property.metaType()));
         d->writeEvent({ { "k", "write" }, { "o", id }, { "p", QString::fromLatin1(property.name()) }, { "v", value } });
         return;
     }
@@ -533,16 +536,14 @@ void Recorder::metacallObserved(QObject* object, QMetaObject::Call call, int ind
     QJsonArray args;
     for (int i = 0; i < method.parameterCount(); ++i) {
         const QMetaType type = method.parameterMetaType(i);
-        args.append(isSensitive(names.value(i)) ? QJsonValue(Redacted)
-                                                : d->encode(ValueCodec::read(argv[i + 1], type), type));
+        args.append(redactNamed(names.value(i), d->encode(ValueCodec::read(argv[i + 1], type), type)));
     }
     QJsonObject event { { "k", "call" }, { "o", id }, { "m", QString::fromLatin1(method.methodSignature()) } };
     if (!args.isEmpty())
         event["a"] = args;
     const QMetaType returnType = method.returnMetaType();
     if (argv[0] && returnType.isValid() && returnType.id() != QMetaType::Void)
-        event["r"] = isSensitive(method.name()) ? QJsonValue(Redacted)
-                                                 : d->encode(ValueCodec::read(argv[0], returnType), returnType);
+        event["r"] = redactNamed(method.name(), d->encode(ValueCodec::read(argv[0], returnType), returnType));
     d->writeEvent(event);
 }
 

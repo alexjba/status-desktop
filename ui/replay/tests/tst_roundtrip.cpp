@@ -255,6 +255,21 @@ private slots:
         QVERIFY(timeline.readAll().contains("login(QString)"));
     }
 
+    void sensitiveNamesOnlyHideText()
+    {
+        Hooked<Account> account;
+        m_recorder->setContextProperty(QStringLiteral("account"), QVariant::fromValue<QObject*>(&account));
+        readLikeQml(&account, { "mnemonicBackedUp", "mnemonic" });
+        m_recorder->markMoment(QStringLiteral("startup"));
+
+        auto replayer = replayAt(QStringLiteral("startup"));
+        QVERIFY(replayer);
+        QObject* replayed = objectOf(replayer->contextProperty("account"));
+        // A flag named after a secret is not a secret (the backup banner depends on it).
+        QCOMPARE(replayed->property("mnemonicBackedUp"), QVariant(true));
+        QCOMPARE(replayed->property("mnemonic"), QVariant(QStringLiteral("$redacted")));
+    }
+
     void sensitiveFieldsInsideJsonArgumentsAreNotWritten()
     {
         Hooked<WalletView> wallet;
