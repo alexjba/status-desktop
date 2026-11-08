@@ -169,12 +169,20 @@ coverage gap.
 ### Media
 
 StatusQ's network managers expose two hooks (`statusq_setNetworkReplyTap`,
-`statusq_setNetworkRequestInterceptor`). The recorder taps every reply and keeps the body
-of each successful GET (peeked at when the reply finishes, so QML still reads all of it)
-in `media/`, keyed by URL; status-go's media server URLs (`localhost`/`127.0.0.1`, a new
-port every run) are keyed without host and port. `STATUS_RECORD_MEDIA=0` leaves media out.
-Replay answers requests it has a recorded response for and lets the rest go to the
-network.
+`statusq_setNetworkRequestInterceptor`). The recorder taps every reply and describes each
+successful GET in `media/index.jsonl` (body peeked at when the reply finishes, so QML still
+reads all of it), keyed by URL; status-go's media server URLs (`localhost`/`127.0.0.1`, a new
+port every run) are keyed without host and port.
+
+By default only metadata is kept: HTTP status, content type, size and, for images, pixel
+size, image format, decoded pixel format and frame count. Replay serves a generated image
+with the same size, format, pixel format and frame count (a solid GIF for GIFs and other
+animations, which Qt cannot write; an empty SVG of the same size for SVGs), so decoded images
+and textures cost what the originals did, and non-image responses as filler of the same size.
+`STATUS_RECORD_MEDIA=bytes` keeps the real bodies instead, for visual checks: **such
+recordings contain personal images** (avatars, chat images) and must stay local.
+`STATUS_RECORD_MEDIA=0` leaves media out. Replay lets requests it has nothing recorded for
+go to the network.
 
 ### Format (directory, versioned, diffable)
 
@@ -185,7 +193,7 @@ network.
   schemas/<hash>.json
   snapshots/<moment>.json   root context + every live object (props, model rows)
   timeline.jsonl     one event per line, {"seq","t","k",...}
-  media/             recorded GET responses (index.jsonl + one file each), served in replay
+  media/             index.jsonl describing recorded GET responses (+ bodies with STATUS_RECORD_MEDIA=bytes)
 ```
 
 Values are JSON, untagged when the declared type is concrete (string, bool, int,

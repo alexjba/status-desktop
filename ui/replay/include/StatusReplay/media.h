@@ -19,12 +19,22 @@ STATUSREPLAY_EXPORT QString mediaKey(const QUrl& url);
 
 class MediaRecorderPrivate;
 
-// Keeps the body of every successful GET response it observes in <dir>/ (index.jsonl plus one
-// file per resource). Thread-safe: QML image loading runs in its own thread.
+// Describes every successful GET response it observes in <dir>/index.jsonl: status, content
+// type, size and, for images, pixel size, format, decoded pixel format and frame count. Replay
+// serves same-size placeholders from that, so decoded images and textures match without the
+// recording holding anyone's pictures. Mode::Bytes also keeps the bodies (one file each) for
+// visual checks; such recordings contain personal images. Thread-safe: QML image loading runs
+// in its own thread.
 class STATUSREPLAY_EXPORT MediaRecorder
 {
 public:
-    explicit MediaRecorder(const QString& directory);
+    enum class Mode
+    {
+        Placeholders,
+        Bytes,
+    };
+
+    explicit MediaRecorder(const QString& directory, Mode mode = Mode::Placeholders);
     ~MediaRecorder();
 
     // Call when the reply is created: the body is peeked at when it finishes, so the
@@ -47,7 +57,8 @@ public:
 
     int size() const;
     bool contains(const QUrl& url) const;
-    // A finished-on-the-next-loop-turn reply with the recorded body, or null when not recorded.
+    // A reply finishing on the next loop turn with the recorded body, or a generated one of the
+    // same size, format and frame count; null when the URL was not recorded.
     QNetworkReply* reply(const QNetworkRequest& request, QObject* parent) const;
 
 private:

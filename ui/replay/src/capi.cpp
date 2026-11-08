@@ -159,10 +159,14 @@ StatusReplayHooks statusreplay_recorder_attach(void* enginePtr)
     recorder->setEngine(engine);
 
 #ifdef STATUSREPLAY_WITH_STATUSQ
-    // Images and other responses the app loads (status-go's media server included), so replay
-    // can serve them; STATUS_RECORD_MEDIA=0 leaves them out.
-    if (qEnvironmentVariable("STATUS_RECORD_MEDIA") != QLatin1String("0")) {
-        g_media = new StatusReplay::MediaRecorder(recorder->directory() + QStringLiteral("/media"));
+    // Images and other responses the app loads (status-go's media server included), described so
+    // replay serves same-size placeholders. STATUS_RECORD_MEDIA=bytes keeps the real bodies
+    // (personal images end up in the recording), =0 leaves media out.
+    const QString media = qEnvironmentVariable("STATUS_RECORD_MEDIA");
+    if (media != QLatin1String("0")) {
+        g_media = new StatusReplay::MediaRecorder(recorder->directory() + QStringLiteral("/media"),
+            media == QLatin1String("bytes") ? StatusReplay::MediaRecorder::Mode::Bytes
+                                            : StatusReplay::MediaRecorder::Mode::Placeholders);
         statusq_setNetworkReplyTap([](void* reply) { g_media->observe(static_cast<QNetworkReply*>(reply)); });
     }
 #endif
