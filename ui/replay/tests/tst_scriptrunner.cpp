@@ -195,22 +195,23 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(acted, QStringList { "laterButton" }, 5000);
     }
 
-    // A required step keeps waiting its whole timeout even when the next item is there; then it
-    // is reported and the step behind it runs.
+    // A required step keeps waiting its whole timeout; then it is reported and the step queued
+    // behind it gets its own timeout from then on (its item shows up after the first one failed,
+    // later than its timeout counted from when it was queued).
     void aStepQueuedBehindAFailingOneRunsAfterIt()
     {
         ScriptRunner runner({});
         QSignalSpy finished(&runner, &ScriptRunner::finished);
         runner.start();
         QVERIFY(finished.wait(1000));
-        root()->findChild<QObject*>("laterButton")->setProperty("visible", true);
         QTest::ignoreMessage(QtWarningMsg, QRegularExpression("step 0: no visible, enabled item 'missingButton'"));
         QElapsedTimer clock;
         clock.start();
         runner.append(QJsonObject { { "click", "missingButton" }, { "timeout", 500 } });
-        runner.append(QJsonObject { { "click", "laterButton" } });
+        runner.append(QJsonObject { { "click", "laterButton" }, { "timeout", 400 } });
+        QTimer::singleShot(800, this, [this] { root()->findChild<QObject*>("laterButton")->setProperty("visible", true); });
         QTRY_COMPARE_WITH_TIMEOUT(root()->property("presses"), QVariant(10), 5000);
-        QVERIFY2(clock.elapsed() >= 500, qPrintable(QString::number(clock.elapsed())));
+        QVERIFY2(clock.elapsed() >= 800, qPrintable(QString::number(clock.elapsed())));
         QTRY_COMPARE(finished.size(), 2);
         QCOMPARE(finished[1][0].toBool(), false);
     }

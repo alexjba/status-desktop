@@ -345,7 +345,9 @@ and service in `StatusQtActivity` (`BuildConfig.REPLAY_VARIANT`).
   `ui` events, performed in order by a single runner that only walks the item tree while a
   target is missing: up to 60 s while fast-forwarding, 5 s in real time, each counted from
   when it becomes current; a click whose target doesn't show is skipped, and logged, as soon
-  as the next one's target shows up while it waits); a recording driven by hand (`RECORD_SCRIPT=none`) replays the Nim state,
+  as the next one's target shows up while it waits. Once a fast-forwarded replay diverges so
+  that N recorded clicks find nothing, it can stall up to N x 60 s before reaching its moment;
+  the log names each skipped click); a recording driven by hand (`RECORD_SCRIPT=none`) replays the Nim state,
   but QML-only state (current page, scroll position, popups) diverges where QML does not
   derive it from Nim.
 - Driving the backend from replay: slot calls never change replayed state, they only

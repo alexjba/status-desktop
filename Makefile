@@ -1338,20 +1338,20 @@ MOBILE_PKG_SUFFIX := .debug
 MOBILE_REPLAY_SIGNING :=
 endif
 
-.PHONY: mobile-replay-signing-check
-mobile-replay-signing-check:
+# Checked when the makefile is read, before any prerequisite builds.
+ifneq ($(filter mobile-record-run mobile-replay-run,$(MAKECMDGOALS)),)
 ifeq ($(MOBILE_REPLAY_PROFILE),release)
 ifdef MOBILE_REPLAY_KEYSTORE_ERROR
-	$(error $(MOBILE_REPLAY_KEYSTORE_ERROR))
+$(error $(MOBILE_REPLAY_KEYSTORE_ERROR))
 endif
-	@test -f "$(MOBILE_REPLAY_DEBUG_KEYSTORE)" || { echo "No debug keystore at $(MOBILE_REPLAY_DEBUG_KEYSTORE). Create it with:"; \
-		echo "  keytool -genkeypair -keystore $(MOBILE_REPLAY_DEBUG_KEYSTORE) -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Android Debug,O=Android,C=US'"; exit 1; }
-else
-	@true
+ifeq ($(wildcard $(MOBILE_REPLAY_DEBUG_KEYSTORE)),)
+$(error No debug keystore at $(MOBILE_REPLAY_DEBUG_KEYSTORE). Create it with: keytool -genkeypair -keystore $(MOBILE_REPLAY_DEBUG_KEYSTORE) -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname 'CN=Android Debug,O=Android,C=US')
+endif
+endif
 endif
 
 mobile-record-run: USE_SYSTEM_NIM=1
-mobile-record-run: qt-pkgconfig | deps-common mobile-replay-signing-check
+mobile-record-run: qt-pkgconfig | deps-common
 	$(MOBILE_REPLAY_SIGNING) $(MAKE) -C mobile all $(MOBILE_REPLAY_BUILD) $(MOBILE_RECORD_VARIANT) RECORDER=1 \
 		BUNDLE_IDENTIFIER=$(MOBILE_RECORD_BUNDLE_IDENTIFIER)
 	APK="$(MOBILE_APK_DIR)/$(MOBILE_RECORD_APK)" \
@@ -1359,7 +1359,7 @@ mobile-record-run: qt-pkgconfig | deps-common mobile-replay-signing-check
 	RECORDING="$(abspath $(RECORD_OUTPUT))" \
 		$(STATUSREPLAY_SOURCE_PATH)/scripts/android-record.sh
 
-mobile-replay-run: qt-pkgconfig mobile-replay-signing-check
+mobile-replay-run: qt-pkgconfig
 ifndef RECORDING
 	$(error RECORDING=<recording dir> is required)
 endif

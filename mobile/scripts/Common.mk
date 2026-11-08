@@ -42,6 +42,9 @@ TARGET_PREFIX := StatusReplay
 else
 TARGET_PREFIX := Status
 endif
+ifeq ($(OS)$(RECORDER),ios1)
+$(error RECORDER=1 is Android only (docs/replay-mode.md))
+endif
 # Android recorder builds (docs/replay-mode.md) get their own APK: they never pass for a normal
 # build. (iOS has no recorder packaging.)
 ifeq ($(OS)$(RECORDER),android1)
