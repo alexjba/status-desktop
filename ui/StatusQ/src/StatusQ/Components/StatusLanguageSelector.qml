@@ -152,8 +152,7 @@ Button {
 
                 id: userSelectorPanel
                 objectName: "statusLanguageSelectorListView"
-                // no delegates before the first open: shaping the native names (e.g. 한국어) loads CJK fallback fonts
-                model: d.listRequested ? d.languageModel : null
+                model: d.languageModel
                 highlightFollowsCurrentItem: true
                 highlight: Rectangle {
                     radius: Theme.radius
@@ -178,7 +177,8 @@ Button {
                             StatusBaseText {
                                 Layout.fillWidth: true
                                 horizontalAlignment: Qt.AlignLeft // force LTR
-                                text: model.nativeName
+                                // not shaped before the first open: native names such as 한국어 load CJK fallback fonts
+                                text: d.listRequested ? model.nativeName : ""
                                 font.capitalization: Font.Capitalize
                                 font.pixelSize: root.font.pixelSize
                                 font.weight: root.font.weight
