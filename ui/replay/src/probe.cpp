@@ -49,9 +49,16 @@ void dumpSmaps(int index, const QString& directory)
     QFile file(QDir(directory).filePath(QStringLiteral("probe-%1-smaps.tsv").arg(index)));
     if (!file.open(QIODevice::WriteOnly))
         return;
+    const QByteArray content = smaps.readAll();
     file.write("mapping\tpss_swappss_kb\n");
-    for (const auto& [name, kb] : pssPerMapping(smaps.readAll()))
+    for (const auto& [name, kb] : pssPerMapping(content))
         file.write(QStringLiteral("%1\t%2\n").arg(name).arg(kb).toUtf8());
+    // the whole file, to attribute APK-embedded libraries by offset
+    if (qEnvironmentVariableIsSet("STATUS_REPLAY_PROBE_RAW_SMAPS")) {
+        QFile raw(QDir(directory).filePath(QStringLiteral("probe-%1-smaps.txt").arg(index)));
+        if (raw.open(QIODevice::WriteOnly))
+            raw.write(content);
+    }
 #else
     Q_UNUSED(index)
     Q_UNUSED(directory)
