@@ -296,6 +296,10 @@ and service in `StatusQtActivity` (`BuildConfig.REPLAY_VARIANT`).
 - Driving the backend from replay: slot calls never change replayed state, they only
   return recorded values.
 - Web content (browser section, dApps WebEngine pages), camera frames, keycard, iOS.
+- State QML keeps outside Nim: its own persisted settings (`Settings`/QSettings, e.g.
+  "notifications prompt already seen") and OS state (notification permission). The replay
+  package starts with its own, so such prompts can differ from the recording (seen on
+  Android: the notifications prompt shows in replay, not in the recording).
 - Editing or synthesizing recordings beyond the test fixture.
 - Exact async timing (status-go response latency, incubation interleaving) beyond the
   recorded timestamps. Realtime replay has no back-pressure when QML is slower than the
