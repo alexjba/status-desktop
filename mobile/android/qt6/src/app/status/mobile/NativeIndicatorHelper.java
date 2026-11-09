@@ -104,6 +104,7 @@ public class NativeIndicatorHelper implements WindowSurfaceMode.Listener {
 
     @Override
     public void afterWindowReadd() {
+        android.util.Log.i("StatusWindow", "RCA indicator afterWindowReadd container=" + (container != null));
         host();
     }
 

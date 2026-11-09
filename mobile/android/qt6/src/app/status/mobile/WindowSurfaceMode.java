@@ -138,11 +138,41 @@ final class WindowSurfaceMode {
         final View decor = window.getDecorView();
         if (decor.getParent() == null) return;
         sTaken = false;
-        for (Listener l : new ArrayList<>(sListeners)) l.beforeWindowReadd();
+        // RCA: one snapshot for both passes (listeners unregister themselves in beforeWindowReadd)
+        final List<Listener> listeners = new ArrayList<>(sListeners);
+        final long t0 = android.os.SystemClock.uptimeMillis();
+        Log.i(TAG, "RCA flip begin listeners=" + listeners.size());
+        watchSurfaces(decor, t0);
+        for (Listener l : listeners) l.beforeWindowReadd();
         final WindowManager wm = activity.getWindowManager();
         wm.removeViewImmediate(decor);
+        Log.i(TAG, "RCA removed +" + (android.os.SystemClock.uptimeMillis() - t0));
         window.takeSurface(null);
         wm.addView(decor, window.getAttributes());
-        for (Listener l : new ArrayList<>(sListeners)) l.afterWindowReadd();
+        Log.i(TAG, "RCA added +" + (android.os.SystemClock.uptimeMillis() - t0));
+        for (Listener l : listeners) l.afterWindowReadd();
+        if (android.os.Build.VERSION.SDK_INT >= 29) decor.getViewTreeObserver().registerFrameCommitCallback(() ->
+                Log.i(TAG, "RCA first HWUI frame committed +" + (android.os.SystemClock.uptimeMillis() - t0)));
+        decor.getViewTreeObserver().addOnDrawListener(new ViewTreeObserver.OnDrawListener() {
+            int n = 0;
+            @Override public void onDraw() {
+                if (n++ < 3) Log.i(TAG, "RCA onDraw#" + n + " +" + (android.os.SystemClock.uptimeMillis() - t0));
+            }
+        });
+    }
+
+    private static void watchSurfaces(View v, long t0) {
+        if (v instanceof android.view.SurfaceView) {
+            final String name = v.getClass().getName();
+            ((android.view.SurfaceView) v).getHolder().addCallback(new SurfaceHolder.Callback() {
+                @Override public void surfaceCreated(SurfaceHolder h) { Log.i(TAG, "RCA " + name + " created +" + (android.os.SystemClock.uptimeMillis() - t0)); }
+                @Override public void surfaceChanged(SurfaceHolder h, int f, int w, int ht) { Log.i(TAG, "RCA " + name + " changed +" + (android.os.SystemClock.uptimeMillis() - t0)); }
+                @Override public void surfaceDestroyed(SurfaceHolder h) { Log.i(TAG, "RCA " + name + " destroyed +" + (android.os.SystemClock.uptimeMillis() - t0)); }
+            });
+        }
+        if (v instanceof ViewGroup) {
+            final ViewGroup g = (ViewGroup) v;
+            for (int i = 0; i < g.getChildCount(); i++) watchSurfaces(g.getChildAt(i), t0);
+        }
     }
 }
