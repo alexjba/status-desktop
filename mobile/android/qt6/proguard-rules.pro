@@ -29,7 +29,7 @@
 -keep class app.status.mobile.DensityListener { *; }
 -keep class app.status.mobile.ShakeDetector { *; }
 
-# ui/StatusQ/src/mediabackend.cpp: callStaticMethod on SoundPlayer (play, stop).
+# ui/StatusQ/src/nativesound.cpp: callStaticMethod on SoundPlayer (play, stop).
 -keep class app.status.mobile.SoundPlayer { *; }
 
 # ui/StatusQ/src/nativeqrcodecapture.cpp: QrCamera constructed by name with a

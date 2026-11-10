@@ -33,7 +33,12 @@ endif()
 find_package(QT 6.11 NAMES Qt6 REQUIRED COMPONENTS Core)
 
 find_package(Qt6 COMPONENTS
-        Core CorePrivate Qml Gui GuiPrivate Quick QuickPrivate QuickLayoutsPrivate QuickControls2 ShaderTools WebChannel Svg Network Multimedia REQUIRED)
+        Core CorePrivate Qml Gui GuiPrivate Quick QuickPrivate QuickLayoutsPrivate QuickControls2 ShaderTools WebChannel Svg Network REQUIRED)
+
+# Not shipped on Android (video plays externally, sounds and the QR camera are native)
+if(NOT ANDROID)
+    find_package(Qt6 COMPONENTS Multimedia REQUIRED)
+endif()
 
 if(CMAKE_SYSTEM_NAME MATCHES "Linux" AND NOT ANDROID)
     find_package(Qt6 COMPONENTS DBus REQUIRED)
@@ -143,7 +148,7 @@ endif()
 add_library(StatusQ ${LIB_TYPE}
         ${STATUSQ_QRC_COMPILED}
         include/StatusQ/audioutils.h
-        include/StatusQ/mediabackend.h
+        include/StatusQ/nativesound.h
         include/StatusQ/nativeqrcodecapture.h
         include/StatusQ/skeletontileitem.h
         include/StatusQ/backgroundgraphicsrelease.h
@@ -206,7 +211,7 @@ add_library(StatusQ ${LIB_TYPE}
         include/StatusQ/urlutils.h
         include/StatusQ/statuslayoutstate.h
         src/audioutils.cpp
-        src/mediabackend.cpp
+        src/nativesound.cpp
         src/nativeqrcodecapture.cpp
         src/skeletontileitem.cpp
         src/backgroundgraphicsrelease.cpp
@@ -352,6 +357,8 @@ elseif (${CMAKE_SYSTEM_NAME} MATCHES "Android")
         src/StatusQ/Controls/NativeIndicatorItem_android.cpp
         src/shareutils_android.cpp
         src/shareintake_other.cpp
+        include/StatusQ/nativecameraaccess.h
+        src/nativecameraaccess_android.cpp
     )
 elseif (WIN32)
     target_sources(StatusQ PRIVATE
@@ -501,11 +508,14 @@ target_link_libraries(StatusQ PRIVATE
         Qt::WebChannel
         Qt::Svg
         Qt::Network
-        Qt::Multimedia # audioutils (previously linked only transitively through SCodes)
         SortFilterProxyModel
         QtModelsToolkit
         MobileUI
         )
+
+if(NOT ANDROID)
+    target_link_libraries(StatusQ PRIVATE Qt::Multimedia)
+endif()
 
 if(NOT (IOS OR ANDROID))
     find_package(Qt6 COMPONENTS WebEngineQuick QUIET)

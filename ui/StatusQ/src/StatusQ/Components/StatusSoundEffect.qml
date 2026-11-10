@@ -21,7 +21,6 @@ Item {
         }
 
         if (!d.soundEffect) {
-            MediaBackend.ensureLoaded()
             d.soundEffect = d.soundEffectComponent().createObject(root, {
                 source: Qt.binding(() => root.source),
                 volume: Qt.binding(() => root.volume),

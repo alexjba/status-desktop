@@ -14,8 +14,10 @@ import app/core/custom_urls/url_scheme_event
 import app/core/intake/pending_intake_slot
 import app/global/single_instance
 import app/global/qr_camera_frames
-import qtcamera/qml as qtcamera_qml
 import qrscan/qml as qrscan_qml
+when not defined(android):
+  # Android: no QtMultimedia; StatusQ provides camera permission and frames
+  import qtcamera/qml as qtcamera_qml
 
 when defined(ios):
   import app/core/services_pause_bridge
@@ -437,7 +439,10 @@ proc mainProc() =
 
   statusq_registerQmlTypes()
   # Camera access/frames (NimQtCamera) and QR decoding (NimQrScan) QML modules.
-  qtcamera_qml.installOnEngine(singletonInstance.engine.vptr)
+  when defined(android):
+    statusq_installNativeCameraAccess(singletonInstance.engine.vptr)
+  else:
+    qtcamera_qml.installOnEngine(singletonInstance.engine.vptr)
   qrscan_qml.installOnEngine(singletonInstance.engine.vptr, cameraFrames())
 
   when defined(monitoring):

@@ -361,29 +361,40 @@ ColumnLayout {
             // Pulls grayscale frames from the preview, at most `maxFps`
             // while the camera runs and nothing is accepted yet, cropped to
             // the scan corners. QrScanner drops a decode still running when
-            // this turns false (hidden, app inactive). Unused on Android: the
-            // native camera is the frame source there (scanner.frameSource).
-            FrameTap {
-                id: tap
+            // this turns false (hidden, app inactive). Not created on Android:
+            // the native camera is the frame source there (scanner.frameSource)
+            // and NimQtCamera has no frame taps without QtMultimedia.
+            Loader {
+                id: tapLoader
 
-                videoSink: scanner.videoSink
-                enabled: scanner.decoding && !scanner.frameSource
-                maxFps: 10
-                maxDim: 1024
+                active: Qt.platform.os !== "android"
 
-                function applyRoi() {
-                    const a = scanner.captureArea
-                    tap.setPreviewRoi(a.x, a.y, a.width, a.height, a.previewWidth,
-                                      a.previewHeight, a.fillMode, a.mirrored)
+                sourceComponent: Item {
+                    readonly property alias tap: tap
+
+                    FrameTap {
+                        id: tap
+
+                        videoSink: scanner.videoSink
+                        enabled: scanner.decoding && !scanner.frameSource
+                        maxFps: 10
+                        maxDim: 1024
+
+                        function applyRoi() {
+                            const a = scanner.captureArea
+                            tap.setPreviewRoi(a.x, a.y, a.width, a.height, a.previewWidth,
+                                              a.previewHeight, a.fillMode, a.mirrored)
+                        }
+
+                        Component.onCompleted: applyRoi()
+                    }
                 }
-
-                Component.onCompleted: applyRoi()
             }
 
-            onCaptureAreaChanged: tap.applyRoi()
+            onCaptureAreaChanged: tapLoader.item?.tap.applyRoi()
 
             QrScanner {
-                frameSource: scanner.frameSource || tap.handle
+                frameSource: scanner.frameSource || (tapLoader.item?.tap.handle ?? 0)
                 scanning: scanner.decoding
                 // One code per scan: a frame can hold several.
                 onTagFound: tag => {

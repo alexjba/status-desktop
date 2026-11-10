@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Short UI sounds (notification, send, error) through SoundPool, so playing one does not
- * load QtMultimedia's FFmpeg backend. Called from StatusQ (mediabackend.cpp) with a local
- * file path; each file is decoded once and stays in the pool.
+ * Short UI sounds (notification, send, error) through SoundPool; the Android build ships
+ * without QtMultimedia. Called from StatusQ (nativesound.cpp) with a local file path; each
+ * file is decoded once and stays in the pool.
  */
 public final class SoundPlayer {
     private static final String TAG = "SoundPlayer";

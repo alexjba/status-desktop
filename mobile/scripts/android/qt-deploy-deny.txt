@@ -1,4 +1,4 @@
-# Regexes on lib file names removed from the APK by trim_qt_deploy.py.
+# Regexes on lib (and jar) file names removed from the APK by trim_qt_deploy.py.
 # The script fails the build if a kept lib still DT_NEEDs a removed one.
 
 # Controls styles other than the one main.cpp selects (qmlimportscanner follows every optional style import)
@@ -33,7 +33,13 @@ libQt6Core5Compat_
 libQt6WebView_
 libplugins_webview_
 
-
-# QtMultimedia uses the ffmpeg backend on Android; the android backend plugin is never
-# selected but its JNI_OnLoad would still run at startup
-libplugins_multimedia_androidmediaplugin_
+# QtMultimedia and FFmpeg: not used on Android (sounds: SoundPool, QR camera: CameraX,
+# video collectibles open externally). qmlimportscanner still finds the QtMultimedia
+# imports of the desktop/iOS-only QML.
+libQt6Multimedia
+Qt6AndroidMultimedia\.jar$
+libplugins_multimedia_
+libqml_QtMultimedia_
+libQt6FFmpegStub-
+^libav(codec|format|util|device|filter)\.so$
+^libsw(scale|resample)\.so$

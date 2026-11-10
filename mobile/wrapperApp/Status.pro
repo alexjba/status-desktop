@@ -1,6 +1,8 @@
 TEMPLATE = app
 
-QT += quick gui qml svg multimedia
+QT += quick gui qml svg
+# Android ships without QtMultimedia (sounds: SoundPool, QR camera: CameraX)
+ios: QT += multimedia
 
 # AOT Storage classes are polymorphic; no RTTI user in this lib, so drop typeinfo
 CONFIG += rtti_off
@@ -58,9 +60,25 @@ QTQUICK_COMPILER_SKIPPED_RESOURCES += $$WEBSCRIPTS_QRC
 
 # StatusQ resources are bundled here instead of libStatusQ (STATUSQ_BUNDLE_QML=OFF)
 # so its QML goes through the Qt Quick Compiler too.
+UI_QRC = $$PWD/../../ui/resources.qrc
+STATUSQ_QRC = $$PWD/../../ui/StatusQ/src/statusq.qrc
+
+# Copy of a qrc without the QML that imports QtMultimedia (desktop/iOS only); same file
+# name, so Q_INIT_RESOURCE(<name>) still links
+defineReplace(dropMultimediaQml) {
+    out = $$OUT_PWD/qrc-android/$$basename(1)
+    res = $$system(python3 -I $$PWD/../scripts/android/drop_qml_importing.py $$system_quote($$1) $$system_quote($$out) QtMultimedia 2>&1)
+    !isEmpty(res): error("drop_qml_importing: $$res")
+    return($$out)
+}
+android {
+    UI_QRC = $$dropMultimediaQml($$UI_QRC)
+    STATUSQ_QRC = $$dropMultimediaQml($$STATUSQ_QRC)
+}
+
 RESOURCES += \
-    $$PWD/../../ui/resources.qrc \
-    $$PWD/../../ui/StatusQ/src/statusq.qrc \
+    $$UI_QRC \
+    $$STATUSQ_QRC \
     $$PWD/../../ui/StatusQ/src/assets/img/img.qrc \
     $$PWD/../../ui/StatusQ/src/assets/png/png.qrc \
     $$PWD/../../ui/StatusQ/src/assets/png/png-mobile.qrc \

@@ -104,19 +104,19 @@ Item {
             id: captureLoader
 
             anchors.fill: parent
-            sourceComponent: Qt.platform.os === "android" ? nativeCaptureComponent
-                                                          : qtCaptureComponent
-        }
 
-        Component {
-            id: qtCaptureComponent
-
-            StatusQrCodeCapture {
-                visible: true
-                clip: true
-                objectName: "qrCodeCapture"
-                active: root.capturing
-                torchOn: root.flashlightOn
+            Component.onCompleted: {
+                if (Qt.platform.os === "android") {
+                    sourceComponent = nativeCaptureComponent
+                    return
+                }
+                // By URL: StatusQrCodeCapture imports QtMultimedia, which Android does not ship
+                setSource("StatusQrCodeCapture.qml", {
+                    objectName: "qrCodeCapture",
+                    clip: true,
+                    active: Qt.binding(() => root.capturing),
+                    torchOn: Qt.binding(() => root.flashlightOn)
+                })
             }
         }
 

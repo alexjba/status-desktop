@@ -26,6 +26,11 @@
 #endif
 #include <MobileUI>
 
+#ifdef Q_OS_ANDROID
+#include <QQmlContext>
+#include <StatusQ/nativecameraaccess.h>
+#endif
+
 #ifdef STATUSQ_HAS_QTWEBENGINE
 #include <QtWebEngineQuick>
 #include <StatusQ/browsercertdistrust.h>
@@ -349,6 +354,16 @@ Q_DECL_EXPORT const char* statusq_shareintake_cache_dir() {
     static const QByteArray dir = Status::ShareIntake::shareIntakeCacheDir().toUtf8();
     return dir.constData();
 }
+
+#ifdef Q_OS_ANDROID
+// `engine` is a QQmlApplicationEngine*. Sets the `nimQtCameraBackend` context property
+// that NimQtCamera's CameraAccess reads (nim-qtcamera is not linked on Android).
+Q_DECL_EXPORT void statusq_installNativeCameraAccess(void* engine) {
+    auto* e = static_cast<QQmlApplicationEngine*>(engine);
+    e->rootContext()->setContextProperty(QStringLiteral("nimQtCameraBackend"),
+                                         new NativeCameraAccess(e));
+}
+#endif
 
 #ifdef MONITORING
 Q_DECL_EXPORT void statusq_registerMonitoringType() {
