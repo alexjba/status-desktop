@@ -28,9 +28,10 @@ import java.util.List;
  * ViewRootImpl then never creates a renderer, and the window gets one transparent software frame
  * so SurfaceFlinger has input bounds for it.
  *
- * Views in the window are not drawn while the surface is taken. The first time a WebView or
- * TextureView becomes visible the window is re-added with HWUI (one way); the swipe indicator
- * lives in its own panel until then ({@link NativeIndicatorHelper}).
+ * Views in the window are not drawn while the surface is taken. Browser WebViews live in their
+ * own HWUI panel windows (MobileWebView own windows) and the swipe indicator in a software panel
+ * ({@link NativeIndicatorHelper}). The first time a WebView or TextureView becomes visible in this
+ * window anyway, the window is re-added with HWUI (one way).
  *
  * Profiling builds can keep the plain HWUI window with STATUS_WINDOW_MODE=hw in status-env.txt.
  */
@@ -88,6 +89,7 @@ final class WindowSurfaceMode {
         window.setFormat(PixelFormat.TRANSLUCENT);
         window.takeSurface(ONE_CLEAR_FRAME);
         sTaken = true;
+        org.mobilewebview.MobileWebView.setOwnWindows(true);
     }
 
     /** After super.onCreate(): Qt has set the content view. */

@@ -59,7 +59,8 @@ public class NativeIndicatorHelper implements WindowSurfaceMode.Listener {
         bandParams = new WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT, Math.max(1, container.getLayoutParams() != null
                         ? container.getLayoutParams().height : 1),
-                WindowManager.LayoutParams.TYPE_APPLICATION_PANEL,
+                // above the WebView panels
+                WindowManager.LayoutParams.TYPE_APPLICATION_SUB_PANEL,
                 WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                         | WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE
                         | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN
