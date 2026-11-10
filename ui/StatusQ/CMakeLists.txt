@@ -166,6 +166,7 @@ add_library(StatusQ ${LIB_TYPE}
         include/StatusQ/formatteddoubleproperty.h
         include/StatusQ/genericvalidator.h
         include/StatusQ/httpstats.h
+        include/StatusQ/webwindebug.h
         include/StatusQ/imageencoderutils.h
         include/StatusQ/inputmethodeventfilter.h
         include/StatusQ/keychain.h
@@ -230,6 +231,7 @@ add_library(StatusQ ${LIB_TYPE}
         src/formatteddoubleproperty.cpp
         src/genericvalidator.cpp
         src/httpstats.cpp
+        src/webwindebug.cpp
         src/imageencoderutils.cpp
         src/inputmethodeventfilter.cpp
         src/keychain.cpp

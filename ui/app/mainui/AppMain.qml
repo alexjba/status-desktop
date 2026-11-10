@@ -2497,6 +2497,12 @@ Item {
                         leftPanelWidthOverride: mainLayoutItem.leftPanelWidthOverride
                     }
 
+                    // spike-only (webwin reclaim experiment)
+                    Connections {
+                        target: WebwinDebug
+                        function onUnloadBrowserRequested() { browserLayoutContainer.active = false }
+                    }
+
                     BrowserLoader {
                         id: browserLayoutContainer
 

@@ -17,6 +17,7 @@
 #include "StatusQ/formatteddoubleproperty.h"
 #include "StatusQ/genericvalidator.h"
 #include "StatusQ/httpstats.h"
+#include "StatusQ/webwindebug.h"
 #include "StatusQ/imageencoderutils.h"
 #include "StatusQ/keychain.h"
 #include "StatusQ/securestorage.h"
@@ -136,6 +137,7 @@ void registerStatusQTypes() {
         return new IncubationHints(engine);
     });
     qmlRegisterSingletonType<HttpStats>("StatusQ", 0, 1, "HttpStats", &HttpStats::qmlInstance);
+    qmlRegisterSingletonType<WebwinDebug>("StatusQ", 0, 1, "WebwinDebug", &WebwinDebug::qmlInstance);
     qmlRegisterSingletonType<ImageEncoderUtils>("StatusQ", 0, 1, "ImageEncoderUtils",
                                                 [](QQmlEngine *engine, QJSEngine *scriptEngine) {
         return ImageEncoderUtils::qmlInstance(engine, scriptEngine);
