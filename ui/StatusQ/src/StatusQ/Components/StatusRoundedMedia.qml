@@ -22,7 +22,8 @@ import StatusQ.Core.Theme
 
     - \c video
     Initially, we try to display the media using StatusVideo. If that results in an error, 
-    we display the fallback image using StatusImage.
+    we display the fallback image using StatusImage. Without inline playback
+    (\l videoPlaybackEnabled false) the fallback image is shown and a click emits videoClicked.
 
     - For any other media type, we default to showing the fallback image using StatusImage.
 
@@ -106,6 +107,13 @@ StatusRoundedComponent {
         Media source is empty.
     */
     property bool isEmpty: false
+
+    /*!
+        \qmlproperty bool StatusRoundedMedia::videoPlaybackEnabled
+
+        Play video inline. False on Android, which ships without QtMultimedia.
+    */
+    property bool videoPlaybackEnabled: Qt.platform.os !== "android"
 
     readonly property int componentMediaType: {
         if (!root.allowAnimation)
@@ -197,7 +205,8 @@ StatusRoundedComponent {
                 return
             }
 
-            if (!d.isFallback && componentMediaType === StatusRoundedMedia.MediaType.Video) {
+            if (componentMediaType === StatusRoundedMedia.MediaType.Video
+                    && (!d.isFallback || !root.videoPlaybackEnabled)) {
                 root.videoClicked(root.mediaUrl)
             } else {
                 root.imageClicked(mediaLoader.item, d.plainImage)
@@ -207,6 +216,7 @@ StatusRoundedComponent {
 
     Component.onCompleted: updateMediaLoader()
     onAllowAnimationChanged: updateMediaLoader()
+    onVideoPlaybackEnabledChanged: updateMediaLoader()
     onMediaUrlChanged: updateMediaLoader()
     onComponentMediaTypeChanged: updateMediaLoader()
     onFallbackImageUrlChanged: updateMediaLoader()
@@ -231,7 +241,8 @@ StatusRoundedComponent {
                                                           : "StatusImage.qml",
                                       properties);
                 return
-            } else if (componentMediaType === StatusRoundedMedia.MediaType.Video) {
+            } else if (componentMediaType === StatusRoundedMedia.MediaType.Video
+                       && root.videoPlaybackEnabled) {
                 mediaLoader.setSource("StatusVideo.qml",
                                     {
                                         "source": root.mediaUrl,

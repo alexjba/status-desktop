@@ -371,7 +371,12 @@ Item {
             interactive: !isError && !isEmpty
             enabled: interactive
             onImageClicked: (image, plain) => Global.openImagePopup(image, "")
-            onVideoClicked: (url) => Global.openVideoPopup(url)
+            onVideoClicked: (url) => {
+                if (collectibleImage.videoPlaybackEnabled)
+                    Global.openVideoPopup(url)
+                else
+                    Qt.openUrlExternally(url)
+            }
             onOpenImageContextMenu: (url, isGif, x, y) => imageContextMenu.createObject(this, { imageSource: url, isGif: isGif, isVideo: false }).popup(x, y)
             onOpenVideoContextMenu: (url, x, y) => imageContextMenu.createObject(this, { imageSource: url, url: url, isVideo: true, isGif: false }).popup(x, y)
         }
