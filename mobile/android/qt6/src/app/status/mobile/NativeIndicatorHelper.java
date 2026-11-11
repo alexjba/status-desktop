@@ -167,6 +167,10 @@ public class NativeIndicatorHelper implements WindowSurfaceMode.Listener {
             imageView.setLayoutParams(iParams);
             imageView.setX(imgX);
             imageView.setY(imgY);
+            // The band window does not clip the image to the container (it showed over the open
+            // navbar in the Browser): clip it to the container explicitly.
+            imageView.setClipBounds(clip ? new android.graphics.Rect((int) -imgX, (int) -imgY,
+                    (int) (containerW - imgX), (int) (containerH - imgY)) : null);
         });
     }
 
