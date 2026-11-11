@@ -90,6 +90,8 @@ final class WindowSurfaceMode {
         window.takeSurface(ONE_CLEAR_FRAME);
         sTaken = true;
         org.mobilewebview.MobileWebView.setOwnWindows(true);
+        // API 30+: Browser WebViews run in the :browser process, so Chromium never loads here.
+        org.mobilewebview.MobileWebView.setRemoteProcess(true);
     }
 
     /** After super.onCreate(): Qt has set the content view. */

@@ -171,6 +171,13 @@
             android:exported="false"
             android:process=":statusgo" />
 
+        <!-- Browser WebViews (mobilewebview remote WebViews): Chromium stays out of the UI process.
+             Bound only while the Browser is shown; the process exits when it is let go. -->
+        <service
+            android:name="org.mobilewebview.BrowserProcessService"
+            android:exported="false"
+            android:process=":browser" />
+
         <!-- Separate-process status-go host service -->
         <service
             android:name=".ipc.StatusGoService"
