@@ -81,6 +81,15 @@ QtObject {
         })
     }
 
+    // Requests of a page that is gone: their results are never delivered (nor replayed).
+    function dropPendingRequests() {
+        if (_pendingRequests === 0)
+            return
+        console.warn("[ConnectorManager] dropping", _pendingRequests, "pending requests of a page that is gone")
+        _ownRequestIds = {}
+        _pendingRequests = 0
+    }
+
     // STATE MANAGEMENT METHODS
     function updateAccounts(newAccounts) {
         if (!Utils.accountsDidChange(accounts, newAccounts)) {

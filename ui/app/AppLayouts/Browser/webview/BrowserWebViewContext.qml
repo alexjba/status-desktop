@@ -383,6 +383,15 @@ QtObject {
             freeze: root.isMobile && (root.hasPopups || retained)
             keepAlive: bridge.connectorManager.pendingRequests > 0
 
+            // A page that navigates (or comes back after its process died) asked nothing yet.
+            readonly property Connections pendingRequestsReset: Connections {
+                target: lazyView
+                function onLoadingChanged() {
+                    if (lazyView.loading)
+                        lazyView.bridge.connectorManager.dropPendingRequests()
+                }
+            }
+
             readonly property ConnectorBridge bridge: ConnectorBridge {
                 // A local preview is outside the dapp world (ADR 0006 §8): no
                 // connector, no channel reaching the page (see WebViewAdapter),
