@@ -381,6 +381,7 @@ QtObject {
             enabled: visible
             // Freeze while a QML popup is shown, or while Retained for Downloads.
             freeze: root.isMobile && (root.hasPopups || retained)
+            keepAlive: bridge.connectorManager.pendingRequests > 0
 
             readonly property ConnectorBridge bridge: ConnectorBridge {
                 // A local preview is outside the dapp world (ADR 0006 §8): no

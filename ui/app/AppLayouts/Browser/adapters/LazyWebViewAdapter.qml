@@ -97,6 +97,7 @@ AbstractWebView {
             localAccountSensitiveSettings: Qt.binding(() => root.localAccountSensitiveSettings),
             devToolsEnabled:               Qt.binding(() => root.devToolsEnabled),
             freeze:                        Qt.binding(() => root.freeze),
+            keepAlive:                     Qt.binding(() => root.keepAlive),
         }
         if (!SQUtils.Utils.isMobile)
             props.profileManager = Qt.binding(() => root.profileManager)

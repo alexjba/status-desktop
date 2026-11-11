@@ -20,6 +20,8 @@ QtObject {
     property var accounts: []
     property bool _initialConnectionDone: false
     property var _ownRequestIds: ({})
+    readonly property int pendingRequests: _pendingRequests
+    property int _pendingRequests: 0
 
     // SIGNALS
     // Notify to re-read all properties
@@ -69,6 +71,7 @@ QtObject {
 
         connectorController.connectorCallRPC(requestId, JSON.stringify(rpcRequest))
         _ownRequestIds[requestId] = true
+        _pendingRequests = Object.keys(_ownRequestIds).length
 
         // Return immediately - response comes via connectorCallRPCResult signal
         return JSON.stringify({
@@ -207,6 +210,7 @@ QtObject {
                 return
 
             delete _ownRequestIds[requestId]
+            _pendingRequests = Object.keys(_ownRequestIds).length
 
             // Emit to Eip1193ProviderAdapter → ethereum_wrapper.js
             requestCompletedEvent({

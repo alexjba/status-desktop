@@ -37,6 +37,7 @@ AbstractWebView {
         anchors.fill: parent
         visible: root.visible
         freeze: root.freeze
+        keepAlive: root.keepAlive
         // Nothing of ours runs in a local preview, and nothing of ours is
         // reachable from it: a downloaded page could bring its own
         // qwebchannel.js (ADR 0006 §8).
