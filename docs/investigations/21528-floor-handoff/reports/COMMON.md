@@ -1,0 +1,36 @@
+# Common brief: UI floor spikes (Status Android, issue status-im/status-app#21528 / epic #22657)
+
+Owner goal: UI-process PSS at the login screen 260 → 150 MB (stretch 100), and every saving must persist after login. Precompile stays (login speed). No CPU regressions on low-end (report CPU for every change). Spike = prove the memory drops safely and is still dropped after login.
+
+## Read first
+- Research reports (your inputs): /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/45f4f7fe-70e3-435a-8371-d63aba0c0749/scratchpad/research/{qt-packaging,qml-metadata,alloc-compile,nim,graphics}.md
+- Measured baseline (Redmi A5, debug build of master + inventory commit, test profile, medians of 3): login screen TOTAL 254 / native 85.1 / .apk mmap 98 / .so 20.3 / EGL 16.1; after login (+120 s, wallet) TOTAL 350 / native 161.4 / apk 103 / so 20.6 / EGL 12.3. TOTAL is noisy ±15 MB (file-page residency); rank on native heap, EGL, and per-library residency (smaps), report TOTAL too.
+- Measured env results: QSG_RHI_BACKEND=vulkan → login 237 / native 79.2 / EGL 12.3; post 329 / native 154.3 / EGL 6.1 (renders fine). QT_QUICK_CONTROLS_STYLE=Basic, QSG_TRANSIENT_IMAGES=1, QT_DISTANCEFIELD_DEFAULT_BASEFONTSIZE=32, QSG_RHI_DISABLE_DISK_CACHE=1 → no native change.
+- Measurement harness: /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/45f4f7fe-70e3-435a-8371-d63aba0c0749/scratchpad/floor/m.sh (copy it into your own scratch dir, change D= and the default PKG; it force-stops all app.status.m* packages, launches, snaps meminfo+smaps at the login screen after 40 s, logs in with the test password via `input tap 360 935` + text + ENTER, snaps after 120 s). APK attribution: research/qtpk-perm.py (midpoint attribution) or floor/apkattr.py; page residency: floor/res.py + pagemap via `run-as`.
+- Docs: ~/Repos/status-desktop.worktrees/perf-21528-memory/docs/profiling-mobile.md (in master: docs/profiling-mobile.md), env hook status-env.txt (debug/PR packages).
+
+## Workspace
+- Create your own worktree from fresh origin/master: `git -C ~/Repos/status-desktop fetch origin && git -C ~/Repos/status-desktop worktree add ~/Repos/status-desktop.worktrees/<your-wt> -b spike/floor-<topic> origin/master`. Never touch ~/Repos/status-desktop's working tree (use `git -C`). Never use bare `git stash`. Commit on your branch (GPG-signed as configured, NO Co-Authored-By trailer). NO pushes, NO PRs, NO GitHub comments.
+- Fresh-worktree mobile build gotchas: read memory files /Users/alexjbanca/.claude/projects/-Users-alexjbanca-Repos-status-desktop/memory/reference_fresh_worktree_mobile_build_gotchas.md and reference_incremental_mobile_build_flag_contamination.md and feedback_mobile_build_flags.md / feedback_mobile_build_variants.md. Working build script to copy and adapt (paths, BUNDLE_IDENTIFIER): /private/tmp/claude-501/-Users-alexjbanca-Repos-status-desktop/45f4f7fe-70e3-435a-8371-d63aba0c0749/scratchpad/mdbg-build.sh (debug build, debuggable → smaps readable via run-as). Use YOUR OWN BUNDLE_IDENTIFIER app.status.f<topic> (package becomes app.status.f<topic>.debug).
+- Builds: ALWAYS through the build lease (serialises builds machine-wide; parallel nim builds collide in ~/Repos/nim-sds): `LEASE_WAIT_MAX=7200 bash ~/Repos/status-desktop.worktrees/perf-21528-memory/mobile/scripts/profiling/lease.sh run buildbox <agent> 21528 90 "<purpose>" -- bash <your build script>` — run it in the FOREGROUND (bash tool timeout max 10 min: use run_in_background for the build and wait for its completion notification; never poll in a sleep loop from the foreground). Build a BASELINE of your branch point too (same flags, same package) so A/B compares like with like.
+- Device: Redmi A5 only via lease: `lease.sh run redmi <agent> 21528 <min> "<purpose>" --pkg <your pkg> -- <cmd>`. adb serial: export ANDROID_SERIAL="adb-9b010059305330363400f1f217fa8c-Dc9BQB._adb-tls-connect._tcp". Install ONLY your own package with `adb install -r` (add `-d` for your own debug package downgrades). NEVER install over, uninstall, clear or launch app.status.mobile, app.status.mobile.debug, app.status.mobile.pr (owner's real profiles). Don't kill the adb server. Never enter device lock-screen PINs. Samsung is disabled. Lenovo (`lease.sh run lenovo ...`) may be used for a second-device check if useful.
+- Test profile on your package: launch → "Create profile" (360,1276) → "Let's go!" (360,858) → type <test password>, tap repeat field (360,550), type again, turn OFF "Save password" toggle (636,792), Confirm (360,1212); after login tick "Don't ask me again" (92,1369) + "Maybe later" (160,1540) on the notifications popup and close the backup banner (694,100). Screenshot each step to verify (coordinates are for 720x1640). Test password is a throwaway test value; never use any other credential.
+
+## Deliverable
+- Branch with one commit per lever (so each can become its own PR later), each commit message stating the measured delta.
+- Report file at the path in your brief: per lever — MB at login screen and after login (medians of ≥3 runs, native/EGL/so/apk/TOTAL), CPU impact (idle CPU % over 60 s post-login via /proc/<pid>/stat ticks, and login→wallet-visible time), functional check done, risks, follow-ups. Mark measured vs estimated honestly.
+- Final message: ≤10-line summary + report path. If blocked (permission denied, build broken), stop and report — do not work around permission blocks.
+
+## Waiting on long jobs (added after 3 agents stalled ~1h on missed build-done notices)
+- Never end your turn relying only on a run_in_background completion notice. Wrap every long job so it writes an exit file: `... ; echo $? > <workdir>/<job>.done`.
+- Then wait with the Monitor tool (until-loop, max timeout 30 min, re-arm on expiry): `until [ -f <workdir>/<job>.done ]; do sleep 5; done; cat <workdir>/<job>.done`.
+- When you get any message or notice, first check for finished .done files you haven't consumed.
+- The lead runs a watchdog: idle 10 min with no lease held/queued and no report → you'll be pinged.
+- Monitors expire after 30 min, including while you sit in a lease queue. Re-arm on every expiry notice until the .done file exists. Never let a finished build sit unmeasured: while waiting for the device, build the next APK.
+- No "hold" leases (take the lease, then wait for yourself to wake up and drive the device). Put the whole device job in a script: `lease.sh run redmi ... -- bash job.sh; echo $? > job.done`. Then the lease is used the moment it's granted and released when the job ends, whether or not you're awake.
+
+## Lenovo profile setup (owner note)
+On the Lenovo, if "Save password" stays ON on the password-setup screen, completing the login requires fingerprint authentication (which a job can't do). Turn the toggle OFF during profile creation (find it by a11y text, not the Redmi coordinates) and verify with a screenshot before Confirm.
+
+## Samsung profile setup (owner note, 2026-11-10)
+Same as the Lenovo: turn "Save password" (and any biometrics toggle) OFF during profile creation, found by a11y text (Redmi coordinates don't apply), screenshot-verified before Confirm. Otherwise every restart raises a fingerprint prompt on the owner's phone. Never interact with a biometric prompt; abort the job instead.
