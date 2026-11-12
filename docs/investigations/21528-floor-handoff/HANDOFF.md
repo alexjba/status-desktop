@@ -51,7 +51,7 @@ Tip SHAs: `git for-each-ref refs/heads | grep -E 'floor|21528|measure/|22677'`. 
 - Local branches:
   - `spike/webview-process-v2` @ 9926f09: master parity, no option A, JS-dialog commit dropped.
   - `spike/webview-process-v2-optA` @ 7b44b54: option A, keeps the JS-dialog forwarding as 9356a8a.
-  - `spike/webview-process-v2-focus`: requested from webproc2 at the pivot (the option A focus part only, WIP, unverified). Check that it exists. At handoff time the clone's tree had staged EmbeddedSurfaceHost/RemoteWebView/WebViewWindow changes.
+  - `spike/webview-process-v2-focus` @ 47dcf52: the option A focus part only (EmbeddedSurfaceHost, panel removed), WIP, never built or tested. Committed by the lead after webproc2 was stopped.
   - `spike/webview-process` (v1, includes the dropped df2843a); `spike/webview-window` @ 97455aa (webwin).
 - Don't push anything to status-im/mobilewebview without the owner's OK.
 
@@ -87,7 +87,7 @@ All in `reports/ (next to this file)`:
 - Agents: exit files plus Monitor, a lead watchdog, lean verification, one commit per lever.
 
 ## Live agents
-- `webproc2` (Browser v2) was told at the pivot to stop, commit WIP to `spike/webview-process-v2-focus`, append "State at pivot" to its report, then stop. Confirm it's idle with no leases held (`ListAgents`). Don't give it new work.
+- `webproc2` is stopped. No leases held (all free at pivot).
 - Devices at pivot:
   - Samsung: fwebproc v10.
   - Redmi: fwebproc v11.
